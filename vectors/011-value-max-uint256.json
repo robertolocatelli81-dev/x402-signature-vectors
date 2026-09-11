@@ -1,0 +1,59 @@
+{
+  "id": "011-value-max-uint256",
+  "origin": "generated",
+  "standard": "EIP-3009 TransferWithAuthorization",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "TransferWithAuthorization": [
+        {
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "name": "validAfter",
+          "type": "uint256"
+        },
+        {
+          "name": "validBefore",
+          "type": "uint256"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        }
+      ]
+    },
+    "primaryType": "TransferWithAuthorization",
+    "message": {
+      "from": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "to": "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+      "value": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+      "validAfter": 1740672089,
+      "validBefore": 1740672154,
+      "nonce": "0xf3746613c2d920b5fdabc0856f2aeb2d4f88ee6037b8cc5d04a71a4462f13480"
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d682a9b5c3da11f9beb22cb307278f157268381797a1b934dbdc42bae8f3043801c",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f"
+  },
+  "notes": [
+    "Bordo: importo al massimo rappresentabile. La FIRMA e' valida e deve verificare.",
+    "Il verdetto crittografico e' accept: rifiutarlo per ragioni di policy (importo nullo, finestra invertita) e' compito del livello sopra, e va tenuto distinto dalla firma."
+  ]
+}

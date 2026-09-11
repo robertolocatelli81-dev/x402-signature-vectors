@@ -1,0 +1,64 @@
+{
+  "keccak": {
+    "casi": 2000,
+    "divergenze": 0,
+    "ok": true
+  },
+  "recover": {
+    "casi": 500,
+    "divergenze": 0,
+    "esempi": [],
+    "ok": true
+  },
+  "vettori": [
+    {
+      "vettore": "001-eip3009-spec-example",
+      "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "riferimento": "0x857b06519e91e3a54538791bdbb0e22373e36b66",
+      "ok": true
+    },
+    {
+      "vettore": "002-eip2612-spec-example",
+      "atteso": "0xd259c1962ac82d9033ea21cf55d59c1a5d97acbb",
+      "riferimento": "0xd259c1962ac82d9033ea21cf55d59c1a5d97acbb",
+      "ok": true
+    },
+    {
+      "vettore": "003-eip3009-generated-valid",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "004-eip2612-generated-valid",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "005-mutated-value",
+      "atteso": "0x4295404a43dd6462eb84217c79ce430427ae1ebe",
+      "riferimento": "0x4295404a43dd6462eb84217c79ce430427ae1ebe",
+      "ok": true
+    },
+    {
+      "vettore": "006-mutated-to",
+      "atteso": "0xafe10d55a77101aa507fc35d1eb31f47f2d66825",
+      "riferimento": "0xafe10d55a77101aa507fc35d1eb31f47f2d66825",
+      "ok": true
+    },
+    {
+      "vettore": "007-mutated-validBefore",
+      "atteso": "0x95b918796bbd17b1e5865807a22fd5fa64e7c278",
+      "riferimento": "0x95b918796bbd17b1e5865807a22fd5fa64e7c278",
+      "ok": true
+    },
+    {
+      "vettore": "008-wrong-domain-chainid",
+      "atteso": "0x8f677b2fe3fb70537d4ca6e6f336c4c54fe0222c",
+      "riferimento": "0x8f677b2fe3fb70537d4ca6e6f336c4c54fe0222c",
+      "ok": true
+    }
+  ],
+  "ok": true
+}

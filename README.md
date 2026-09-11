@@ -9,10 +9,16 @@ standard library (`lib/`). A conformance vector that needs an ecosystem installe
 vector most people will not check.
 
 ```bash
-python3 verify.py                 # exit 0 = conformant, 1 = failures, 2 = bench not trustworthy
-python3 tools/check_manifest.py   # fail-closed integrity gate over every file
+python3 verify.py                  # exit 0 = conformant, 1 = failures, 2 = bench not trustworthy
+python3 tools/check_manifest.py    # fail-closed integrity gate over every file
+python3 tools/check_schema.py      # every vector against schema/vector.schema.json
 python3 tools/audit_spec_examples.py
 ```
+
+**Cross-validated.** `lib/` is not trusted on its own authority: Keccak-256 is checked against
+`eth-hash` over 2000 inputs, and recovery against `coincurve`/libsecp256k1 over 500 real signatures —
+zero divergences. Those libraries are *not* a dependency of the suite; they are used only to prove
+`lib/` has no blind spot of its own (`tools/crossvalidate.py`, run in its own CI job).
 
 ## Why this exists
 
@@ -76,9 +82,20 @@ test private key  0x4646…4646   (published on purpose: a conformance vector mu
 test address      0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f
 ```
 
-Current set: 8 vectors — 3 `accept`, 5 `reject`. The rejects include one-unit amount mutation,
-recipient substitution, a one-second validity shift, and a wrong-chain domain: a verifier that accepts
-any of them is not binding the signature to the message.
+Current set: **18 vectors — 7 `accept`, 11 `reject`** (v0.2.0), against
+[`schema/vector.schema.json`](schema/vector.schema.json).
+
+Beyond message-binding mutations (amount off by one, substituted recipient, one-second validity
+shift, wrong-chain domain), the set covers the cryptographic edges where verifiers actually break:
+
+- **ECDSA malleability** — `(r, N−s)` with flipped `v` is mathematically valid over the *same*
+  message and recovers to the *same* address. EIP-2 requires low-s, so a conformant verifier must
+  reject it. This is the vector that separates a real verifier from one that just calls `ecrecover`,
+  and accepting it means the same authorization exists in two forms with different hashes.
+- **Malformed signatures** — `r=0`, `s=0`, `r=N`, `v` out of range: recovery is undefined and
+  `recovered_address` is `null`. A library that raises here instead of rejecting is a denial of service.
+- **uint256 boundaries and non-ASCII domain names** — these are `accept`: the signature is valid, and
+  rejecting them is *policy*, not signature verification. Keeping the two apart is the point.
 
 ## The bench proves itself before it measures
 

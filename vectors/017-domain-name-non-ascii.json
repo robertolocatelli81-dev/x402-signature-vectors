@@ -1,0 +1,59 @@
+{
+  "id": "017-domain-name-non-ascii",
+  "origin": "generated",
+  "standard": "EIP-3009 TransferWithAuthorization",
+  "eip712": {
+    "domain": {
+      "name": "USD€",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "TransferWithAuthorization": [
+        {
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "name": "validAfter",
+          "type": "uint256"
+        },
+        {
+          "name": "validBefore",
+          "type": "uint256"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        }
+      ]
+    },
+    "primaryType": "TransferWithAuthorization",
+    "message": {
+      "from": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "to": "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+      "value": 10000,
+      "validAfter": 1740672089,
+      "validBefore": 1740672154,
+      "nonce": "0xf3746613c2d920b5fdabc0856f2aeb2d4f88ee6037b8cc5d04a71a4462f13480"
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d7f0f976e3aa49fac4f7ae0b47da5de28382b71057256770aeabb2061e1ab425d1c",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f"
+  },
+  "notes": [
+    "Il `name` del dominio contiene un carattere non ASCII (USD€).",
+    "In EIP-712 una stringa e' hashata come keccak256 dei suoi byte UTF-8: un'implementazione che normalizza, tronca o ri-codifica produce un domainSeparator diverso e fallisce qui."
+  ]
+}

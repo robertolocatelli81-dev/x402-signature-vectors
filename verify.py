@@ -21,6 +21,29 @@ CAMPI_DOMINIO = [{"name": "name", "type": "string"}, {"name": "version", "type":
                  {"name": "chainId", "type": "uint256"}, {"name": "verifyingContract", "type": "address"}]
 
 
+def controlli_firma(sig_hex):
+    """Regole che una firma deve rispettare PRIMA del recupero (EIP-2 e range di secp256k1).
+
+    Un verificatore che si limita a ecrecover accetta anche la firma malleabile (r, N-s), cioe' la
+    stessa autorizzazione in due forme con hash diversi: e' la porta d'ingresso del replay.
+    """
+    raw = bytes.fromhex(sig_hex[2:])
+    if len(raw) != 65:
+        return "lunghezza != 65 byte"
+    r = int.from_bytes(raw[:32], "big")
+    s = int.from_bytes(raw[32:64], "big")
+    v = raw[64]
+    if v not in (27, 28):
+        return f"v = {v} fuori dai valori ammessi (27/28)"
+    if not (1 <= r < S.N):
+        return "r fuori dal range [1, N-1]"
+    if not (1 <= s < S.N):
+        return "s fuori dal range [1, N-1]"
+    if s > S.N // 2:
+        return "s alto: viola la regola low-s di EIP-2 (firma malleabile)"
+    return None
+
+
 def recupera(vec):
     e = vec["eip712"]
     ds = hash_struct("EIP712Domain", {"EIP712Domain": CAMPI_DOMINIO}, e["domain"])
@@ -32,14 +55,18 @@ def recupera(vec):
 
 
 def verdetto(vec):
-    """accept sse la firma recupera all'indirizzo dichiarato come firmatario del messaggio."""
+    """accept sse la firma supera i controlli di forma E recupera al firmatario dichiarato."""
+    problema = controlli_firma(vec["signature"])
+    if problema:
+        return "reject", None, problema
     try:
         rec = recupera(vec)
-    except Exception as e:                                   # noqa: BLE001
-        return "reject", f"errore di recupero: {type(e).__name__}"
+    except Exception:                                        # noqa: BLE001
+        return "reject", None, "recupero non definito"
     msg = vec["eip712"]["message"]
     firmatario = msg.get("from") or msg.get("owner")
-    return ("accept" if rec.lower() == str(firmatario).lower() else "reject"), rec
+    ok = rec.lower() == str(firmatario).lower()
+    return ("accept" if ok else "reject"), rec, (None if ok else "recupera a un indirizzo diverso")
 
 
 def main():
@@ -59,17 +86,20 @@ def main():
     righe, falliti = [], 0
     for nome in file:
         vec = json.load(open(os.path.join(vdir, nome)))
-        v, rec = verdetto(vec)
+        v, rec, perche = verdetto(vec)
         atteso = vec["expected"]["verdict"]
         ok = v == atteso
-        ok_addr = str(rec).lower() == str(vec["expected"]["recovered_address"]).lower()
+        att_addr = vec["expected"]["recovered_address"]
+        ok_addr = (rec is None and att_addr is None) or (
+            rec is not None and att_addr is not None and rec.lower() == str(att_addr).lower())
         if not (ok and ok_addr):
             falliti += 1
-        righe.append((vec["id"], vec["origin"], atteso, v, "OK" if (ok and ok_addr) else "FALLITO"))
+        righe.append((vec["id"], vec["origin"], atteso, v,
+                      "OK" if (ok and ok_addr) else "FALLITO", perche or ""))
 
-    print(f"{'vettore':32s} {'origine':10s} {'atteso':8s} {'ottenuto':9s} esito")
+    print(f"{'vettore':32s} {'origine':10s} {'atteso':8s} {'ottenuto':9s} {'esito':8s} motivo del reject")
     for r in righe:
-        print(f"{r[0]:32s} {r[1]:10s} {r[2]:8s} {r[3]:9s} {r[4]}")
+        print(f"{r[0]:32s} {r[1]:10s} {r[2]:8s} {r[3]:9s} {r[4]:8s} {r[5][:44]}")
     print(f"\n{len(righe)} vettori · {len(righe)-falliti} conformi · {falliti} falliti")
     return 0 if falliti == 0 else 1
 

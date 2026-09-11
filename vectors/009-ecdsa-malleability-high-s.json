@@ -1,0 +1,60 @@
+{
+  "id": "009-ecdsa-malleability-high-s",
+  "origin": "generated",
+  "standard": "EIP-3009 TransferWithAuthorization",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "TransferWithAuthorization": [
+        {
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "name": "validAfter",
+          "type": "uint256"
+        },
+        {
+          "name": "validBefore",
+          "type": "uint256"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        }
+      ]
+    },
+    "primaryType": "TransferWithAuthorization",
+    "message": {
+      "from": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "to": "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+      "value": 10000,
+      "validAfter": 1740672089,
+      "validBefore": 1740672154,
+      "nonce": "0xf3746613c2d920b5fdabc0856f2aeb2d4f88ee6037b8cc5d04a71a4462f13480"
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020ded42479abc9c49fc73b8f59f22a3375326fe1162c6f87e9593aad997b9f0e2181c",
+  "expected": {
+    "verdict": "reject",
+    "recovered_address": null
+  },
+  "notes": [
+    "Firma (r, N-s) con v invertito: matematicamente valida sullo STESSO messaggio e recupera allo STESSO indirizzo del vettore 003.",
+    "EIP-2 impone s <= N/2 (low-s): un verificatore conforme deve RIFIUTARLA, altrimenti la stessa autorizzazione esiste in due forme con hash diversi — la porta d'ingresso del replay.",
+    "E' il vettore che separa un verificatore corretto da uno che si limita a fare ecrecover."
+  ]
+}

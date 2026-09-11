@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/robertolocatelli81-dev/x402-signature-vectors/schema/vector.schema.json",
+  "title": "x402 signature conformance vector",
+  "description": "A self-contained EIP-712 signature conformance vector. Everything needed to reproduce the verdict is in the file, including the domain the x402 specification leaves unstated.",
+  "type": "object",
+  "required": ["id", "origin", "standard", "eip712", "signature", "expected", "notes"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9]{3}-[a-z0-9-]+$",
+      "description": "Stable identifier, zero-padded ordinal plus slug. Never reused."
+    },
+    "origin": {
+      "enum": ["spec", "generated"],
+      "description": "'spec' = payload and signature taken verbatim from the x402 specifications, expected verdict is the audit result. 'generated' = signed with the published test key. The two must never be conflated."
+    },
+    "standard": {
+      "type": "string",
+      "description": "The signing standard under test, e.g. 'EIP-3009 TransferWithAuthorization'."
+    },
+    "eip712": {
+      "type": "object",
+      "required": ["domain", "types", "primaryType", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "domain": {
+          "type": "object",
+          "required": ["name", "version", "chainId", "verifyingContract"],
+          "properties": {
+            "name": {"type": "string"},
+            "version": {"type": "string"},
+            "chainId": {"type": "integer", "minimum": 0},
+            "verifyingContract": {"type": "string", "pattern": "^0x[0-9a-fA-F]{40}$"}
+          }
+        },
+        "types": {
+          "type": "object",
+          "description": "EIP-712 type definitions, excluding EIP712Domain (implied by the domain object).",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "type"],
+              "properties": {"name": {"type": "string"}, "type": {"type": "string"}}
+            }
+          }
+        },
+        "primaryType": {"type": "string"},
+        "message": {"type": "object"}
+      }
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{130}$",
+      "description": "65 bytes: r (32) || s (32) || v (1), hex with 0x prefix."
+    },
+    "expected": {
+      "type": "object",
+      "required": ["verdict", "recovered_address"],
+      "additionalProperties": false,
+      "properties": {
+        "verdict": {
+          "enum": ["accept", "reject"],
+          "description": "The verdict a conformant verifier MUST reach on the signature layer alone."
+        },
+        "recovered_address": {
+          "type": ["string", "null"],
+          "pattern": "^0x[0-9a-fA-F]{40}$",
+          "description": "Address the signature actually recovers to, or null when recovery is undefined (malformed signature, or rejected by a form check before recovery)."
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 1,
+      "description": "Why the vector exists and what a failure on it means. A vector without a stated purpose is noise."
+    }
+  }
+}

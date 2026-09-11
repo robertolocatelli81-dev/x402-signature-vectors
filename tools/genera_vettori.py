@@ -111,7 +111,7 @@ def costruisci():
     mutazioni = [
         ("005-mutated-value", {"value": 10001}, "importo alterato di 1 unita'"),
         ("006-mutated-to", {"to": "0x0000000000000000000000000000000000000001"}, "destinatario sostituito"),
-        ("007-mutated-validBefore", {"validBefore": 1740672155}, "finestra di validita' spostata di 1 secondo"),
+        ("007-mutated-valid-before", {"validBefore": 1740672155}, "finestra di validita' spostata di 1 secondo"),
     ]
     for mid, patch, perche in mutazioni:
         msg_m = dict(msg_3009, **{"from": addr}, **patch)
@@ -146,7 +146,7 @@ def costruisci():
 def main():
     vdir = os.path.join(BASE, "vectors")
     os.makedirs(vdir, exist_ok=True)
-    vettori = costruisci()
+    vettori = costruisci() + costruisci_edge()
     for vec in vettori:
         with open(os.path.join(vdir, vec["id"] + ".json"), "w") as f:
             json.dump(vec, f, indent=2, ensure_ascii=False)
@@ -156,6 +156,109 @@ def main():
     for vec in vettori:
         print(f"  {vec['id']:32s} {vec['origin']:10s} {vec['expected']['verdict']}")
     return 0
+
+
+
+
+# ─────────────────────────── edge case crittografici (v0.2) ───────────────────────────
+def costruisci_edge():
+    """Casi che un verificatore sbaglia davvero: malleabilita', bordi degli interi, firme malformate.
+
+    Non sono vettori "didattici": ognuno corrisponde a un modo documentato di rompere una verifica
+    EIP-712/ECDSA. Dove il recupero non e' definito, l'atteso e' `null` e il verdetto e' reject.
+    """
+    from secp256k1 import N as ORDINE
+    addr = indirizzo_test()
+    base_msg = {"from": addr, "to": "0x209693Bc6afc0C5328bA36FaF03C514EF312287C", "value": 10000,
+                "validAfter": 1740672089, "validBefore": 1740672154,
+                "nonce": "0xf3746613c2d920b5fdabc0856f2aeb2d4f88ee6037b8cc5d04a71a4462f13480"}
+    d = digest(DOM_USDC, TIPI_3009, "TransferWithAuthorization", base_msg)
+    sig_valida = firma(d)
+    r = int(sig_valida[2:66], 16)
+    s = int(sig_valida[66:130], 16)
+    v = int(sig_valida[130:132], 16)
+    out = []
+
+    def rec_o_none(sig, messaggio=base_msg, dominio=DOM_USDC):
+        try:
+            raw = bytes.fromhex(sig[2:])
+            dd = digest(dominio, TIPI_3009, "TransferWithAuthorization", messaggio)
+            pub = S.recover_public_key(dd, int.from_bytes(raw[:32], "big"),
+                                       int.from_bytes(raw[32:64], "big"), raw[64] - 27)
+            return S.public_key_to_address(pub, keccak256)
+        except Exception:                                      # noqa: BLE001
+            return None
+
+    # malleabilita' ECDSA: (r, N-s) e' una firma matematicamente valida sullo stesso messaggio.
+    # EIP-2 impone low-s: un verificatore conforme DEVE rifiutarla.
+    s_alto = ORDINE - s
+    v_flip = 28 if v == 27 else 27
+    sig_mall = "0x" + r.to_bytes(32, "big").hex() + s_alto.to_bytes(32, "big").hex() + bytes([v_flip]).hex()
+    out.append(vettore(
+        "009-ecdsa-malleability-high-s", "generated", "EIP-3009 TransferWithAuthorization",
+        DOM_USDC, TIPI_3009, "TransferWithAuthorization", base_msg, sig_mall, "reject", None,
+        ["Firma (r, N-s) con v invertito: matematicamente valida sullo STESSO messaggio e recupera "
+         "allo STESSO indirizzo del vettore 003.",
+         "EIP-2 impone s <= N/2 (low-s): un verificatore conforme deve RIFIUTARLA, altrimenti la "
+         "stessa autorizzazione esiste in due forme con hash diversi — la porta d'ingresso del replay.",
+         "E' il vettore che separa un verificatore corretto da uno che si limita a fare ecrecover."]))
+
+    # bordi di uint256
+    for vid, patch, perche in [
+        ("010-value-zero", {"value": 0}, "importo nullo"),
+        ("011-value-max-uint256", {"value": 2**256 - 1}, "importo al massimo rappresentabile"),
+        ("012-window-inverted", {"validAfter": 1740672154, "validBefore": 1740672089},
+         "finestra di validita' invertita (after > before)"),
+    ]:
+        m = dict(base_msg, **patch)
+        dd = digest(DOM_USDC, TIPI_3009, "TransferWithAuthorization", m)
+        sg = firma(dd)
+        out.append(vettore(
+            vid, "generated", "EIP-3009 TransferWithAuthorization",
+            DOM_USDC, TIPI_3009, "TransferWithAuthorization", m, sg, "accept", addr,
+            [f"Bordo: {perche}. La FIRMA e' valida e deve verificare.",
+             "Il verdetto crittografico e' accept: rifiutarlo per ragioni di policy (importo nullo, "
+             "finestra invertita) e' compito del livello sopra, e va tenuto distinto dalla firma."]))
+
+    # firme malformate: il recupero non e' definito
+    for vid, sig, perche in [
+        ("013-signature-r-zero", "0x" + "00" * 32 + s.to_bytes(32, "big").hex() + bytes([v]).hex(),
+         "r = 0, fuori dal range [1, N-1]"),
+        ("014-signature-s-zero", "0x" + r.to_bytes(32, "big").hex() + "00" * 32 + bytes([v]).hex(),
+         "s = 0, fuori dal range [1, N-1]"),
+        ("015-signature-v-out-of-range", sig_valida[:-2] + "1f",
+         "v = 31, fuori dai valori ammessi (27/28)"),
+        ("016-signature-r-equals-n", "0x" + ORDINE.to_bytes(32, "big").hex()
+         + s.to_bytes(32, "big").hex() + bytes([v]).hex(),
+         "r = N (ordine del gruppo): non e' una coordinata valida"),
+    ]:
+        out.append(vettore(
+            vid, "generated", "EIP-3009 TransferWithAuthorization",
+            DOM_USDC, TIPI_3009, "TransferWithAuthorization", base_msg, sig, "reject", rec_o_none(sig),
+            [f"Firma malformata: {perche}.",
+             "Il recupero non e' definito: il verificatore deve rifiutare senza sollevare eccezioni "
+             "non gestite. Una libreria che qui lancia invece di rifiutare e' un denial of service."]))
+
+    # unicode nel domain name: l'encoding della stringa entra nel typeHash
+    dom_uni = dict(DOM_USDC, name="USD€")
+    d_uni = digest(dom_uni, TIPI_3009, "TransferWithAuthorization", base_msg)
+    out.append(vettore(
+        "017-domain-name-non-ascii", "generated", "EIP-3009 TransferWithAuthorization",
+        dom_uni, TIPI_3009, "TransferWithAuthorization", base_msg, firma(d_uni), "accept", addr,
+        ["Il `name` del dominio contiene un carattere non ASCII (USD€).",
+         "In EIP-712 una stringa e' hashata come keccak256 dei suoi byte UTF-8: un'implementazione "
+         "che normalizza, tronca o ri-codifica produce un domainSeparator diverso e fallisce qui."]))
+
+    # indirizzo zero come destinatario: firma valida, destinatario che brucia i fondi
+    m_zero = dict(base_msg, to="0x0000000000000000000000000000000000000000")
+    out.append(vettore(
+        "018-recipient-zero-address", "generated", "EIP-3009 TransferWithAuthorization",
+        DOM_USDC, TIPI_3009, "TransferWithAuthorization", m_zero,
+        firma(digest(DOM_USDC, TIPI_3009, "TransferWithAuthorization", m_zero)), "accept", addr,
+        ["Destinatario = indirizzo zero. La firma e' valida: il verdetto crittografico e' accept.",
+         "Serve a distinguere il livello: chi rifiuta questo vettore sta applicando policy, non "
+         "verifica di firma, e deve dirlo con un errore diverso."]))
+    return out
 
 
 if __name__ == "__main__":

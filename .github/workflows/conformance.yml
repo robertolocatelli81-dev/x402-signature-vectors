@@ -1,0 +1,37 @@
+name: conformance
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"          # lunedì mattina: i vettori non devono marcire in silenzio
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+
+      # Nessuna installazione: la suite gira sulla sola stdlib, ed è metà del punto.
+      - name: Integrity gate (fail-closed)
+        run: python3 tools/check_manifest.py
+      - name: Vector schema
+        run: python3 tools/check_schema.py
+      - name: Conformance run
+        run: python3 verify.py
+      - name: Audit of the specification examples
+        run: python3 tools/audit_spec_examples.py
+
+  crossvalidate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      # Le librerie di riferimento servono SOLO qui: dimostrano che lib/ non ha un punto cieco
+      # proprio. La suite non dipende da loro.
+      - run: pip install coincurve "eth-hash[pycryptodome]"
+      - name: Cross-validate against libsecp256k1 and eth-hash
+        run: python3 tools/crossvalidate.py

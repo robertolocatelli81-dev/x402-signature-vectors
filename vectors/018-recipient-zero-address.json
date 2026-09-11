@@ -1,0 +1,59 @@
+{
+  "id": "018-recipient-zero-address",
+  "origin": "generated",
+  "standard": "EIP-3009 TransferWithAuthorization",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "TransferWithAuthorization": [
+        {
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "name": "validAfter",
+          "type": "uint256"
+        },
+        {
+          "name": "validBefore",
+          "type": "uint256"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        }
+      ]
+    },
+    "primaryType": "TransferWithAuthorization",
+    "message": {
+      "from": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "to": "0x0000000000000000000000000000000000000000",
+      "value": 10000,
+      "validAfter": 1740672089,
+      "validBefore": 1740672154,
+      "nonce": "0xf3746613c2d920b5fdabc0856f2aeb2d4f88ee6037b8cc5d04a71a4462f13480"
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d7e3b0f6f63c6c5c77918630af3a2e3d20f5e7870acf01095f27ba896784e0e6c1c",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f"
+  },
+  "notes": [
+    "Destinatario = indirizzo zero. La firma e' valida: il verdetto crittografico e' accept.",
+    "Serve a distinguere il livello: chi rifiuta questo vettore sta applicando policy, non verifica di firma, e deve dirlo con un errore diverso."
+  ]
+}
