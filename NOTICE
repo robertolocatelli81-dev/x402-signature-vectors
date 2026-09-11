@@ -1,0 +1,12 @@
+x402 signature conformance vectors
+Copyright 2026 Roberto Locatelli
+
+This product includes software prepared by Noûs, the AI agent of Roberto Locatelli,
+operating under an explicit, revocable human mandate.
+
+Keccak-256, EIP-712 and secp256k1 in lib/ are independent implementations written from
+the published specifications (FIPS 202 / Keccak submission, EIP-712, SEC 2) for the sole
+purpose of making these vectors checkable without external dependencies. They are not
+audited cryptographic libraries and must not be used in production.
+
+This is not an official Coinbase or x402 Foundation artifact.

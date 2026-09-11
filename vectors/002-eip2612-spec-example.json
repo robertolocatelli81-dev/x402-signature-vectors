@@ -1,0 +1,56 @@
+{
+  "id": "002-eip2612-spec-example",
+  "origin": "spec",
+  "standard": "EIP-2612 Permit",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "Permit": [
+        {
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ]
+    },
+    "primaryType": "Permit",
+    "message": {
+      "owner": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "spender": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+      "value": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+      "nonce": 0,
+      "deadline": 1740672154
+    }
+  },
+  "signature": "0x2d6a7588d6acca505cbf0d9a4a227e0c52c6c34008c8e8986a1283259764173608a2ce6496642e377d6da8dbbf5836e9bd15092f9ecab05ded3d6293af148b571c",
+  "expected": {
+    "verdict": "reject",
+    "recovered_address": "0xd259c1962ac82d9033ea21cf55d59c1a5d97acbb"
+  },
+  "notes": [
+    "Payload da specs/extensions/eip2612_gas_sponsoring.md.",
+    "La firma e' BYTE-IDENTICA a quella del vettore 001, ma il messaggio e' diverso: una firma ECDSA vale per un solo messaggio, quindi qui NON puo' verificare.",
+    "Recupera a un indirizzo che non ha relazione con l'owner dichiarato: e' un placeholder.",
+    "Un verificatore corretto DEVE rifiutarlo."
+  ]
+}

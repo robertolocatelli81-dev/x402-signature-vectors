@@ -1,0 +1,60 @@
+{
+  "id": "001-eip3009-spec-example",
+  "origin": "spec",
+  "standard": "EIP-3009 TransferWithAuthorization",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "TransferWithAuthorization": [
+        {
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "name": "validAfter",
+          "type": "uint256"
+        },
+        {
+          "name": "validBefore",
+          "type": "uint256"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        }
+      ]
+    },
+    "primaryType": "TransferWithAuthorization",
+    "message": {
+      "from": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "to": "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+      "value": 10000,
+      "validAfter": 1740672089,
+      "validBefore": 1740672154,
+      "nonce": "0xf3746613c2d920b5fdabc0856f2aeb2d4f88ee6037b8cc5d04a71a4462f13480"
+    }
+  },
+  "signature": "0x2d6a7588d6acca505cbf0d9a4a227e0c52c6c34008c8e8986a1283259764173608a2ce6496642e377d6da8dbbf5836e9bd15092f9ecab05ded3d6293af148b571c",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x857b06519E91e3A54538791bDbb0E22373e36b66"
+  },
+  "notes": [
+    "Payload e firma da specs/schemes/exact/scheme_exact_evm.md (Phase 1 example).",
+    "Verifica: la firma recupera all'authorization.from dichiarato.",
+    "Il domain non e' scritto in nessun .md normativo: qui e' esplicitato ed e' quello che rende valida la firma gia' pubblicata (vedi coinbase/x402#324)."
+  ]
+}

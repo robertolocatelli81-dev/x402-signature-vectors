@@ -1,0 +1,29 @@
+{
+  "suite": "x402-signature-vectors",
+  "version": "0.1.0",
+  "counts": {
+    "files": 19,
+    "vectors": 8
+  },
+  "files": {
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "NOTICE": "9f5f4638f827405ed013824e687d45889e2e9647efe9e4217726f3a6087896f8",
+    "README.md": "081a0ccd2de93ed9ef49e8e97527989574e1fc13ade81ea55712fb2eab04288a",
+    "audit/SPEC_EXAMPLES_AUDIT.md": "e43b82c9789fdbd4ed57e4a91d33b6f95fa325bd394bfacd567598dfc9a48988",
+    "audit/spec_examples_audit.json": "b3981175ee06d11fc9f0307ce5499833f8af45c7063765550b8f2061b5cea051",
+    "lib/eip712.py": "5014c19bfa6e04023b6d283fe796b8fc7d87d393fdcaba7696c9b45bd9704b03",
+    "lib/secp256k1.py": "685df9c85d41cb7e329b6e996c26836babe0d1a2ec6a51bb4e45e74d46663956",
+    "tools/audit_spec_examples.py": "23ea699e1acfb4f369ac4b1a48dd6f71982c58cf3d2f5c887b515d3c6e3db35c",
+    "tools/check_manifest.py": "b440042b98ebbd9bd327de3a78af1bdea9f10caf9edf4f21cf4a85dbef0ff2c8",
+    "tools/genera_vettori.py": "9fef6f0efe28e59c36b9a7430cc301e056e04aff50957a3883bd52fc5c8cee09",
+    "vectors/001-eip3009-spec-example.json": "7bd3cfdedd18cd0eb715349b61aedf2ab9a0c29344b74efc668199c3625b425e",
+    "vectors/002-eip2612-spec-example.json": "3b8abb2cf622032fd770a32a348a6f281992b4607c3a324014d85d377d4dcc15",
+    "vectors/003-eip3009-generated-valid.json": "57251b8598034150fe2be4e073515f0a94203106b396c1bfeb56d5bd6a62217f",
+    "vectors/004-eip2612-generated-valid.json": "2e24bbac8b857f9b0111ca1503c165cdd4416396b37365b16a312b92fc215231",
+    "vectors/005-mutated-value.json": "09f67a45741fbb6fe672241e9c16a5e473dcb9d4588d4725fd1a13a85b145e32",
+    "vectors/006-mutated-to.json": "7510066102f9ffb2b6f5412f27faa05d2cdb9387d0c8c8bbdbd3a51e7edda2bc",
+    "vectors/007-mutated-validBefore.json": "54f0aecf4c49d7f831c0bc5e013766d0030f4a70ee0fc23544b330d782bd7efa",
+    "vectors/008-wrong-domain-chainid.json": "512b956e72b71f931f2374655da0233f7bd5a8cb4e1cbe6e6eb833b52712bc0f",
+    "verify.py": "4243cb2e999cba9508c2514794e78ffe360ae9176fb5aff466efce91ca73411e"
+  }
+}
