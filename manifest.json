@@ -2,7 +2,7 @@
   "suite": "x402-signature-vectors",
   "version": "1.0.0",
   "counts": {
-    "files": 70,
+    "files": 72,
     "vectors": 50
   },
   "files": {
@@ -13,6 +13,7 @@
     "README.md": "e79dd2b8c379207349c3bf02c9966131c4a1fe09d8f835dbb5ef1f9350f25911",
     "audit/SPEC_EXAMPLES_AUDIT.md": "e43b82c9789fdbd4ed57e4a91d33b6f95fa325bd394bfacd567598dfc9a48988",
     "audit/crossvalidation.json": "e8fbf7fdf244e0c3d693df812b63e014b17e83dbcf0177acc08e7b264bf0c466",
+    "audit/crossvalidation_eip712.json": "5878d6419d636cd6db9b056fa678bead2c148ad5aab939f2a3094386ecfcf04c",
     "audit/mente2_gemini_qualita.json": "7079a4e63c7dec7e5aa737354b1de415ca5c7155337f3e2ea10c071806b9e5b3",
     "audit/mente2_gemini_v02.json": "509fe5fe708fda889a1679135e971939112feb2e4c4aa554ad520490a86f1bdd",
     "audit/spec_examples_audit.json": "b3981175ee06d11fc9f0307ce5499833f8af45c7063765550b8f2061b5cea051",
@@ -23,6 +24,7 @@
     "tools/check_manifest.py": "359e39982217884c100948d034ac1cdb3f3dc310a678845a7e16950ce3360661",
     "tools/check_schema.py": "e0fc18fe833ab4daf9aeae996dfc43347b4098c38d1a3042862ac4a8abf9a376",
     "tools/crossvalidate.py": "6ab4bcabc6bf6fff5634a88aea9018a92f33f50f8221fb9bffa5cc66e836622d",
+    "tools/crossvalidate_eip712.py": "44e11c2a4a532f89a780f8978ad0d92b6903a41e336957cecaff74d16b324032",
     "tools/genera_vettori.py": "f455b3023ed15581b71a8d691190ab52248f120910abdb2b68160fe15829ece8",
     "tools/genera_vettori_50.py": "53ee4d99b77b79ce4808e5d761b7be35c80f8f6a356eb8ce050c4b57a5ded44a",
     "vectors/001-eip3009-spec-example.json": "16f3581af0fe84d0081d460308a91f50bb5ed7a6ce4e5cba06148766c2cb1457",
@@ -75,6 +77,6 @@
     "vectors/048-signature-empty.json": "0a1ec7bc2c91bff4bc96fcfd3837e716a6c36fbc962981085cdf3f8d1af19b7e",
     "vectors/049-message-missing-field.json": "42d05ae9cfafc75ba37870fc133c03db32357be11002acaca5bed923892c7032",
     "vectors/050-primary-type-not-in-types.json": "e656e8c3ba66ac4716c04226c324f71e097bef0da65c481320767bff8f8f5e06",
-    "verify.py": "0ec2d0fc05c8828212451fb628fa7d08c7714011c0a7b8372e34ba3744a040cd"
+    "verify.py": "c58d34f3c7b2a4e12a305cd2f031490cd78f73bada2c106f4921c73f4e16dba4"
   }
 }

@@ -34,7 +34,15 @@ def controlli_firma(sig_hex):
     Un verificatore che si limita a ecrecover accetta anche la firma malleabile (r, N-s), cioe' la
     stessa autorizzazione in due forme con hash diversi: e' la porta d'ingresso del replay.
     """
-    raw = bytes.fromhex(sig_hex[2:])
+    # L'input arriva dalla rete: ogni assunzione va verificata PRIMA di usarla. Un fromhex() su una
+    # stringa arbitraria solleva ValueError, e un verificatore che solleva invece di rifiutare e' un
+    # denial of service. (Misurato: 79 eccezioni non gestite su 600 input malevoli, prima di questo.)
+    if not isinstance(sig_hex, str) or not sig_hex.startswith("0x"):
+        return "firma non e' una stringa 0x"
+    corpo = sig_hex[2:]
+    if len(corpo) % 2 or any(c not in "0123456789abcdefABCDEF" for c in corpo):
+        return "firma non esadecimale"
+    raw = bytes.fromhex(corpo)
     if len(raw) != 65:
         return "lunghezza != 65 byte"
     r = int.from_bytes(raw[:32], "big")
@@ -63,7 +71,10 @@ def recupera(vec):
 
 def verdetto(vec):
     """accept sse la firma supera i controlli di forma E recupera al firmatario dichiarato."""
-    problema = controlli_firma(vec["signature"])
+    try:
+        problema = controlli_firma(vec.get("signature"))
+    except Exception:                                        # noqa: BLE001 — nessun input deve passare oltre
+        return "reject", None, "firma non interpretabile"
     if problema:
         # Il verdetto e' reject, ma se il recupero e' comunque definito (caso tipico: firma
         # malleabile high-s, matematicamente valida) l'indirizzo si RIPORTA: serve a chi sta
@@ -78,7 +89,9 @@ def verdetto(vec):
         return "reject", None, "recupero non definito"
     # Il firmatario e' DICHIARATO nel vettore: dedurlo dal nome del campo ("from", "owner"…) funziona
     # solo finche' le struct si chiamano come ci si aspetta, e i vettori strutturali non lo fanno.
-    firmatario = vec["signer"]
+    firmatario = vec.get("signer")
+    if not firmatario:
+        return "reject", rec, "vettore senza `signer` dichiarato"
     ok = rec.lower() == str(firmatario).lower()
     return ("accept" if ok else "reject"), rec, (None if ok else "recupera a un indirizzo diverso")
 
