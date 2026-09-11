@@ -1,0 +1,64 @@
+{
+  "id": "043-nonce-all-zero",
+  "origin": "generated",
+  "standard": "EIP-3009 TransferWithAuthorization",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "TransferWithAuthorization": [
+        {
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "name": "validAfter",
+          "type": "uint256"
+        },
+        {
+          "name": "validBefore",
+          "type": "uint256"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        }
+      ]
+    },
+    "primaryType": "TransferWithAuthorization",
+    "message": {
+      "from": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "to": "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+      "value": 10000,
+      "validAfter": 1740672089,
+      "validBefore": 1740672154,
+      "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d128fa6f1820653de046686f7e2b5da03074af265ec4dc612977500a1b1e5ac801c",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0xe9a462ba4d6a3ad36ddba72becd41c65c5d2aec8df95044606f2fc2d6e91c3de",
+    "signing_digest": "0x682a25daf53d862878d80af32e1f5ba196961c186ef58419850779b708d98e0a"
+  },
+  "notes": [
+    "Confine del nonce EIP-3009: nonce tutto a zero.",
+    "Il nonce e' un bytes32 opaco: nessun valore e' speciale per la firma. Rifiutarlo e' policy anti-replay, non verifica."
+  ]
+}

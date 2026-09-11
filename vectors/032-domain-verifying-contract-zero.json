@@ -1,0 +1,64 @@
+{
+  "id": "032-domain-verifying-contract-zero",
+  "origin": "generated",
+  "standard": "EIP-3009 TransferWithAuthorization",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x0000000000000000000000000000000000000000"
+    },
+    "types": {
+      "TransferWithAuthorization": [
+        {
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "name": "validAfter",
+          "type": "uint256"
+        },
+        {
+          "name": "validBefore",
+          "type": "uint256"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        }
+      ]
+    },
+    "primaryType": "TransferWithAuthorization",
+    "message": {
+      "from": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "to": "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+      "value": 10000,
+      "validAfter": 1740672089,
+      "validBefore": 1740672154,
+      "nonce": "0xf3746613c2d920b5fdabc0856f2aeb2d4f88ee6037b8cc5d04a71a4462f13480"
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d3cfb1022c7798a5be9bb33526fbcccc61c6b73a9f001b6016305359ccd364e8a1b",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267",
+    "domain_separator": "0xac0463c0680826fa5601a5a493d9f594a2047a5bcc1fc115c7cea11f20ce113b",
+    "hash_struct": "0x2d4485bc772d834706524f22dd4d659cdebef9a830534e35df3d0642cfdbee1b",
+    "signing_digest": "0xdfb041bfc343addd097fee59e55017f0d8b235905e0c9514d4e7e6b7aa68bc2a"
+  },
+  "notes": [
+    "Dominio ai confini: verifyingContract = indirizzo zero.",
+    "La firma e' valida: il domainSeparator cambia ma resta ben definito. Un'implementazione che tratta il valore come assente invece che come valore produce un separator diverso e fallisce."
+  ]
+}

@@ -17,8 +17,15 @@ sys.path.insert(0, os.path.join(BASE, "lib"))
 from eip712 import keccak256, hash_struct, self_test as banco_eip712    # noqa: E402
 import secp256k1 as S                                                    # noqa: E402
 
-CAMPI_DOMINIO = [{"name": "name", "type": "string"}, {"name": "version", "type": "string"},
-                 {"name": "chainId", "type": "uint256"}, {"name": "verifyingContract", "type": "address"}]
+# Ordine canonico dei campi di EIP712Domain. I campi sono OPZIONALI: il typeHash si calcola su
+# quelli effettivamente presenti. Una lista fissa a quattro campi sbaglia su ogni dominio parziale —
+# per esempio quello del contratto Permit2, che non ha `version` (vettore 035).
+_ORDINE_DOMINIO = [("name", "string"), ("version", "string"), ("chainId", "uint256"),
+                   ("verifyingContract", "address"), ("salt", "bytes32")]
+
+
+def campi_dominio(dominio):
+    return [{"name": n, "type": t} for n, t in _ORDINE_DOMINIO if n in dominio]
 
 
 def controlli_firma(sig_hex):
@@ -46,7 +53,7 @@ def controlli_firma(sig_hex):
 
 def recupera(vec):
     e = vec["eip712"]
-    ds = hash_struct("EIP712Domain", {"EIP712Domain": CAMPI_DOMINIO}, e["domain"])
+    ds = hash_struct("EIP712Domain", {"EIP712Domain": campi_dominio(e["domain"])}, e["domain"])
     digest = keccak256(b"\x19\x01" + ds + hash_struct(e["primaryType"], e["types"], e["message"]))
     raw = bytes.fromhex(vec["signature"][2:])
     pub = S.recover_public_key(digest, int.from_bytes(raw[:32], "big"),

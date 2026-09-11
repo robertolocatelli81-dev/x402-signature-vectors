@@ -47,6 +47,12 @@ def recover_public_key(msg_hash: bytes, r: int, s: int, rec_id: int):
     """Q = r^-1 (sR - eG). rec_id ∈ {0,1} (dal parametro v della firma Ethereum: v-27)."""
     if not (1 <= r < N and 1 <= s < N):
         raise ValueError("r/s fuori range")
+    if rec_id not in (0, 1, 2, 3):
+        # Bug trovato dalla cross-validazione contro libsecp256k1 (11/09/2026): con v=0 il chiamante
+        # calcola rec_id = 0-27 = -27, e senza questo controllo lo shift `-27 >> 1` produceva un punto
+        # qualsiasi e un indirizzo INVENTATO, mentre libsecp256k1 rifiuta. Un recupero che non rifiuta
+        # un recovery id impossibile fabbrica firmatari.
+        raise ValueError(f"recovery id {rec_id} fuori da {{0,1,2,3}}")
     x = r + N * (rec_id >> 1)
     if x >= P:
         raise ValueError("x fuori campo")

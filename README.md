@@ -84,7 +84,7 @@ test private key  0x4646…4646   (published on purpose: a conformance vector mu
 test address      0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f
 ```
 
-Current set: **22 vectors — 11 `accept`, 11 `reject`** (v0.3.0), against
+Current set: **50 vectors — 27 `accept`, 23 `reject`** (v1.0.0), against
 [`schema/vector.schema.json`](schema/vector.schema.json).
 
 Beyond message-binding mutations (amount off by one, substituted recipient, one-second validity
@@ -98,6 +98,17 @@ shift, wrong-chain domain), the set covers the cryptographic edges where verifie
   `recovered_address` is `null`. A library that raises here instead of rejecting is a denial of service.
 - **uint256 boundaries and non-ASCII domain names** — these are `accept`: the signature is valid, and
   rejecting them is *policy*, not signature verification. Keeping the two apart is the point.
+- **Exact secp256k1 boundaries** — `s = N/2` and `s = N/2 + 1` (where a `<` instead of `<=` breaks
+  and nowhere else), `r = 1`, `r = N−1`, raw recovery ids `v = 0/1` instead of 27/28.
+- **Partial EIP-712 domains** — a domain without `version`, which is the real domain of the canonical
+  Permit2 contract. An implementation assuming four fixed fields computes a different separator. This
+  vector found the bug in *our own* runner, which had the fields hard-coded.
+- **Both other x402 transfer methods** — Permit2 `PermitWitnessTransferFrom` with the witness types
+  taken from the spec's `WITNESS_TYPE_STRING`, plus a tampered-witness vector: the attack the witness
+  pattern exists to stop, where a facilitator redirects the payment.
+- **Robustness** — signatures too short, too long, empty; a message missing a declared field; a
+  `primaryType` absent from `types`. These must be clean rejections: the input comes from the network,
+  and a library that raises here is a denial of service.
 - **EIP-712 encoding structure** — arrays of structs (hashed as the concatenation of element
   hashStructs, not as JSON), two-level nesting, a string containing a NUL byte (hashed whole, not
   truncated C-style), and referenced-type ordering in `encodeType` (alphabetical, regardless of

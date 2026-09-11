@@ -46,7 +46,6 @@
           "type": "object",
           "required": [
             "name",
-            "version",
             "chainId",
             "verifyingContract"
           ],
@@ -65,7 +64,8 @@
               "type": "string",
               "pattern": "^0x[0-9a-fA-F]{40}$"
             }
-          }
+          },
+          "description": "EIP-712 domain. `version` is optional on purpose: EIP-712 allows partial domains and the canonical Permit2 contract omits it \u2014 an implementation that assumes four fixed fields computes a different separator."
         },
         "types": {
           "type": "object",
@@ -99,8 +99,8 @@
     },
     "signature": {
       "type": "string",
-      "pattern": "^0x[0-9a-fA-F]{130}$",
-      "description": "65 bytes: r (32) || s (32) || v (1), hex with 0x prefix."
+      "pattern": "^0x[0-9a-fA-F]*$",
+      "description": "Signature as transmitted. Length is NOT constrained here: a malformed length is exactly what some vectors test, and rejecting it is the verifier's job, not the schema's."
     },
     "expected": {
       "type": "object",
@@ -130,24 +130,36 @@
           "description": "Address the signature actually recovers to, or null when recovery is undefined (malformed signature, or rejected by a form check before recovery)."
         },
         "type_hash": {
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "pattern": "^0x[0-9a-fA-F]{64}$",
-          "description": "keccak256(encodeType(primaryType)) \u2014 lets the encoding layer be tested in isolation from ECDSA."
+          "description": "keccak256(encodeType(primaryType)) \u2014 lets the encoding layer be tested in isolation from ECDSA. null when the message cannot be encoded at all (missing field, unknown primaryType)."
         },
         "domain_separator": {
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "pattern": "^0x[0-9a-fA-F]{64}$",
-          "description": "hashStruct(EIP712Domain)."
+          "description": "hashStruct(EIP712Domain). null when the message cannot be encoded at all (missing field, unknown primaryType)."
         },
         "hash_struct": {
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "pattern": "^0x[0-9a-fA-F]{64}$",
-          "description": "hashStruct(primaryType, message)."
+          "description": "hashStruct(primaryType, message). null when the message cannot be encoded at all (missing field, unknown primaryType)."
         },
         "signing_digest": {
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "pattern": "^0x[0-9a-fA-F]{64}$",
-          "description": "keccak256(0x1901 || domainSeparator || hashStruct): the bytes actually signed."
+          "description": "keccak256(0x1901 || domainSeparator || hashStruct): the bytes actually signed. null when the message cannot be encoded at all (missing field, unknown primaryType)."
         }
       }
     },

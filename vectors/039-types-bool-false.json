@@ -1,0 +1,59 @@
+{
+  "id": "039-types-bool-false",
+  "origin": "generated",
+  "standard": "EIP-712 encoding (tipi atomici)",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "Misto": [
+        {
+          "name": "chi",
+          "type": "address"
+        },
+        {
+          "name": "attivo",
+          "type": "bool"
+        },
+        {
+          "name": "piccolo",
+          "type": "uint8"
+        },
+        {
+          "name": "segno",
+          "type": "int256"
+        },
+        {
+          "name": "parola",
+          "type": "bytes32"
+        }
+      ]
+    },
+    "primaryType": "Misto",
+    "message": {
+      "chi": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "attivo": false,
+      "piccolo": 0,
+      "segno": 0,
+      "parola": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d318c305c664d76bce8f5e437af91c97be7d2f17db2e72765db89eed709a8a3221c",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0x1524be38e271d3fb6699eea9bd88778bb1ec5ed9ed0776103f8aa563f3f6fdb4",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0xefaf5a5f0121d5d71ea7748e00e130eedac656ddf9605804568e96356465224c",
+    "signing_digest": "0x9b48f25a306cff526471fbd741d505ed1e6ef23bc613b5e6ffd618c80781cf44"
+  },
+  "notes": [
+    "Tipi atomici ai valori limite: bool false, uint8 zero, bytes32 zero.",
+    "Ogni valore atomico occupa 32 byte con padding a SINISTRA: un bool false e' 32 byte di zeri, non un campo assente."
+  ]
+}

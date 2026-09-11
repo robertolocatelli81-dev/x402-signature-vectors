@@ -148,6 +148,174 @@
       "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
       "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
       "ok": true
+    },
+    {
+      "vettore": "023-s-exactly-half-n",
+      "atteso": "0x4ae7f3d44a3ba67aad9ff0d43587ab45d21c7fa4",
+      "riferimento": "0x4ae7f3d44a3ba67aad9ff0d43587ab45d21c7fa4",
+      "ok": true
+    },
+    {
+      "vettore": "024-s-just-above-half-n",
+      "atteso": "0xf89df0e989e09bf73bb7de2e383de2c9b486767f",
+      "riferimento": "0xf89df0e989e09bf73bb7de2e383de2c9b486767f",
+      "ok": true
+    },
+    {
+      "vettore": "025-s-equals-one",
+      "atteso": "0x54d0babd54056e18aaec4f80395df25fa930116b",
+      "riferimento": "0x54d0babd54056e18aaec4f80395df25fa930116b",
+      "ok": true
+    },
+    {
+      "vettore": "026-r-equals-one",
+      "atteso": "0x3e47db91b6b852d1a09304e87c1f39e2b27dedb8",
+      "riferimento": "0x3e47db91b6b852d1a09304e87c1f39e2b27dedb8",
+      "ok": true
+    },
+    {
+      "vettore": "027-r-equals-n-minus-one",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "028-v-raw-zero",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "029-v-raw-one",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "030-domain-chainid-zero",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "031-domain-chainid-max",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "032-domain-verifying-contract-zero",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "033-domain-empty-name",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "034-domain-empty-version",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "035-domain-without-version",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "036-array-empty",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "037-array-single",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "038-types-bool-true",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "039-types-bool-false",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "040-address-lowercase-vs-checksum",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "041-permit2-witness-transfer",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "042-permit2-witness-tampered",
+      "atteso": "0x6784855a30f7700866fbb29c20b1dc085a118148",
+      "riferimento": "0x6784855a30f7700866fbb29c20b1dc085a118148",
+      "ok": true
+    },
+    {
+      "vettore": "043-nonce-all-zero",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "044-nonce-all-ff",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "045-validity-window-degenerate",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "046-signature-too-short",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "047-signature-too-long",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "048-signature-empty",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "049-message-missing-field",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "050-primary-type-not-in-types",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
     }
   ],
   "ok": true

@@ -115,17 +115,33 @@ def cross_rifiuti(n=600):
 def cross_vettori():
     """I vettori della suite, ri-verificati con le librerie di riferimento invece che con lib/."""
     vdir = os.path.join(BASE, "vectors")
-    campi = [{"name": "name", "type": "string"}, {"name": "version", "type": "string"},
-             {"name": "chainId", "type": "uint256"}, {"name": "verifyingContract", "type": "address"}]
+    ordine = [("name", "string"), ("version", "string"), ("chainId", "uint256"),
+              ("verifyingContract", "address"), ("salt", "bytes32")]
     esiti = []
     for nome in sorted(os.listdir(vdir)):
         if not nome.endswith(".json"):
             continue
         v = json.load(open(os.path.join(vdir, nome)))
         e = v["eip712"]
-        ds = hash_struct("EIP712Domain", {"EIP712Domain": campi}, e["domain"])
-        digest = keccak_nostro(b"\x19\x01" + ds + hash_struct(e["primaryType"], e["types"], e["message"]))
+        campi = [{"name": n, "type": t} for n, t in ordine if n in e["domain"]]
+        try:
+            ds = hash_struct("EIP712Domain", {"EIP712Domain": campi}, e["domain"])
+            hs = hash_struct(e["primaryType"], e["types"], e["message"])
+        except Exception:                                     # noqa: BLE001
+            # Il messaggio non e' codificabile (campo mancante, primaryType ignoto): non esiste un
+            # digest da firmare, quindi nemmeno un indirizzo da recuperare. Concordanza per costruzione.
+            esiti.append({"vettore": v["id"], "atteso": v["expected"]["recovered_address"],
+                          "riferimento": None,
+                          "ok": v["expected"]["recovered_address"] is None})
+            continue
+        digest = keccak_nostro(b"\x19\x01" + ds + hs)
         raw = bytes.fromhex(v["signature"][2:])
+        if len(raw) != 65 or raw[64] not in (27, 28):
+            # Firma malformata: nessuna delle due parti puo' recuperare. Concordanza per costruzione.
+            esiti.append({"vettore": v["id"], "atteso": v["expected"]["recovered_address"],
+                          "riferimento": None,
+                          "ok": v["expected"]["recovered_address"] is None})
+            continue
         sig = raw[:64] + bytes([raw[64] - 27])
         try:
             pub = PublicKey.from_signature_and_message(sig, digest, hasher=None).format(compressed=False)[1:]

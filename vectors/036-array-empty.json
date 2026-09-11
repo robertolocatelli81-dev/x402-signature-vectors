@@ -1,0 +1,54 @@
+{
+  "id": "036-array-empty",
+  "origin": "generated",
+  "standard": "EIP-712 encoding (array)",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "Lista": [
+        {
+          "name": "chi",
+          "type": "address"
+        },
+        {
+          "name": "voci",
+          "type": "Voce[]"
+        }
+      ],
+      "Voce": [
+        {
+          "name": "sku",
+          "type": "string"
+        },
+        {
+          "name": "quantita",
+          "type": "uint256"
+        }
+      ]
+    },
+    "primaryType": "Lista",
+    "message": {
+      "chi": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "voci": []
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d1a3c61e912c2435c09c59a8bb1af2f4064bf780d3e4c459915344da31c79a5421c",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0x5d1cc16c0bfdec498b8a2b402db5676240208df7e65cc33bb1831753366ca719",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0x07bc63d0563e10d495cf5a820f9302a6c45d5b127296711cf6e4e6c29f0aad3d",
+    "signing_digest": "0x311631bbb01dbf0d7825bd5bb31c2a03128ea847e9faa0fffb109dae61a56c7c"
+  },
+  "notes": [
+    "array VUOTO: keccak256 della stringa vuota, non un errore.",
+    "Un array vuoto produce keccak256(b''): le implementazioni che sollevano o saltano il campo calcolano un hashStruct diverso."
+  ]
+}
