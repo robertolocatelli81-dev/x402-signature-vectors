@@ -84,7 +84,7 @@ test private key  0x4646…4646   (published on purpose: a conformance vector mu
 test address      0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f
 ```
 
-Current set: **50 vectors — 27 `accept`, 23 `reject`** (v1.0.0), against
+Current set: **52 vectors — 27 `accept`, 25 `reject`** (v1.1.0), against
 [`schema/vector.schema.json`](schema/vector.schema.json).
 
 Beyond message-binding mutations (amount off by one, substituted recipient, one-second validity

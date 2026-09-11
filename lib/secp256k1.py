@@ -63,7 +63,13 @@ def recover_public_key(msg_hash: bytes, r: int, s: int, rec_id: int):
     y = beta if (beta % 2) == (rec_id & 1) else P - beta
     R = (x, y)
     e = int.from_bytes(msg_hash, "big") % N
-    return _mul(_inv(r, N), _add(_mul(s, R), _mul(N - e, (GX, GY))))
+    Q = _mul(_inv(r, N), _add(_mul(s, R), _mul(N - e, (GX, GY))))
+    if Q is None:
+        # Punto all'infinito: succede quando sR == eG (costruibile a tavolino: R = kG, s = e/k).
+        # Non e' una chiave pubblica. libsecp256k1 fallisce il recupero; un'implementazione che
+        # lo serializza (address(0) alla ecrecover, o keccak di 64 byte zero) fabbrica un firmatario.
+        raise ValueError("recupero al punto all'infinito: nessuna chiave pubblica")
+    return Q
 
 
 def public_key_to_address(pub, keccak) -> str:

@@ -316,6 +316,18 @@
       "atteso": null,
       "riferimento": null,
       "ok": true
+    },
+    {
+      "vettore": "051-recovery-point-at-infinity-address-zero",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "052-recovery-point-at-infinity-zero-point-address",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
     }
   ],
   "ok": true

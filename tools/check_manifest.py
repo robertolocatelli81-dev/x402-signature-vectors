@@ -20,7 +20,8 @@ def sha256(percorso):
 def genera():
     voci = {}
     for radice, _, file in os.walk(BASE):
-        if any(p in radice for p in (".git", "__pycache__")):
+        # Esclusi: .git, cache e il venv locale di cross-validazione (.xval); .github resta dentro.
+        if any(p in radice for p in ("/.git/", "__pycache__", "/.xval")) or radice.endswith("/.git"):
             continue
         for f in sorted(file):
             if f in ("manifest.json",) or f.endswith((".pyc", ".log")):
@@ -28,7 +29,7 @@ def genera():
             rel = os.path.relpath(os.path.join(radice, f), BASE)
             voci[rel] = sha256(os.path.join(BASE, rel))
     vettori = sorted(v for v in voci if v.startswith("vectors/"))
-    return {"suite": "x402-signature-vectors", "version": "1.0.1",
+    return {"suite": "x402-signature-vectors", "version": "1.1.0",
             "counts": {"files": len(voci), "vectors": len(vettori)},
             "files": dict(sorted(voci.items()))}
 

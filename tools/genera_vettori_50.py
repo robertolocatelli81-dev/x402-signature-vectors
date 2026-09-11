@@ -275,6 +275,52 @@ def parte_due(v, campi3):
                         ["`primaryType` non presente in `types`.",
                          "Caso degenere che un consumatore di vettori puo' ricevere da un peer "
                          "malevolo: il fallimento deve essere un rifiuto, non un KeyError."]))
+
+    # ── F. recupero al punto all'infinito ────────────────────────────────────────────
+    # Q = r^-1 (sR - eG). Se sR == eG allora Q = ∞, che NON e' una chiave pubblica. Si costruisce a
+    # tavolino senza conoscere alcuna chiave privata: R = kG, r = R.x, s = e * k^-1 (mod N), con k
+    # cercato dal basso finche' s e' low-s, cosi' la firma supera OGNI controllo di forma e il rifiuto
+    # puo' venire SOLO dal recupero. libsecp256k1 fallisce ("failed to recover ECDSA public key").
+    # Il `signer` dichiarato e' l'indirizzo che un'implementazione DIFETTOSA produrrebbe dal punto ∞:
+    # se il verificatore lo confronta e trova uguale, ACCETTA una firma senza firmatario.
+    ds = hash_struct("EIP712Domain", {"EIP712Domain": CAMPI_DOMINIO}, DOM_USDC)
+    digest_inf = keccak256(b"\x19\x01" + ds + hash_struct("TransferWithAuthorization", TIPI_3009, MSG3009))
+    e_inf = int.from_bytes(digest_inf, "big") % S.N
+    k = 1
+    while True:
+        R = S._mul(k, (S.GX, S.GY))
+        r_inf = R[0] % S.N
+        if R[0] < S.N and r_inf:
+            s_inf = e_inf * S._inv(k, S.N) % S.N
+            if 1 <= s_inf <= S.N // 2:
+                break
+        k += 1
+    sig_inf = ("0x" + r_inf.to_bytes(32, "big").hex() + s_inf.to_bytes(32, "big").hex()
+               + bytes([(R[1] & 1) + 27]).hex())
+    assert S._mul(s_inf, R) == S._mul(e_inf, (S.GX, S.GY)), "costruzione sbagliata: sR != eG"
+    for vid, signer, perche in [
+        ("051-recovery-point-at-infinity-address-zero",
+         "0x0000000000000000000000000000000000000000",
+         "`address(0)`: e' cio' che `ecrecover` restituisce in Solidity quando il recupero fallisce. "
+         "Un verificatore off-chain che copia quel comportamento e poi confronta con il firmatario "
+         "atteso accetta qualunque firma degenere purche' il firmatario dichiarato sia zero"),
+        ("052-recovery-point-at-infinity-zero-point-address",
+         "0x" + keccak256(b"\x00" * 64).hex()[-40:],
+         "keccak256 di 64 byte zero: e' l'indirizzo che si ottiene serializzando il punto ∞ come "
+         "(0, 0), il modo in cui alcune implementazioni in Python/JS rappresentano l'identita'"),
+    ]:
+        v.append(costruisci(vid, "generated", T3[0], DOM_USDC, TIPI_3009, "TransferWithAuthorization",
+                            MSG3009, sig_inf, "reject", None,
+                            [f"Firma ben formata (65 byte, r e s nel range, low-s) costruita con "
+                             f"R = {k}·G e s = e·k⁻¹, cosi' che s·R = e·G e il recupero dia il punto "
+                             f"all'infinito. Nessuna chiave privata coinvolta.",
+                             "Il punto all'infinito NON e' una chiave pubblica: il recupero deve "
+                             "FALLIRE (libsecp256k1: 'failed to recover ECDSA public key'). "
+                             "`recovered_address` e' null.",
+                             f"Il `signer` dichiarato e' {perche}. Confrontare un indirizzo fabbricato "
+                             "dal punto ∞ con il firmatario atteso e' il modo in cui questa firma senza "
+                             "firmatario viene accettata."],
+                            signer=signer))
     return v
 
 
@@ -286,7 +332,7 @@ def main():
         with open(os.path.join(vdir, vec["id"] + ".json"), "w") as f:
             json.dump(vec, f, indent=2, ensure_ascii=False)
             f.write("\n")
-    print(f"vettori 023-050 scritti: {len(v)}")
+    print(f"vettori 023-052 scritti: {len(v)}")
     for vec in v:
         print(f"  {vec['id']:38s} {vec['expected']['verdict']}")
     return 0

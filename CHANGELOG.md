@@ -4,6 +4,28 @@ Vectors are versioned so that an implementation can state *which* set it passes.
 stable and never reused: a vector that turns out to be wrong is corrected in place and the change is
 recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
+## 1.1.0 — 2026-09-11
+
+**52 vectors** (27 accept, 25 reject). Closes the last item left open by the review: recovery at the
+point at infinity.
+
+- **051–052 — recovery yields the point at infinity.** `Q = r⁻¹(sR − eG)` is the identity whenever
+  `sR = eG`, and that is constructible without any private key: `R = kG`, `r = R.x`, `s = e·k⁻¹`
+  (here `k = 2`, chosen so that `s` is low-s). The signature is well-formed in every syntactic
+  respect — 65 bytes, `r` and `s` in range, low-s — so the **only** reason to reject is that the
+  identity is not a public key. libsecp256k1 fails the recovery (`failed to recover ECDSA public
+  key`). The declared `signer` is, in turn, the address a *defective* implementation would derive
+  from ∞: `address(0)` (051, the Solidity `ecrecover` failure sentinel) and `keccak256(0x00 × 64)`
+  = `0x3f17…5fb5` (052, the identity serialised as `(0, 0)`). Both defective mappings were
+  simulated against the vectors and both would ACCEPT; `verify.py` rejects.
+- **`lib/secp256k1.py`** now raises on the identity instead of returning `None`. Before this change
+  the runner rejected only because of its blanket exception handler, and `public_key_to_address`
+  would have raised a `TypeError` — the same class of defect the fuzzer caught in 1.0.1, one layer
+  lower.
+- `tools/check_manifest.py` ignores the local cross-validation venv (`.xval/`) — and, found while
+  doing so, **now covers `.github/workflows/conformance.yml`**: the old exclusion matched `.github`
+  as well as `.git`, so the CI definition was outside the integrity gate. 77 files declared.
+
 ## 1.0.1 — 2026-09-11
 
 Pre-publication testing, and what it found.
