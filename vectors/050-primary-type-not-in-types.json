@@ -55,7 +55,8 @@
     "type_hash": null,
     "domain_separator": null,
     "hash_struct": null,
-    "signing_digest": null
+    "signing_digest": null,
+    "reject_reason": "encoding_error"
   },
   "notes": [
     "`primaryType` non presente in `types`.",

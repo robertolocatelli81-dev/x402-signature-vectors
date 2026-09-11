@@ -34,7 +34,7 @@ panici, rifiuti, accettati = [], 0, 0
 for i in range(600):
     v = storpia(base, i)
     try:
-        esito, _, _ = V.verdetto(v)
+        esito, _, _, _ = V.verdetto(v)
         if esito == "reject": rifiuti += 1
         else: accettati += 1
     except RecursionError:

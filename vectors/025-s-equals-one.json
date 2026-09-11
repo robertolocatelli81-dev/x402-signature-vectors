@@ -55,7 +55,8 @@
     "type_hash": "0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267",
     "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
     "hash_struct": "0x2d4485bc772d834706524f22dd4d659cdebef9a830534e35df3d0642cfdbee1b",
-    "signing_digest": "0xd11f1fb6f95e521838858254326d198cfc84c37a192e789a5028d17c60d95574"
+    "signing_digest": "0xd11f1fb6f95e521838858254326d198cfc84c37a192e789a5028d17c60d95574",
+    "reject_reason": "signer_mismatch"
   },
   "notes": [
     "s = 1: valore minimo del range, firma non del messaggio.",

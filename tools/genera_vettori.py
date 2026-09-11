@@ -16,9 +16,11 @@ import sys
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE, "lib"))
+sys.path.insert(0, os.path.join(BASE, "tools"))
 
 from eip712 import keccak256, hash_struct           # noqa: E402
-import secp256k1 as S                               # noqa: E402
+import secp256k1 as S
+from reject_reasons import annota  # noqa: E402
 
 CHIAVE_TEST = 0x4646464646464646464646464646464646464646464646464646464646464646
 K_DETERMINISTICO = 0x1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF
@@ -235,7 +237,7 @@ def main():
     vettori = costruisci() + costruisci_edge() + costruisci_strutturali()
     for vec in vettori:
         with open(os.path.join(vdir, vec["id"] + ".json"), "w") as f:
-            json.dump(vec, f, indent=2, ensure_ascii=False)
+            json.dump(annota(vec), f, indent=2, ensure_ascii=False)
             f.write("\n")
     print(f"indirizzo della chiave di test: {indirizzo_test()}")
     print(f"vettori scritti: {len(vettori)}")

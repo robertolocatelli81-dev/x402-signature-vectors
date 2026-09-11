@@ -4,6 +4,33 @@ Vectors are versioned so that an implementation can state *which* set it passes.
 stable and never reused: a vector that turns out to be wrong is corrected in place and the change is
 recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
+## 1.2.0 — 2026-09-11
+
+Adversarial review (Gemini 3.1 Pro, same day) of the whole v1.1.0. Three findings survived
+verification and are fixed here; the others were checked against the code and rejected (r=0/s=0 are
+vectors 013/014; the domain mapping in x402 PR #324 reads `extra` from the *resource server's*
+requirements and settlement uses the contract's own domain on-chain).
+
+- **`expected.reject_reason` — a reject must be for the declared reason.** The runner rejects
+  everything it does not understand (input arrives from the network; raising is a denial of
+  service), which means a *broken* vector — a mistyped key, a wrong type — also becomes a "reject",
+  and if the vector expected "reject" it passed. Before this change, 049 and 050 (EIP-712 messages
+  that cannot be encoded) were rejected with the **same reason as a failed ECDSA recovery** and
+  nobody could tell. Now every reject vector declares one of six classes (`signature_malformed`,
+  `signature_out_of_range`, `signature_high_s`, `encoding_error`, `recovery_undefined`,
+  `signer_mismatch`; see `tools/reject_reasons.py`), declared **by hand per vector**, not derived
+  from the runner; the runner classifies independently and a class mismatch is a FAIL. Fail-closed:
+  a reject without a declared class fails the schema gate and the runner. Shown to fail in both
+  directions (wrong declared class → FAIL; vector with a renamed `domain` key → `encoding_error`
+  ≠ declared → FAIL). Encoding is now computed before and separately from recovery in `verify.py`.
+  The 27 accept vectors are byte-identical.
+- **`tools/discriminate_infinity.py`** — positive control of 051/052, in CI: simulates the two
+  defective recoveries the vectors claim to catch (identity → `address(0)`; identity → keccak of 64
+  zero bytes) and requires that both ACCEPT. A reject vector nobody could accept proves nothing.
+- **052 note corrected.** `(0, 0)` is not a point of secp256k1 (0 ≠ 7 mod p) and the identity has
+  no affine coordinates: the address is what a *software convention* for the neutral element
+  produces when serialised as 64 bytes, not a mathematical serialisation of ∞.
+
 ## 1.1.0 — 2026-09-11
 
 **52 vectors** (27 accept, 25 reject). Closes the last item left open by the review: recovery at the

@@ -72,6 +72,12 @@ Each vector is a single self-contained JSON file — `eip712` (domain, types, pr
 `signature`, and an `expected` block naming both the verdict and the address the signature actually
 recovers to. Nothing is implicit, including the domain that the specification leaves unstated.
 
+Every `reject` vector also declares **`reject_reason`** — one of `signature_malformed`,
+`signature_out_of_range`, `signature_high_s`, `encoding_error`, `recovery_undefined`,
+`signer_mismatch` (defined in `tools/reject_reasons.py`). A verifier is conformant on a reject vector
+only if it rejects **for that class of reason**: a vector rejected for the wrong reason is how a broken
+test passes, and a reject vector without a declared class fails the schema gate.
+
 `origin` separates two statuses that must not be mixed:
 
 - **`spec`** — payload and signature taken verbatim from the x402 specifications. The expected verdict
@@ -84,7 +90,7 @@ test private key  0x4646…4646   (published on purpose: a conformance vector mu
 test address      0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f
 ```
 
-Current set: **52 vectors — 27 `accept`, 25 `reject`** (v1.1.0), against
+Current set: **52 vectors — 27 `accept`, 25 `reject`** (v1.2.0), against
 [`schema/vector.schema.json`](schema/vector.schema.json).
 
 Beyond message-binding mutations (amount off by one, substituted recipient, one-second validity

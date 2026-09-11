@@ -50,7 +50,8 @@
     "type_hash": "0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9",
     "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
     "hash_struct": "0xa780812756d74a1185d5372726b3956112d816008c3378caeee0f1ad01b81e8c",
-    "signing_digest": "0x9d699b419c72490ae461cca68d915ed086fa1cf4028f64ab40ad4735a9535818"
+    "signing_digest": "0x9d699b419c72490ae461cca68d915ed086fa1cf4028f64ab40ad4735a9535818",
+    "reject_reason": "signer_mismatch"
   },
   "notes": [
     "Payload da specs/extensions/eip2612_gas_sponsoring.md.",

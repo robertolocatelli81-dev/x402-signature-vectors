@@ -14,7 +14,8 @@ sys.path.insert(0, os.path.join(BASE, "lib"))
 sys.path.insert(0, os.path.join(BASE, "tools"))
 
 from eip712 import keccak256, hash_struct, type_hash          # noqa: E402
-import secp256k1 as S                                         # noqa: E402
+import secp256k1 as S
+from reject_reasons import annota  # noqa: E402
 from genera_vettori import (CHIAVE_TEST, K_DETERMINISTICO, CAMPI_DOMINIO, ASSET, DOM_USDC,  # noqa: E402
                             TIPI_3009, indirizzo_test, firma, digest)
 
@@ -306,8 +307,10 @@ def parte_due(v, campi3):
          "atteso accetta qualunque firma degenere purche' il firmatario dichiarato sia zero"),
         ("052-recovery-point-at-infinity-zero-point-address",
          "0x" + keccak256(b"\x00" * 64).hex()[-40:],
-         "keccak256 di 64 byte zero: e' l'indirizzo che si ottiene serializzando il punto ∞ come "
-         "(0, 0), il modo in cui alcune implementazioni in Python/JS rappresentano l'identita'"),
+         "keccak256 di 64 byte zero: l'indirizzo che si ottiene se il codice rappresenta l'identita' "
+         "con la tupla (0, 0) e la serializza come 64 byte. Attenzione: (0, 0) NON e' un punto della "
+         "curva (0 != 7 mod p) e il punto all'infinito non ha coordinate affini — e' una convenzione "
+         "software per l'elemento neutro, non una serializzazione matematica"),
     ]:
         v.append(costruisci(vid, "generated", T3[0], DOM_USDC, TIPI_3009, "TransferWithAuthorization",
                             MSG3009, sig_inf, "reject", None,
@@ -330,7 +333,7 @@ def main():
     vdir = os.path.join(BASE, "vectors")
     for vec in v:
         with open(os.path.join(vdir, vec["id"] + ".json"), "w") as f:
-            json.dump(vec, f, indent=2, ensure_ascii=False)
+            json.dump(annota(vec), f, indent=2, ensure_ascii=False)
             f.write("\n")
     print(f"vettori 023-052 scritti: {len(v)}")
     for vec in v:

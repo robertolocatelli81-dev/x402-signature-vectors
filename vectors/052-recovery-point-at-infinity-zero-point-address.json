@@ -55,11 +55,12 @@
     "type_hash": "0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267",
     "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
     "hash_struct": "0x2d4485bc772d834706524f22dd4d659cdebef9a830534e35df3d0642cfdbee1b",
-    "signing_digest": "0xd11f1fb6f95e521838858254326d198cfc84c37a192e789a5028d17c60d95574"
+    "signing_digest": "0xd11f1fb6f95e521838858254326d198cfc84c37a192e789a5028d17c60d95574",
+    "reject_reason": "recovery_undefined"
   },
   "notes": [
     "Firma ben formata (65 byte, r e s nel range, low-s) costruita con R = 2·G e s = e·k⁻¹, cosi' che s·R = e·G e il recupero dia il punto all'infinito. Nessuna chiave privata coinvolta.",
     "Il punto all'infinito NON e' una chiave pubblica: il recupero deve FALLIRE (libsecp256k1: 'failed to recover ECDSA public key'). `recovered_address` e' null.",
-    "Il `signer` dichiarato e' keccak256 di 64 byte zero: e' l'indirizzo che si ottiene serializzando il punto ∞ come (0, 0), il modo in cui alcune implementazioni in Python/JS rappresentano l'identita'. Confrontare un indirizzo fabbricato dal punto ∞ con il firmatario atteso e' il modo in cui questa firma senza firmatario viene accettata."
+    "Il `signer` dichiarato e' keccak256 di 64 byte zero: l'indirizzo che si ottiene se il codice rappresenta l'identita' con la tupla (0, 0) e la serializza come 64 byte. Attenzione: (0, 0) NON e' un punto della curva (0 != 7 mod p) e il punto all'infinito non ha coordinate affini — e' una convenzione software per l'elemento neutro, non una serializzazione matematica. Confrontare un indirizzo fabbricato dal punto ∞ con il firmatario atteso e' il modo in cui questa firma senza firmatario viene accettata."
   ]
 }

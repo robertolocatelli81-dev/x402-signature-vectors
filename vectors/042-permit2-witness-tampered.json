@@ -75,7 +75,8 @@
     "type_hash": "0xebc156cd23678a74c94df13d772ef5478420637f0c94bd10d509e1dc98f521c7",
     "domain_separator": "0x010f27a92fb9a32622f44f001dc4d15706a85b33499cfc2ce9033113ab26592c",
     "hash_struct": "0x21f59bc01ab66f2d79a3961b5a03c4e014a42e243e699019e91dd1e58a47aa26",
-    "signing_digest": "0xebe6825d4e7dc8c30be3ec56496c4f44e2d881bb0a4fca3c81568570e6b4a14c"
+    "signing_digest": "0xebe6825d4e7dc8c30be3ec56496c4f44e2d881bb0a4fca3c81568570e6b4a14c",
+    "reject_reason": "signer_mismatch"
   },
   "notes": [
     "Stessa firma del 041 con il destinatario del witness sostituito.",

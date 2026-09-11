@@ -65,7 +65,7 @@
               "pattern": "^0x[0-9a-fA-F]{40}$"
             }
           },
-          "description": "EIP-712 domain. `version` is optional on purpose: EIP-712 allows partial domains and the canonical Permit2 contract omits it \u2014 an implementation that assumes four fixed fields computes a different separator."
+          "description": "EIP-712 domain. `version` is optional on purpose: EIP-712 allows partial domains and the canonical Permit2 contract omits it — an implementation that assumes four fixed fields computes a different separator."
         },
         "types": {
           "type": "object",
@@ -135,7 +135,7 @@
             "null"
           ],
           "pattern": "^0x[0-9a-fA-F]{64}$",
-          "description": "keccak256(encodeType(primaryType)) \u2014 lets the encoding layer be tested in isolation from ECDSA. null when the message cannot be encoded at all (missing field, unknown primaryType)."
+          "description": "keccak256(encodeType(primaryType)) — lets the encoding layer be tested in isolation from ECDSA. null when the message cannot be encoded at all (missing field, unknown primaryType)."
         },
         "domain_separator": {
           "type": [
@@ -160,6 +160,17 @@
           ],
           "pattern": "^0x[0-9a-fA-F]{64}$",
           "description": "keccak256(0x1901 || domainSeparator || hashStruct): the bytes actually signed. null when the message cannot be encoded at all (missing field, unknown primaryType)."
+        },
+        "reject_reason": {
+          "enum": [
+            "signature_malformed",
+            "signature_out_of_range",
+            "signature_high_s",
+            "encoding_error",
+            "recovery_undefined",
+            "signer_mismatch"
+          ],
+          "description": "REQUIRED when verdict is reject (enforced by tools/check_schema.py). The class of reason a conformant verifier rejects for. A verifier that rejects for a different reason is not conformant: rejecting for the wrong reason is how a broken test passes. Classes are defined in tools/reject_reasons.py."
         }
       }
     },

@@ -62,7 +62,16 @@ def main():
         if not nome.endswith(".json"):
             continue
         tot += 1
-        errori = valida(json.load(open(os.path.join(vdir, nome))), schema, nome)
+        vec = json.load(open(os.path.join(vdir, nome)))
+        errori = valida(vec, schema, nome)
+        # Regola condizionale (il mini-validatore non ha if/then): un reject DEVE dichiarare la classe
+        # di ragione, un accept NON deve averla. Senza, il runner non puo' distinguere un rifiuto
+        # giusto da un vettore rotto che rifiuta per caso.
+        exp = vec.get("expected", {}) if isinstance(vec, dict) else {}
+        if exp.get("verdict") == "reject" and "reject_reason" not in exp:
+            errori.append(f"{nome}/expected: verdict reject senza reject_reason")
+        if exp.get("verdict") == "accept" and "reject_reason" in exp:
+            errori.append(f"{nome}/expected: verdict accept con reject_reason")
         if errori:
             ko += 1
             print(f"  {nome}:")

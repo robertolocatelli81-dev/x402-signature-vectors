@@ -38,31 +38,41 @@ def controlli_firma(sig_hex):
     # stringa arbitraria solleva ValueError, e un verificatore che solleva invece di rifiutare e' un
     # denial of service. (Misurato: 79 eccezioni non gestite su 600 input malevoli, prima di questo.)
     if not isinstance(sig_hex, str) or not sig_hex.startswith("0x"):
-        return "firma non e' una stringa 0x"
+        return "signature_malformed", "firma non e' una stringa 0x"
     corpo = sig_hex[2:]
     if len(corpo) % 2 or any(c not in "0123456789abcdefABCDEF" for c in corpo):
-        return "firma non esadecimale"
+        return "signature_malformed", "firma non esadecimale"
     raw = bytes.fromhex(corpo)
     if len(raw) != 65:
-        return "lunghezza != 65 byte"
+        return "signature_malformed", "lunghezza != 65 byte"
     r = int.from_bytes(raw[:32], "big")
     s = int.from_bytes(raw[32:64], "big")
     v = raw[64]
     if v not in (27, 28):
-        return f"v = {v} fuori dai valori ammessi (27/28)"
+        return "signature_malformed", f"v = {v} fuori dai valori ammessi (27/28)"
     if not (1 <= r < S.N):
-        return "r fuori dal range [1, N-1]"
+        return "signature_out_of_range", "r fuori dal range [1, N-1]"
     if not (1 <= s < S.N):
-        return "s fuori dal range [1, N-1]"
+        return "signature_out_of_range", "s fuori dal range [1, N-1]"
     if s > S.N // 2:
-        return "s alto: viola la regola low-s di EIP-2 (firma malleabile)"
+        return "signature_high_s", "s alto: viola la regola low-s di EIP-2 (firma malleabile)"
     return None
 
 
-def recupera(vec):
+class EncodingError(Exception):
+    """Il messaggio EIP-712 non si puo' codificare: e' un fallimento DIVERSO dal recupero."""
+
+
+def digest_di(vec):
     e = vec["eip712"]
-    ds = hash_struct("EIP712Domain", {"EIP712Domain": campi_dominio(e["domain"])}, e["domain"])
-    digest = keccak256(b"\x19\x01" + ds + hash_struct(e["primaryType"], e["types"], e["message"]))
+    try:
+        ds = hash_struct("EIP712Domain", {"EIP712Domain": campi_dominio(e["domain"])}, e["domain"])
+        return keccak256(b"\x19\x01" + ds + hash_struct(e["primaryType"], e["types"], e["message"]))
+    except Exception as ex:                                  # noqa: BLE001 — l'input non e' fidato
+        raise EncodingError(str(ex)) from ex
+
+
+def recupera(vec, digest):
     raw = bytes.fromhex(vec["signature"][2:])
     pub = S.recover_public_key(digest, int.from_bytes(raw[:32], "big"),
                                int.from_bytes(raw[32:64], "big"), raw[64] - 27)
@@ -70,30 +80,45 @@ def recupera(vec):
 
 
 def verdetto(vec):
-    """accept sse la firma supera i controlli di forma E recupera al firmatario dichiarato."""
+    """accept sse la firma supera i controlli di forma E recupera al firmatario dichiarato.
+
+    Ritorna (verdict, recovered_address, classe_di_ragione, testo). Il verificatore rifiuta TUTTO cio'
+    che non capisce (l'input arriva dalla rete: sollevare e' un denial of service), ma dice PERCHE':
+    senza la classe, un vettore rotto che solleva un'eccezione diventa un "reject" e passa per il
+    motivo sbagliato. Le classi sono in tools/reject_reasons.py.
+    """
     try:
         problema = controlli_firma(vec.get("signature"))
     except Exception:                                        # noqa: BLE001 — nessun input deve passare oltre
-        return "reject", None, "firma non interpretabile"
+        return "reject", None, "signature_malformed", "firma non interpretabile"
+    # L'encoding si calcola PRIMA e SEPARATAMENTE dal recupero: un messaggio non codificabile e' un
+    # fallimento dello strato EIP-712, non della firma, e la classe deve dirlo.
+    try:
+        digest = digest_di(vec)
+    except EncodingError:
+        return "reject", None, "encoding_error", "messaggio EIP-712 non codificabile"
     if problema:
+        classe, testo = problema
         # Il verdetto e' reject, ma se il recupero e' comunque definito (caso tipico: firma
         # malleabile high-s, matematicamente valida) l'indirizzo si RIPORTA: serve a chi sta
         # debuggando, e distingue "rifiutata da una regola" da "non recuperabile".
         try:
-            return "reject", recupera(vec), problema
+            return "reject", recupera(vec, digest), classe, testo
         except Exception:                                    # noqa: BLE001
-            return "reject", None, problema
+            return "reject", None, classe, testo
     try:
-        rec = recupera(vec)
-    except Exception:                                        # noqa: BLE001
-        return "reject", None, "recupero non definito"
+        rec = recupera(vec, digest)
+    except Exception as ex:                                  # noqa: BLE001
+        return "reject", None, "recovery_undefined", f"recupero non definito: {ex}"
     # Il firmatario e' DICHIARATO nel vettore: dedurlo dal nome del campo ("from", "owner"…) funziona
     # solo finche' le struct si chiamano come ci si aspetta, e i vettori strutturali non lo fanno.
     firmatario = vec.get("signer")
     if not firmatario:
-        return "reject", rec, "vettore senza `signer` dichiarato"
+        return "reject", rec, "signer_mismatch", "vettore senza `signer` dichiarato"
     ok = rec.lower() == str(firmatario).lower()
-    return ("accept" if ok else "reject"), rec, (None if ok else "recupera a un indirizzo diverso")
+    if ok:
+        return "accept", rec, None, None
+    return "reject", rec, "signer_mismatch", "recupera a un indirizzo diverso"
 
 
 def main():
@@ -113,20 +138,29 @@ def main():
     righe, falliti = [], 0
     for nome in file:
         vec = json.load(open(os.path.join(vdir, nome)))
-        v, rec, perche = verdetto(vec)
+        v, rec, classe, perche = verdetto(vec)
         atteso = vec["expected"]["verdict"]
         ok = v == atteso
         att_addr = vec["expected"]["recovered_address"]
         ok_addr = (rec is None and att_addr is None) or (
             rec is not None and att_addr is not None and rec.lower() == str(att_addr).lower())
-        if not (ok and ok_addr):
+        # Un reject e' conforme solo se rifiuta PER LA RAGIONE DICHIARATA. FAIL-CLOSED: un vettore
+        # reject senza classe dichiarata non e' un test, e' un semaforo.
+        ok_ragione = True
+        if atteso == "reject":
+            att_classe = vec["expected"].get("reject_reason")
+            ok_ragione = att_classe is not None and classe == att_classe
+            if not ok_ragione:
+                perche = f"ragione {classe} != dichiarata {att_classe}"
+        if not (ok and ok_addr and ok_ragione):
             falliti += 1
         righe.append((vec["id"], vec["origin"], atteso, v,
-                      "OK" if (ok and ok_addr) else "FALLITO", perche or ""))
+                      "OK" if (ok and ok_addr and ok_ragione) else "FALLITO",
+                      f"{classe}: {perche}" if classe else ""))
 
-    print(f"{'vettore':32s} {'origine':10s} {'atteso':8s} {'ottenuto':9s} {'esito':8s} motivo del reject")
+    print(f"{'vettore':32s} {'origine':10s} {'atteso':8s} {'ottenuto':9s} {'esito':8s} ragione del reject")
     for r in righe:
-        print(f"{r[0]:32s} {r[1]:10s} {r[2]:8s} {r[3]:9s} {r[4]:8s} {r[5][:44]}")
+        print(f"{r[0]:32s} {r[1]:10s} {r[2]:8s} {r[3]:9s} {r[4]:8s} {r[5][:60]}")
     print(f"\n{len(righe)} vettori · {len(righe)-falliti} conformi · {falliti} falliti")
     return 0 if falliti == 0 else 1
 

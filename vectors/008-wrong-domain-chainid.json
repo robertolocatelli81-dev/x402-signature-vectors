@@ -55,7 +55,8 @@
     "type_hash": "0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267",
     "domain_separator": "0xfa238c9966b9fb47bb6cc3f915b541622ae7406c2c45a2510b835f46e2214895",
     "hash_struct": "0x2d4485bc772d834706524f22dd4d659cdebef9a830534e35df3d0642cfdbee1b",
-    "signing_digest": "0xf9e7c7af9154d0e7b7d7c48671f44f1e57eb48a675c84cc5cf5406ac8f0f9f45"
+    "signing_digest": "0xf9e7c7af9154d0e7b7d7c48671f44f1e57eb48a675c84cc5cf5406ac8f0f9f45",
+    "reject_reason": "signer_mismatch"
   },
   "notes": [
     "Stesso messaggio e stessa firma del 003, ma chainId di un'altra rete (8453 invece di 84532).",
