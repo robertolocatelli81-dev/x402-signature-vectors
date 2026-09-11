@@ -19,6 +19,8 @@ jobs:
         run: python3 tools/check_manifest.py
       - name: Vector schema
         run: python3 tools/check_schema.py
+      - name: Prose numbers match the data (README counts, per-vector notes, changelog entry)
+        run: python3 tools/check_docs.py
       - name: Conformance run
         run: python3 verify.py
       - name: Audit of the specification examples

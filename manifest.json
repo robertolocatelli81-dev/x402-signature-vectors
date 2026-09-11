@@ -2,14 +2,14 @@
   "suite": "x402-signature-vectors",
   "version": "1.3.0",
   "counts": {
-    "files": 82,
+    "files": 83,
     "vectors": 55
   },
   "files": {
-    ".github/workflows/conformance.yml": "aa8c5bef3760d2f563f7aa740694e57779ef3a5589cb7bbfce322c2e6c87aba8",
+    ".github/workflows/conformance.yml": "f5a5450966cc7eac68917b6b1f0277f9de66b77838489695a2c216cb5b371cc1",
     ".gitignore": "53a0b2adecc6ddcc82f1542a209e791edb669904176d8c851a2b5a832d3d6288",
     ".gitleaks.toml": "897622f6d5d20265f81c32a00a05cba6a8cb6355ceba9121d8ff745522e05c13",
-    "CHANGELOG.md": "b19affd88eab19fa86ffdfe7b0a88b0464f0c0d5068ef5803185ce07fdcccb43",
+    "CHANGELOG.md": "03a1804b3a3a1a4af40cb2fe596cb2758d2090c86d90f7b4d10acab832b2ab55",
     "LICENSE": "b7e03adc9d081de26a861b20364cb45f9ec702bf3d44c981158d54a172db2187",
     "NOTICE": "9f5f4638f827405ed013824e687d45889e2e9647efe9e4217726f3a6087896f8",
     "README.md": "bc13557457f863918d4fa2e0ec48b3d82dd38a5d677be658fa1220d823715fe0",
@@ -23,6 +23,7 @@
     "lib/secp256k1.py": "7e10ceb85840d1049dc2fbdef4c03e14a5af9a29c78eba54d4393695402a1f69",
     "schema/vector.schema.json": "fcefb7080168d82260fb4cab6a5b64d51be1209e6b4f275bf0d1a8f5cfc2857e",
     "tools/audit_spec_examples.py": "23ea699e1acfb4f369ac4b1a48dd6f71982c58cf3d2f5c887b515d3c6e3db35c",
+    "tools/check_docs.py": "af9009580181d3f815022676c16bd95711238b0fc63fc40965c6b68009b3fce5",
     "tools/check_manifest.py": "dd4d09cbc09a9220857780a5b57f75db0b6ec985bd3d9889516e291bd478ce96",
     "tools/check_schema.py": "a954b052be1d133c772a6d42aaf844c1df0373251ccf67608901c3b0a7a4537b",
     "tools/crossvalidate.py": "6ab4bcabc6bf6fff5634a88aea9018a92f33f50f8221fb9bffa5cc66e836622d",

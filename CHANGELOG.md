@@ -27,6 +27,10 @@ statement is not softened, it is replaced by the true one.
 - Confirmed by the review, unchanged: `signer_mismatch` is the right class for 023/025/026 — an
   arbitrary `r` or `s` still recovers to *some* key, and `ecrecover` returns that address, so the only
   cryptographic reason to reject is that it is not the declared signer.
+- **`tools/check_docs.py`, in CI**: the numbers in the README (vector counts, version, how many
+  vectors the `eth-account` cross-validation can compare) are recomputed from the vectors, each
+  vector's notes are checked against its own data, and the changelog must carry the manifest
+  version. Why: "48 vectors compared" survived three releases because no gate ever read a sentence.
 - Still open (missing coverage, not a wrong claim): EIP-191 / `personal_sign` vectors for the
   ERC-4361 sign-in flow. That needs a `format` dimension in the schema and runner; next release.
 
