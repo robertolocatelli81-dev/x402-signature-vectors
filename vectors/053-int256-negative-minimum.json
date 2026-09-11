@@ -1,0 +1,50 @@
+{
+  "id": "053-int256-negative-minimum",
+  "origin": "generated",
+  "standard": "EIP-712 encoding — signed integers",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "Order": [
+        {
+          "name": "delta",
+          "type": "int256"
+        },
+        {
+          "name": "memo",
+          "type": "bytes"
+        },
+        {
+          "name": "qty",
+          "type": "uint8"
+        }
+      ]
+    },
+    "primaryType": "Order",
+    "message": {
+      "delta": -57896044618658097711785492504343953926634992332820282019728792003956564819968,
+      "memo": "0x",
+      "qty": 255
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d1e47f487415e5b6504d980c781ae5a007d70b909f0d7ab744b65a3d18bc4bb7c1b",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0x4fefb33a9e12c24e99dec5072ddff193b7635ffed883cedc5b8a4ee6b869d073",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0xd89742ef10664ed54785d35a8dcd1ab80650736c69bed96043cc7632e518a984",
+    "signing_digest": "0x99a9b5e2083d958e3c9cc7b2e7f9d4df032bccf1463c4e984560586932d275df"
+  },
+  "notes": [
+    "`int256` al minimo (-2^255), `uint8` al massimo, `bytes` vuoto.",
+    "Gli interi con segno si codificano in complemento a due su 32 byte. Una libreria che chiama to_bytes senza signed=True rifiuta (o esplode su) un messaggio valido: era il nostro caso prima di questo vettore.",
+    "Digest validato contro eth-account 0.14.0."
+  ]
+}

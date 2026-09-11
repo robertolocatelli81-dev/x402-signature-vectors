@@ -328,6 +328,24 @@
       "atteso": null,
       "riferimento": null,
       "ok": true
+    },
+    {
+      "vettore": "053-int256-negative-minimum",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "054-bytes-dynamic",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "055-undeclared-field-ignored",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
     }
   ],
   "ok": true

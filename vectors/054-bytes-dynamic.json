@@ -1,0 +1,50 @@
+{
+  "id": "054-bytes-dynamic",
+  "origin": "generated",
+  "standard": "EIP-712 encoding — dynamic bytes",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "Order": [
+        {
+          "name": "delta",
+          "type": "int256"
+        },
+        {
+          "name": "memo",
+          "type": "bytes"
+        },
+        {
+          "name": "qty",
+          "type": "uint8"
+        }
+      ]
+    },
+    "primaryType": "Order",
+    "message": {
+      "delta": -1,
+      "memo": "0xdeadbeef",
+      "qty": 7
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d259bb2541902d3999646d1fd87a95238d34f687f2d97b89218c1a2b1b09bf2821c",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0x4fefb33a9e12c24e99dec5072ddff193b7635ffed883cedc5b8a4ee6b869d073",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0xb2f58ddb44a7bab3e12aa9d337c279a9df3b102ebaec5e97360aa87305fcccc8",
+    "signing_digest": "0x480539e9ae6d172eeae5732470763cb23f4e8c534979c57995ce5abea490a689"
+  },
+  "notes": [
+    "`bytes` dinamico non vuoto (0xdeadbeef) e `int256` = -1.",
+    "`bytes` si codifica come keccak256 del contenuto, non dei caratteri esadecimali della stringa JSON: la stringa va decodificata prima. La nostra lib passava la stringa a keccak e sollevava TypeError.",
+    "Digest validato contro eth-account 0.14.0."
+  ]
+}

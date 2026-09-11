@@ -4,6 +4,32 @@ Vectors are versioned so that an implementation can state *which* set it passes.
 stable and never reused: a vector that turns out to be wrong is corrected in place and the change is
 recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
+## 1.3.0 — 2026-09-11
+
+Second adversarial review (Gemini 3.1 Pro), this time over the complete code. Everything it found was
+checked against the code and the curve; everything that held is fixed here. Rule applied: a wrong
+statement is not softened, it is replaced by the true one.
+
+- **Two dormant defects in `lib/eip712.py`**, dormant because no vector touched them: `intN` was
+  encoded without `signed=True`, so a **negative `int256` — a valid message — raised `OverflowError`**
+  (a library that refuses a valid message is worse than one that crashes); and dynamic `bytes` was
+  hashed as the JSON string object instead of the decoded content (`TypeError`). Both fixed; values
+  outside the declared width now raise (→ `encoding_error` for the runner) instead of silently
+  encoding. Cross-validated against `eth-account` 0.14.0.
+- **053–055**: signed-integer minimum with `uint8` maximum and empty `bytes`; non-empty dynamic
+  `bytes`; and an **undeclared field** — the message of 054 plus a key not in `types`, carrying the
+  *same* signature, because `encodeData` concatenates the declared members and nothing else (both
+  `eth-account` and this library ignore the field). 30 accept / 25 reject.
+- **Two wrong statements removed.** The note of 027 said the recovery at `r = N−1` "is defined": it
+  is not — `x = N−1` is not on the curve (`x³+7` is not a quadratic residue mod p), which is exactly
+  why the runner classifies it `recovery_undefined`. And the cross-validation count "48 vectors" was
+  stale since 1.0.1 (it is 53 now: all vectors whose message is encodable).
+- Confirmed by the review, unchanged: `signer_mismatch` is the right class for 023/025/026 — an
+  arbitrary `r` or `s` still recovers to *some* key, and `ecrecover` returns that address, so the only
+  cryptographic reason to reject is that it is not the declared signer.
+- Still open (missing coverage, not a wrong claim): EIP-191 / `personal_sign` vectors for the
+  ERC-4361 sign-in flow. That needs a `format` dimension in the schema and runner; next release.
+
 ## 1.2.0 — 2026-09-11
 
 Adversarial review (Gemini 3.1 Pro, same day) of the whole v1.1.0. Three findings survived

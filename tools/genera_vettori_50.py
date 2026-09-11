@@ -91,8 +91,9 @@ def tutti():
         ("025-s-equals-one", 1, "reject", "s = 1: valore minimo del range, firma non del messaggio"),
         ("026-r-equals-one", None, "reject", "r = 1: valore minimo del range"),
         ("027-r-equals-n-minus-one", None, "reject",
-         "r = N-1: il massimo valore ammesso dal range. Il recupero e' definito ma il punto non "
-         "corrisponde al firmatario"),
+         "r = N-1: il massimo valore ammesso dal range. La coordinata x = N-1 NON appartiene alla "
+         "curva (x^3+7 non e' un residuo quadratico mod p), quindi il recupero fallisce: "
+         "recovery_undefined, non un firmatario diverso"),
     ]:
         if vid == "026-r-equals-one":
             sig = "0x" + (1).to_bytes(32, "big").hex() + s_ok.to_bytes(32, "big").hex() + bytes([v_ok]).hex()
@@ -324,6 +325,44 @@ def parte_due(v, campi3):
                              "dal punto ∞ con il firmatario atteso e' il modo in cui questa firma senza "
                              "firmatario viene accettata."],
                             signer=signer))
+
+    # ── G. confini di codifica trovati dalla revisione (Gemini 3.1 Pro, 11/09/2026) ──────
+    # lib/eip712.py aveva due bug DORMIENTI perche' nessun vettore li toccava: int256 negativo ->
+    # OverflowError (un messaggio VALIDO rifiutato), bytes dinamico -> TypeError. Questi vettori li
+    # coprono, validati contro eth-account 0.14.0. Il 055 fissa un confine che entrambe le
+    # implementazioni di riferimento rispettano: un campo non dichiarato in `types` NON entra
+    # nell'hash (EIP-712 encodeData concatena i MEMBRI del tipo, nient'altro).
+    TIPI_ORD = {"Order": [{"name": "delta", "type": "int256"}, {"name": "memo", "type": "bytes"},
+                          {"name": "qty", "type": "uint8"}]}
+    m_neg = {"delta": -(2 ** 255), "memo": "0x", "qty": 255}
+    sg = firma_su(DOM_USDC, TIPI_ORD, "Order", m_neg)
+    v.append(costruisci("053-int256-negative-minimum", "generated", "EIP-712 encoding — signed integers",
+                        DOM_USDC, TIPI_ORD, "Order", m_neg, sg, "accept", ADDR,
+                        ["`int256` al minimo (-2^255), `uint8` al massimo, `bytes` vuoto.",
+                         "Gli interi con segno si codificano in complemento a due su 32 byte. Una "
+                         "libreria che chiama to_bytes senza signed=True rifiuta (o esplode su) un "
+                         "messaggio valido: era il nostro caso prima di questo vettore.",
+                         "Digest validato contro eth-account 0.14.0."]))
+    m_bytes = {"delta": -1, "memo": "0xdeadbeef", "qty": 7}
+    sg = firma_su(DOM_USDC, TIPI_ORD, "Order", m_bytes)
+    v.append(costruisci("054-bytes-dynamic", "generated", "EIP-712 encoding — dynamic bytes",
+                        DOM_USDC, TIPI_ORD, "Order", m_bytes, sg, "accept", ADDR,
+                        ["`bytes` dinamico non vuoto (0xdeadbeef) e `int256` = -1.",
+                         "`bytes` si codifica come keccak256 del contenuto, non dei caratteri "
+                         "esadecimali della stringa JSON: la stringa va decodificata prima. La nostra "
+                         "lib passava la stringa a keccak e sollevava TypeError.",
+                         "Digest validato contro eth-account 0.14.0."]))
+    m_alien = dict(m_bytes, undeclared="this field is not in the type and must not enter the hash")
+    v.append(costruisci("055-undeclared-field-ignored", "generated", "EIP-712 encoding — undeclared field",
+                        DOM_USDC, TIPI_ORD, "Order", m_alien, sg, "accept", ADDR,
+                        ["Stesso messaggio del 054 piu' un campo NON dichiarato in `types`; la firma "
+                         "e' la STESSA del 054.",
+                         "encodeData concatena i membri del tipo nell'ordine dichiarato: un campo "
+                         "estraneo non entra nell'hash, quindi il digest e la firma coincidono con il "
+                         "054. Un verificatore che incorpora i campi extra produce un digest diverso "
+                         "e rifiuta una firma valida. eth-account e questa lib ignorano il campo.",
+                         "Attenzione al confine: questo e' il comportamento dell'ENCODING. Se un "
+                         "campo estraneo debba essere accettato a livello di protocollo e' policy."]))
     return v
 
 
@@ -335,7 +374,7 @@ def main():
         with open(os.path.join(vdir, vec["id"] + ".json"), "w") as f:
             json.dump(annota(vec), f, indent=2, ensure_ascii=False)
             f.write("\n")
-    print(f"vettori 023-052 scritti: {len(v)}")
+    print(f"vettori 023-055 scritti: {len(v)}")
     for vec in v:
         print(f"  {vec['id']:38s} {vec['expected']['verdict']}")
     return 0

@@ -105,9 +105,22 @@ def encode_value(tipo: str, valore, types: dict | None = None) -> bytes:
     if tipo == "string":
         return keccak256(str(valore).encode("utf-8"))
     if tipo == "bytes":
-        return keccak256(valore)
+        # Dal JSON arriva una stringa "0x…", non byte raw: senza questo, keccak256 su una str solleva
+        # TypeError. Bug dormiente trovato dalla revisione Gemini 3.1 Pro dell'11/09/2026 (nessun
+        # vettore usava `bytes` dinamico, solo `bytes32`). Coperto dal vettore 054.
+        return keccak256(bytes.fromhex(str(valore)[2:]) if isinstance(valore, str) else valore)
     if tipo.startswith("uint") or tipo.startswith("int"):
-        return int(valore).to_bytes(32, "big")
+        # `intN` e' con segno: complemento a due su 32 byte (EIP-712: "encoded as uint256/int256").
+        # Prima mancava signed=… e un int256 negativo — messaggio VALIDO — sollevava OverflowError:
+        # una libreria che rifiuta un messaggio valido e' peggio di una che esplode. Vettore 053.
+        # Un valore fuori dal range del tipo solleva OverflowError -> per il runner e' encoding_error.
+        bits = int(tipo[4:] or 256) if tipo.startswith("uint") else int(tipo[3:] or 256)
+        v = int(valore)
+        if tipo.startswith("uint") and not (0 <= v < 2 ** bits):
+            raise OverflowError(f"{tipo}: {v} fuori range")
+        if tipo.startswith("int") and not (-(2 ** (bits - 1)) <= v < 2 ** (bits - 1)):
+            raise OverflowError(f"{tipo}: {v} fuori range")
+        return v.to_bytes(32, "big", signed=tipo.startswith("int"))
     if tipo == "address":
         return bytes(12) + bytes.fromhex(str(valore)[2:])
     if tipo == "bool":

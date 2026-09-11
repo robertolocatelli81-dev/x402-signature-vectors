@@ -90,7 +90,7 @@ test private key  0x4646…4646   (published on purpose: a conformance vector mu
 test address      0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f
 ```
 
-Current set: **52 vectors — 27 `accept`, 25 `reject`** (v1.2.0), against
+Current set: **55 vectors — 30 `accept`, 25 `reject`** (v1.3.0), against
 [`schema/vector.schema.json`](schema/vector.schema.json).
 
 Beyond message-binding mutations (amount off by one, substituted recipient, one-second validity
@@ -128,7 +128,7 @@ layer failed — the EIP-712 encoding or the ECDSA recovery — instead of just 
 
 | test | result |
 |---|---|
-| **EIP-712 encoding vs `eth-account` 0.14.0** (reference implementation) | 48 vectors compared, **0 divergences** — arrays, nesting, NUL byte and partial domains included |
+| **EIP-712 encoding vs `eth-account` 0.14.0** (reference implementation) | 53 vectors compared (the 2 whose message is not encodable by construction are skipped), **0 divergences** — arrays, nesting, NUL byte, partial domains, signed integers, dynamic bytes and undeclared fields included |
 | **Primitives vs `coincurve`/libsecp256k1 and `eth-hash`** | 2000 Keccak inputs, 500 signatures produced *by* libsecp256k1, **600 degenerate inputs checked on rejections** — 0 divergences |
 | **Reproducibility** | regenerated from scratch, **byte-identical** to the committed vectors |
 | **Clean clone** | `git clone` into an empty directory, all gates green with no local state |

@@ -59,7 +59,7 @@
     "reject_reason": "recovery_undefined"
   },
   "notes": [
-    "r = N-1: il massimo valore ammesso dal range. Il recupero e' definito ma il punto non corrisponde al firmatario.",
+    "r = N-1: il massimo valore ammesso dal range. La coordinata x = N-1 NON appartiene alla curva (x^3+7 non e' un residuo quadratico mod p), quindi il recupero fallisce: recovery_undefined, non un firmatario diverso.",
     "Confine esatto: i bug di range vivono qui, non nei valori centrali."
   ]
 }
