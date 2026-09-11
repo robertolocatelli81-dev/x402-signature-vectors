@@ -23,6 +23,8 @@ jobs:
         run: python3 verify.py
       - name: Audit of the specification examples
         run: python3 tools/audit_spec_examples.py
+      - name: Fuzz the runner (no unhandled exceptions on hostile input)
+        run: python3 tools/fuzz_runner.py
 
   crossvalidate:
     runs-on: ubuntu-latest
@@ -32,6 +34,8 @@ jobs:
         with: { python-version: "3.11" }
       # Le librerie di riferimento servono SOLO qui: dimostrano che lib/ non ha un punto cieco
       # proprio. La suite non dipende da loro.
-      - run: pip install coincurve "eth-hash[pycryptodome]"
-      - name: Cross-validate against libsecp256k1 and eth-hash
+      - run: pip install coincurve "eth-hash[pycryptodome]" eth-account
+      - name: Cross-validate primitives against libsecp256k1 and eth-hash
         run: python3 tools/crossvalidate.py
+      - name: Cross-validate EIP-712 encoding against eth-account
+        run: python3 tools/crossvalidate_eip712.py

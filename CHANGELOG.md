@@ -4,6 +4,20 @@ Vectors are versioned so that an implementation can state *which* set it passes.
 stable and never reused: a vector that turns out to be wrong is corrected in place and the change is
 recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
+## 1.0.1 — 2026-09-11
+
+Pre-publication testing, and what it found.
+
+- **EIP-712 encoding cross-validated against `eth-account` 0.14.0**: 48 vectors, 0 divergences. Until
+  now the encoding had a single external oracle — the canonical `Mail` example in EIP-712 itself.
+  One example is not coverage.
+- **Runner hardening**: `tools/fuzz_runner.py` threw 600 malformed vectors at `verify.py` and found
+  **79 unhandled `ValueError`s** — `fromhex` on an unvalidated string. A verifier that raises instead
+  of rejecting is a denial of service, since the input arrives from the network. Now 600/600 rejected,
+  0 exceptions, and the fuzzer runs in CI.
+- **Reproducibility**: vectors regenerate byte-identical.
+- **Clean-clone test**: a fresh `git clone` passes every gate with no local state.
+
 ## 1.0.0 — 2026-09-11
 
 **50 vectors** (27 accept, 23 reject). The additions are not padding: each one is a documented way an

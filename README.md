@@ -118,6 +118,20 @@ shift, wrong-chain domain), the set covers the cryptographic edges where verifie
 `hash_struct` and `signing_digest` alongside the verdict. An implementation that fails learns *which*
 layer failed — the EIP-712 encoding or the ECDSA recovery — instead of just "does not verify".
 
+## Tested before publication
+
+| test | result |
+|---|---|
+| **EIP-712 encoding vs `eth-account` 0.14.0** (reference implementation) | 48 vectors compared, **0 divergences** — arrays, nesting, NUL byte and partial domains included |
+| **Primitives vs `coincurve`/libsecp256k1 and `eth-hash`** | 2000 Keccak inputs, 500 signatures produced *by* libsecp256k1, **600 degenerate inputs checked on rejections** — 0 divergences |
+| **Reproducibility** | regenerated from scratch, **byte-identical** to the committed vectors |
+| **Clean clone** | `git clone` into an empty directory, all gates green with no local state |
+| **Hostile input (`tools/fuzz_runner.py`)** | 600 malformed vectors → **600 rejected, 0 unhandled exceptions** |
+
+That last row was not green at first: the runner raised `ValueError` on 79 of 600 inputs because it
+called `fromhex` on an unvalidated string. On a facilitator that is a denial of service — hostile
+input comes from the network. Fixed before publishing, and the fuzzer now runs in CI.
+
 ## The bench proves itself before it measures
 
 `verify.py` refuses to emit a verdict unless the bench passes first:

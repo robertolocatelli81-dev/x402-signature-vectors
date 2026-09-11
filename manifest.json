@@ -1,16 +1,16 @@
 {
   "suite": "x402-signature-vectors",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "counts": {
-    "files": 72,
+    "files": 73,
     "vectors": 50
   },
   "files": {
     ".gitignore": "862263fa1f46c20f0d1e4dac5ffcc75abd55c08211b2c3864c5f8764b9d87793",
-    "CHANGELOG.md": "bc4d9d39db66ee23e4a0637ff8d04acdccec2f5a1874028a655abb7ba0788c88",
+    "CHANGELOG.md": "9172a5c4225564997c003b30c651eb80955036d335018ba3a091ac2d9bfcbe31",
     "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "NOTICE": "9f5f4638f827405ed013824e687d45889e2e9647efe9e4217726f3a6087896f8",
-    "README.md": "e79dd2b8c379207349c3bf02c9966131c4a1fe09d8f835dbb5ef1f9350f25911",
+    "README.md": "868d39e24ab6765421fcf3b1531751b1bf7d3ff1f684ba91825baf58ff6c4ba2",
     "audit/SPEC_EXAMPLES_AUDIT.md": "e43b82c9789fdbd4ed57e4a91d33b6f95fa325bd394bfacd567598dfc9a48988",
     "audit/crossvalidation.json": "e8fbf7fdf244e0c3d693df812b63e014b17e83dbcf0177acc08e7b264bf0c466",
     "audit/crossvalidation_eip712.json": "5878d6419d636cd6db9b056fa678bead2c148ad5aab939f2a3094386ecfcf04c",
@@ -21,10 +21,11 @@
     "lib/secp256k1.py": "3c4c5e170832ab14ab43cce7fe267cd7b4cdaf7e2cc5b7b9dc1896e17be488de",
     "schema/vector.schema.json": "81cd22e771e09b78e241a78aafe40d47a5bfac4d6cd001b9eb97fcb14dc43e10",
     "tools/audit_spec_examples.py": "23ea699e1acfb4f369ac4b1a48dd6f71982c58cf3d2f5c887b515d3c6e3db35c",
-    "tools/check_manifest.py": "359e39982217884c100948d034ac1cdb3f3dc310a678845a7e16950ce3360661",
+    "tools/check_manifest.py": "17e5be754d6a4e3a583ccb2cbc28fe587d5b59111ff2eb1ed4e6a0c9dcaa4145",
     "tools/check_schema.py": "e0fc18fe833ab4daf9aeae996dfc43347b4098c38d1a3042862ac4a8abf9a376",
     "tools/crossvalidate.py": "6ab4bcabc6bf6fff5634a88aea9018a92f33f50f8221fb9bffa5cc66e836622d",
     "tools/crossvalidate_eip712.py": "44e11c2a4a532f89a780f8978ad0d92b6903a41e336957cecaff74d16b324032",
+    "tools/fuzz_runner.py": "c167e5241899b046713000fd22b58306d80bfaf5e917389c78e05c64b7269335",
     "tools/genera_vettori.py": "f455b3023ed15581b71a8d691190ab52248f120910abdb2b68160fe15829ece8",
     "tools/genera_vettori_50.py": "53ee4d99b77b79ce4808e5d761b7be35c80f8f6a356eb8ce050c4b57a5ded44a",
     "vectors/001-eip3009-spec-example.json": "16f3581af0fe84d0081d460308a91f50bb5ed7a6ce4e5cba06148766c2cb1457",
