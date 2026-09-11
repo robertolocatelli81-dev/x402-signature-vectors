@@ -1,0 +1,23 @@
+# Allowlist motivata — non silenzia, spiega.
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+description = "generic-api-key con allowlist per indirizzi di contratto pubblici"
+regex = '''(?i)(?:key|api|token|secret|password)[\w.-]{0,30}[=:]\s*['"]?([0-9a-zA-Z_.\-]{16,})['"]?'''
+[rules.allowlist]
+description = """
+0x036CbD53842c5426634e7929541eC2318f3dCF7e e' l'indirizzo PUBBLICO del contratto USDC su Base
+Sepolia (chain 84532), preso dall'esempio della specifica x402 e presente nel campo `token` dei
+vettori Permit2. Un indirizzo di contratto e' pubblico per definizione: sta on-chain. La regola
+generica lo segnala perche' e' una stringa esadecimale lunga preceduta da "token".
+
+0x4646...4646 e' la chiave privata di TEST, pubblicata deliberatamente nel README: un vettore di
+conformita' non deve custodire segreti, deve essere rifattibile da chiunque. Non controlla fondi
+su nessuna rete.
+"""
+regexes = [
+  '''0x036CbD53842c5426634e7929541eC2318f3dCF7e''',
+  '''0x4646464646464646464646464646464646464646464646464646464646464646''',
+]

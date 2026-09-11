@@ -2,11 +2,12 @@
   "suite": "x402-signature-vectors",
   "version": "1.0.1",
   "counts": {
-    "files": 73,
+    "files": 74,
     "vectors": 50
   },
   "files": {
     ".gitignore": "862263fa1f46c20f0d1e4dac5ffcc75abd55c08211b2c3864c5f8764b9d87793",
+    ".gitleaks.toml": "897622f6d5d20265f81c32a00a05cba6a8cb6355ceba9121d8ff745522e05c13",
     "CHANGELOG.md": "9172a5c4225564997c003b30c651eb80955036d335018ba3a091ac2d9bfcbe31",
     "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "NOTICE": "9f5f4638f827405ed013824e687d45889e2e9647efe9e4217726f3a6087896f8",
