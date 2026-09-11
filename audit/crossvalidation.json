@@ -10,6 +10,12 @@
     "esempi": [],
     "ok": true
   },
+  "rifiuti": {
+    "casi": 600,
+    "divergenze": 0,
+    "esempi": [],
+    "ok": true
+  },
   "vettori": [
     {
       "vettore": "001-eip3009-spec-example",
@@ -48,7 +54,7 @@
       "ok": true
     },
     {
-      "vettore": "007-mutated-validBefore",
+      "vettore": "007-mutated-valid-before",
       "atteso": "0x95b918796bbd17b1e5865807a22fd5fa64e7c278",
       "riferimento": "0x95b918796bbd17b1e5865807a22fd5fa64e7c278",
       "ok": true
@@ -57,6 +63,90 @@
       "vettore": "008-wrong-domain-chainid",
       "atteso": "0x8f677b2fe3fb70537d4ca6e6f336c4c54fe0222c",
       "riferimento": "0x8f677b2fe3fb70537d4ca6e6f336c4c54fe0222c",
+      "ok": true
+    },
+    {
+      "vettore": "009-ecdsa-malleability-high-s",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "010-value-zero",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "011-value-max-uint256",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "012-window-inverted",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "013-signature-r-zero",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "014-signature-s-zero",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "015-signature-v-out-of-range",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "016-signature-r-equals-n",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "017-domain-name-non-ascii",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "018-recipient-zero-address",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "019-eip712-array-of-structs",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "020-eip712-nested-structs",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "021-eip712-string-null-byte",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "022-eip712-type-ordering",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
       "ok": true
     }
   ],

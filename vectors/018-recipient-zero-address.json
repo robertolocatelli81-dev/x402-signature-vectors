@@ -2,6 +2,7 @@
   "id": "018-recipient-zero-address",
   "origin": "generated",
   "standard": "EIP-3009 TransferWithAuthorization",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
   "eip712": {
     "domain": {
       "name": "USDC",
@@ -50,7 +51,11 @@
   "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d7e3b0f6f63c6c5c77918630af3a2e3d20f5e7870acf01095f27ba896784e0e6c1c",
   "expected": {
     "verdict": "accept",
-    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f"
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0x5370ac0655225358edf9e4d1e3f3bf2c66ba62e1d14d2e1c1868479504883cc2",
+    "signing_digest": "0xec3e1a1d885273bc68f5f2bbdf5731500150d310bdd6866cd5dd223f3f2e63c4"
   },
   "notes": [
     "Destinatario = indirizzo zero. La firma e' valida: il verdetto crittografico e' accept.",

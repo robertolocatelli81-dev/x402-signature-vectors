@@ -1,0 +1,60 @@
+{
+  "id": "022-eip712-type-ordering",
+  "origin": "generated",
+  "standard": "EIP-712 encoding (ordinamento tipi)",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "Radice": [
+        {
+          "name": "b",
+          "type": "Zeta"
+        },
+        {
+          "name": "a",
+          "type": "Alfa"
+        }
+      ],
+      "Zeta": [
+        {
+          "name": "v",
+          "type": "uint256"
+        }
+      ],
+      "Alfa": [
+        {
+          "name": "v",
+          "type": "uint256"
+        }
+      ]
+    },
+    "primaryType": "Radice",
+    "message": {
+      "b": {
+        "v": 2
+      },
+      "a": {
+        "v": 1
+      }
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d1af91aa52e03bdb1a4ba9344a780fb77c560c38000af15beaa18f173b623610d1c",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0x5932a5ab4e6d794006ac89b2d7d2da8374d1b9518c81a2627d89b7b0cd286aac",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0xff2e95b2a538bb25cb243237b27c54f6a4b3b7c30d7d4190a6ac5d5e965686b4",
+    "signing_digest": "0x3d712c6c8fdf0e28761dd1509a06748b2b7d9a926708f80b4cdffa3be22f6598"
+  },
+  "notes": [
+    "I tipi referenziati compaiono in encodeType in ordine ALFABETICO (Alfa prima di Zeta), indipendentemente dall'ordine in cui appaiono nella struct o nel JSON.",
+    "L'atteso `type_hash` in questo vettore e' la verifica diretta di quella regola: un'implementazione che conserva l'ordine di dichiarazione produce un typeHash diverso."
+  ]
+}

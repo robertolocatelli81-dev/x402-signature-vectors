@@ -1,0 +1,81 @@
+{
+  "id": "020-eip712-nested-structs",
+  "origin": "generated",
+  "standard": "EIP-712 encoding (annidamento)",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "Busta": [
+        {
+          "name": "da",
+          "type": "Parte"
+        },
+        {
+          "name": "a",
+          "type": "Parte"
+        },
+        {
+          "name": "nota",
+          "type": "string"
+        }
+      ],
+      "Parte": [
+        {
+          "name": "nome",
+          "type": "string"
+        },
+        {
+          "name": "conto",
+          "type": "Conto"
+        }
+      ],
+      "Conto": [
+        {
+          "name": "indirizzo",
+          "type": "address"
+        },
+        {
+          "name": "catena",
+          "type": "uint256"
+        }
+      ]
+    },
+    "primaryType": "Busta",
+    "message": {
+      "da": {
+        "nome": "Alice",
+        "conto": {
+          "indirizzo": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+          "catena": 84532
+        }
+      },
+      "a": {
+        "nome": "Bob",
+        "conto": {
+          "indirizzo": "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+          "catena": 8453
+        }
+      },
+      "nota": "due livelli"
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d434d391dab7e753c6922c2edd54bd4c07dc83e7669fd35f48d44c2536c24145f1c",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0xafb0135cb9763e26241a97ca7e051370c5ac93c423df66ffb6496a5219d1d473",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0x262075f0bdd92524928008c427d831c54d05579cbdc421e5b14e9efef7d2335f",
+    "signing_digest": "0xfc34ca345a9211d1c7ea347a99426864c5fe1f29a043b330a2656192e013ddfc"
+  },
+  "notes": [
+    "Struct annidate su due livelli: ogni struct contribuisce con il proprio hashStruct.",
+    "encodeType raccoglie i tipi referenziati RICORSIVAMENTE e li ordina alfabeticamente: Busta(...)Conto(...)Parte(...). Sbagliare l'ordine cambia il typeHash e quindi tutto."
+  ]
+}

@@ -58,13 +58,20 @@ def verdetto(vec):
     """accept sse la firma supera i controlli di forma E recupera al firmatario dichiarato."""
     problema = controlli_firma(vec["signature"])
     if problema:
-        return "reject", None, problema
+        # Il verdetto e' reject, ma se il recupero e' comunque definito (caso tipico: firma
+        # malleabile high-s, matematicamente valida) l'indirizzo si RIPORTA: serve a chi sta
+        # debuggando, e distingue "rifiutata da una regola" da "non recuperabile".
+        try:
+            return "reject", recupera(vec), problema
+        except Exception:                                    # noqa: BLE001
+            return "reject", None, problema
     try:
         rec = recupera(vec)
     except Exception:                                        # noqa: BLE001
         return "reject", None, "recupero non definito"
-    msg = vec["eip712"]["message"]
-    firmatario = msg.get("from") or msg.get("owner")
+    # Il firmatario e' DICHIARATO nel vettore: dedurlo dal nome del campo ("from", "owner"…) funziona
+    # solo finche' le struct si chiamano come ci si aspetta, e i vettori strutturali non lo fanno.
+    firmatario = vec["signer"]
     ok = rec.lower() == str(firmatario).lower()
     return ("accept" if ok else "reject"), rec, (None if ok else "recupera a un indirizzo diverso")
 

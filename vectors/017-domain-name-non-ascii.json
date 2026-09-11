@@ -2,6 +2,7 @@
   "id": "017-domain-name-non-ascii",
   "origin": "generated",
   "standard": "EIP-3009 TransferWithAuthorization",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
   "eip712": {
     "domain": {
       "name": "USD€",
@@ -50,7 +51,11 @@
   "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d7f0f976e3aa49fac4f7ae0b47da5de28382b71057256770aeabb2061e1ab425d1c",
   "expected": {
     "verdict": "accept",
-    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f"
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267",
+    "domain_separator": "0xd3c2c6039c8e6cd80761775ecdc8cf87c936e78d5c7bb73ec80ec8047602b231",
+    "hash_struct": "0x2d4485bc772d834706524f22dd4d659cdebef9a830534e35df3d0642cfdbee1b",
+    "signing_digest": "0x9d7e5c2b19db95fd8e7036175f8cb989b77db0132b28583e7015bfb8a7296c8e"
   },
   "notes": [
     "Il `name` del dominio contiene un carattere non ASCII (USD€).",

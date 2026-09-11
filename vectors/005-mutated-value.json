@@ -2,6 +2,7 @@
   "id": "005-mutated-value",
   "origin": "generated",
   "standard": "EIP-3009 TransferWithAuthorization",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
   "eip712": {
     "domain": {
       "name": "USDC",
@@ -50,7 +51,11 @@
   "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d12bdb8654363b6038c470a60dd5cc8ab93b0cb83e85021a62c2784f516455f291b",
   "expected": {
     "verdict": "reject",
-    "recovered_address": "0x4295404a43dd6462eb84217c79ce430427ae1ebe"
+    "recovered_address": "0x4295404a43dd6462eb84217c79ce430427ae1ebe",
+    "type_hash": "0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0x489dd85ebf070e6b7de18956fa97554112791a0bb9b32a077d1ba84280e9f533",
+    "signing_digest": "0xde5853b2c95be1fca13c0b5a7d50a6208eaf6256511e7c56fa2e0162466bdf5d"
   },
   "notes": [
     "Mutazione del vettore 003: importo alterato di 1 unita'.",

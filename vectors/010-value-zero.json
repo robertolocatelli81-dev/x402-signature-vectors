@@ -2,6 +2,7 @@
   "id": "010-value-zero",
   "origin": "generated",
   "standard": "EIP-3009 TransferWithAuthorization",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
   "eip712": {
     "domain": {
       "name": "USDC",
@@ -50,10 +51,15 @@
   "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d336cadae69844e5ed84b2645b6b5a4ecf51b35730fa3cbea5d16076e7fbf20941b",
   "expected": {
     "verdict": "accept",
-    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f"
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0x5fd933c617876d89f87772963233f7146ae093bb2aed955531f54a07f161902c",
+    "signing_digest": "0xe0f29f74e4a29c02086ff07474eab10703e2bb3c70412948eebdb829e420cb19"
   },
   "notes": [
     "Bordo: importo nullo. La FIRMA e' valida e deve verificare.",
+    "MARCATORE DI CONFINE, non un test crittografico: serve a dimostrare che il livello firma NON deve applicare regole di business. Chi lo rifiuta sta mischiando i livelli.",
     "Il verdetto crittografico e' accept: rifiutarlo per ragioni di policy (importo nullo, finestra invertita) e' compito del livello sopra, e va tenuto distinto dalla firma."
   ]
 }

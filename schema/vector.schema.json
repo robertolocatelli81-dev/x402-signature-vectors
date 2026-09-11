@@ -4,7 +4,16 @@
   "title": "x402 signature conformance vector",
   "description": "A self-contained EIP-712 signature conformance vector. Everything needed to reproduce the verdict is in the file, including the domain the x402 specification leaves unstated.",
   "type": "object",
-  "required": ["id", "origin", "standard", "eip712", "signature", "expected", "notes"],
+  "required": [
+    "id",
+    "origin",
+    "standard",
+    "signer",
+    "eip712",
+    "signature",
+    "expected",
+    "notes"
+  ],
   "additionalProperties": false,
   "properties": {
     "id": {
@@ -13,7 +22,10 @@
       "description": "Stable identifier, zero-padded ordinal plus slug. Never reused."
     },
     "origin": {
-      "enum": ["spec", "generated"],
+      "enum": [
+        "spec",
+        "generated"
+      ],
       "description": "'spec' = payload and signature taken verbatim from the x402 specifications, expected verdict is the audit result. 'generated' = signed with the published test key. The two must never be conflated."
     },
     "standard": {
@@ -22,17 +34,37 @@
     },
     "eip712": {
       "type": "object",
-      "required": ["domain", "types", "primaryType", "message"],
+      "required": [
+        "domain",
+        "types",
+        "primaryType",
+        "message"
+      ],
       "additionalProperties": false,
       "properties": {
         "domain": {
           "type": "object",
-          "required": ["name", "version", "chainId", "verifyingContract"],
+          "required": [
+            "name",
+            "version",
+            "chainId",
+            "verifyingContract"
+          ],
           "properties": {
-            "name": {"type": "string"},
-            "version": {"type": "string"},
-            "chainId": {"type": "integer", "minimum": 0},
-            "verifyingContract": {"type": "string", "pattern": "^0x[0-9a-fA-F]{40}$"}
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "chainId": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "verifyingContract": {
+              "type": "string",
+              "pattern": "^0x[0-9a-fA-F]{40}$"
+            }
           }
         },
         "types": {
@@ -42,13 +74,27 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["name", "type"],
-              "properties": {"name": {"type": "string"}, "type": {"type": "string"}}
+              "required": [
+                "name",
+                "type"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              }
             }
           }
         },
-        "primaryType": {"type": "string"},
-        "message": {"type": "object"}
+        "primaryType": {
+          "type": "string"
+        },
+        "message": {
+          "type": "object"
+        }
       }
     },
     "signature": {
@@ -58,25 +104,65 @@
     },
     "expected": {
       "type": "object",
-      "required": ["verdict", "recovered_address"],
+      "required": [
+        "verdict",
+        "recovered_address",
+        "type_hash",
+        "domain_separator",
+        "hash_struct",
+        "signing_digest"
+      ],
       "additionalProperties": false,
       "properties": {
         "verdict": {
-          "enum": ["accept", "reject"],
+          "enum": [
+            "accept",
+            "reject"
+          ],
           "description": "The verdict a conformant verifier MUST reach on the signature layer alone."
         },
         "recovered_address": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "pattern": "^0x[0-9a-fA-F]{40}$",
           "description": "Address the signature actually recovers to, or null when recovery is undefined (malformed signature, or rejected by a form check before recovery)."
+        },
+        "type_hash": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{64}$",
+          "description": "keccak256(encodeType(primaryType)) \u2014 lets the encoding layer be tested in isolation from ECDSA."
+        },
+        "domain_separator": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{64}$",
+          "description": "hashStruct(EIP712Domain)."
+        },
+        "hash_struct": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{64}$",
+          "description": "hashStruct(primaryType, message)."
+        },
+        "signing_digest": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{64}$",
+          "description": "keccak256(0x1901 || domainSeparator || hashStruct): the bytes actually signed."
         }
       }
     },
     "notes": {
       "type": "array",
-      "items": {"type": "string"},
+      "items": {
+        "type": "string"
+      },
       "minItems": 1,
       "description": "Why the vector exists and what a failure on it means. A vector without a stated purpose is noise."
+    },
+    "signer": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{40}$",
+      "description": "Address the message attributes as its signer. Declared, never inferred from field names: a struct may call it anything."
     }
   }
 }

@@ -53,10 +53,26 @@ def firma(d):
 
 
 def vettore(vid, origine, standard, dominio, tipi, primary, messaggio, sig, verdetto, atteso, note):
+    """I digest intermedi sono parte dell'atteso, non un di piu'.
+
+    Senza, un'implementazione che fallisce sa solo "non verifica" e non se ha sbagliato l'ENCODING
+    (typeHash/hashStruct/domainSeparator) o il RECUPERO ECDSA. Con questi campi i due strati si
+    testano separatamente, che e' la differenza fra una suite diagnosticabile e un semaforo."""
+    from eip712 import type_hash
+    ds = hash_struct("EIP712Domain", {"EIP712Domain": CAMPI_DOMINIO}, dominio)
+    hs = hash_struct(primary, tipi, messaggio)
+    firmatario = (messaggio.get("from") or messaggio.get("owner") or messaggio.get("acquirente")
+                  or messaggio.get("chi") or (messaggio.get("da", {}) or {}).get("conto", {}).get("indirizzo")
+                  or indirizzo_test())
     return {"id": vid, "origin": origine, "standard": standard,
+            "signer": firmatario,
             "eip712": {"domain": dominio, "types": tipi, "primaryType": primary, "message": messaggio},
             "signature": sig,
-            "expected": {"verdict": verdetto, "recovered_address": atteso},
+            "expected": {"verdict": verdetto, "recovered_address": atteso,
+                         "type_hash": "0x" + type_hash(primary, tipi).hex(),
+                         "domain_separator": "0x" + ds.hex(),
+                         "hash_struct": "0x" + hs.hex(),
+                         "signing_digest": "0x" + keccak256(b"\x19\x01" + ds + hs).hex()},
             "notes": note}
 
 
@@ -143,10 +159,80 @@ def costruisci():
     return v
 
 
+def costruisci_strutturali():
+    """Casi dove le implementazioni EIP-712 divergono per davvero: array, struct annidate,
+    stringhe con byte nulli, ordinamento dei tipi in encodeType.
+
+    Non sono payload x402: sono le regole di encoding che x402 eredita da EIP-712 e su cui un SDK
+    sbaglia prima di arrivare al pagamento.
+    """
+    addr = indirizzo_test()
+    out = []
+
+    # array dinamico di struct: EIP-712 hasha la concatenazione degli hashStruct degli elementi
+    tipi_arr = {"Ordine": [{"name": "acquirente", "type": "address"}, {"name": "voci", "type": "Voce[]"}],
+                "Voce": [{"name": "sku", "type": "string"}, {"name": "quantita", "type": "uint256"}]}
+    msg_arr = {"acquirente": addr, "voci": [{"sku": "A-1", "quantita": 2}, {"sku": "B-2", "quantita": 1}]}
+    d = digest_generico(DOM_USDC, tipi_arr, "Ordine", msg_arr)
+    out.append(vettore("019-eip712-array-of-structs", "generated", "EIP-712 encoding (array di struct)",
+        DOM_USDC, tipi_arr, "Ordine", msg_arr, firma(d), "accept", addr,
+        ["Array dinamico di struct: l'hash di un array e' keccak256 della CONCATENAZIONE degli "
+         "hashStruct dei suoi elementi, non del JSON dell'array.",
+         "encodeType deve produrre Ordine(address acquirente,Voce[] voci)Voce(string sku,uint256 quantita): "
+         "i tipi referenziati seguono in ordine alfabetico.",
+         "Un'implementazione che serializza l'array come stringa fallisce qui e in nessun altro vettore."]))
+
+    # struct annidata a due livelli
+    tipi_nest = {"Busta": [{"name": "da", "type": "Parte"}, {"name": "a", "type": "Parte"},
+                           {"name": "nota", "type": "string"}],
+                 "Parte": [{"name": "nome", "type": "string"}, {"name": "conto", "type": "Conto"}],
+                 "Conto": [{"name": "indirizzo", "type": "address"}, {"name": "catena", "type": "uint256"}]}
+    msg_nest = {"da": {"nome": "Alice", "conto": {"indirizzo": addr, "catena": 84532}},
+                "a": {"nome": "Bob", "conto": {"indirizzo": "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+                                               "catena": 8453}},
+                "nota": "due livelli"}
+    d = digest_generico(DOM_USDC, tipi_nest, "Busta", msg_nest)
+    out.append(vettore("020-eip712-nested-structs", "generated", "EIP-712 encoding (annidamento)",
+        DOM_USDC, tipi_nest, "Busta", msg_nest, firma(d), "accept", addr,
+        ["Struct annidate su due livelli: ogni struct contribuisce con il proprio hashStruct.",
+         "encodeType raccoglie i tipi referenziati RICORSIVAMENTE e li ordina alfabeticamente: "
+         "Busta(...)Conto(...)Parte(...). Sbagliare l'ordine cambia il typeHash e quindi tutto."]))
+
+    # stringa con byte nullo a meta': tronca o hasha per intero?
+    tipi_s = {"Messaggio": [{"name": "chi", "type": "address"}, {"name": "testo", "type": "string"}]}
+    msg_s = {"chi": addr, "testo": "prima\u0000dopo"}
+    d = digest_generico(DOM_USDC, tipi_s, "Messaggio", msg_s)
+    out.append(vettore("021-eip712-string-null-byte", "generated", "EIP-712 encoding (stringhe)",
+        DOM_USDC, tipi_s, "Messaggio", msg_s, firma(d), "accept", addr,
+        ["La stringa contiene un byte NULLO a meta'. EIP-712 hasha i byte UTF-8 per intero: una "
+         "implementazione che tratta le stringhe alla maniera del C tronca a 'prima' e ottiene un "
+         "hashStruct diverso.",
+         "E' il caso che separa chi lavora sui byte da chi lavora su stringhe C."]))
+
+    # ordinamento dei tipi in encodeType: B prima di A nel dizionario, ma A prima di B nell'encoding
+    tipi_ord = {"Radice": [{"name": "b", "type": "Zeta"}, {"name": "a", "type": "Alfa"}],
+                "Zeta": [{"name": "v", "type": "uint256"}],
+                "Alfa": [{"name": "v", "type": "uint256"}]}
+    msg_ord = {"b": {"v": 2}, "a": {"v": 1}}
+    d = digest_generico(DOM_USDC, tipi_ord, "Radice", msg_ord)
+    out.append(vettore("022-eip712-type-ordering", "generated", "EIP-712 encoding (ordinamento tipi)",
+        DOM_USDC, tipi_ord, "Radice", msg_ord, firma(d), "accept", addr,
+        ["I tipi referenziati compaiono in encodeType in ordine ALFABETICO (Alfa prima di Zeta), "
+         "indipendentemente dall'ordine in cui appaiono nella struct o nel JSON.",
+         "L'atteso `type_hash` in questo vettore e' la verifica diretta di quella regola: "
+         "un'implementazione che conserva l'ordine di dichiarazione produce un typeHash diverso."]))
+    return out
+
+
+def digest_generico(dominio, tipi, primary, messaggio):
+    ds = hash_struct("EIP712Domain", {"EIP712Domain": CAMPI_DOMINIO}, dominio)
+    return keccak256(b"\x19\x01" + ds + hash_struct(primary, tipi, messaggio))
+
+
 def main():
     vdir = os.path.join(BASE, "vectors")
     os.makedirs(vdir, exist_ok=True)
-    vettori = costruisci() + costruisci_edge()
+    vettori = costruisci() + costruisci_edge() + costruisci_strutturali()
     for vec in vettori:
         with open(os.path.join(vdir, vec["id"] + ".json"), "w") as f:
             json.dump(vec, f, indent=2, ensure_ascii=False)
@@ -196,9 +282,11 @@ def costruisci_edge():
     sig_mall = "0x" + r.to_bytes(32, "big").hex() + s_alto.to_bytes(32, "big").hex() + bytes([v_flip]).hex()
     out.append(vettore(
         "009-ecdsa-malleability-high-s", "generated", "EIP-3009 TransferWithAuthorization",
-        DOM_USDC, TIPI_3009, "TransferWithAuthorization", base_msg, sig_mall, "reject", None,
+        DOM_USDC, TIPI_3009, "TransferWithAuthorization", base_msg, sig_mall, "reject",
+        rec_o_none(sig_mall),
         ["Firma (r, N-s) con v invertito: matematicamente valida sullo STESSO messaggio e recupera "
-         "allo STESSO indirizzo del vettore 003.",
+         "allo STESSO indirizzo del vettore 003 — per questo `recovered_address` NON e' null: il "
+         "recupero e' definito, e' la regola low-s a imporre il reject.",
          "EIP-2 impone s <= N/2 (low-s): un verificatore conforme deve RIFIUTARLA, altrimenti la "
          "stessa autorizzazione esiste in due forme con hash diversi — la porta d'ingresso del replay.",
          "E' il vettore che separa un verificatore corretto da uno che si limita a fare ecrecover."]))
@@ -217,6 +305,8 @@ def costruisci_edge():
             vid, "generated", "EIP-3009 TransferWithAuthorization",
             DOM_USDC, TIPI_3009, "TransferWithAuthorization", m, sg, "accept", addr,
             [f"Bordo: {perche}. La FIRMA e' valida e deve verificare.",
+             "MARCATORE DI CONFINE, non un test crittografico: serve a dimostrare che il livello "
+             "firma NON deve applicare regole di business. Chi lo rifiuta sta mischiando i livelli.",
              "Il verdetto crittografico e' accept: rifiutarlo per ragioni di policy (importo nullo, "
              "finestra invertita) e' compito del livello sopra, e va tenuto distinto dalla firma."]))
 

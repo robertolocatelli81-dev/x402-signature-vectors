@@ -64,6 +64,54 @@ def cross_recover(n=500):
     return {"casi": n, "divergenze": len(divergenze), "esempi": divergenze[:3], "ok": not divergenze}
 
 
+def cross_rifiuti(n=600):
+    """Fuzzing differenziale NEGATIVO: lib/ deve RIFIUTARE tutto cio' che libsecp256k1 rifiuta.
+
+    Il test positivo (firma valida -> stesso indirizzo) dimostra solo che lib/ funziona sull'happy
+    path. Il rischio vero e' l'opposto: che un bug nell'aritmetica modulare faccia ACCETTARE a lib/
+    un input che l'oracolo standard scarta. Qui si generano input degeneri e si confrontano i
+    RIFIUTI, non le accettazioni.
+    """
+    divergenze = []
+    casi = 0
+    for _ in range(n):
+        msg = secrets.token_bytes(32)
+        scelta = secrets.randbelow(6)
+        if scelta == 0:                                        # r = 0
+            sig = bytes(32) + secrets.token_bytes(32) + bytes([secrets.randbelow(2)])
+        elif scelta == 1:                                      # s = 0
+            sig = secrets.token_bytes(32) + bytes(32) + bytes([secrets.randbelow(2)])
+        elif scelta == 2:                                      # r >= N
+            sig = (S.N + secrets.randbelow(1000)).to_bytes(32, "big") + secrets.token_bytes(32) + bytes([0])
+        elif scelta == 3:                                      # s >= N
+            sig = secrets.token_bytes(32) + (S.N + secrets.randbelow(1000)).to_bytes(32, "big") + bytes([1])
+        elif scelta == 4:                                      # rec id fuori range
+            sig = secrets.token_bytes(64) + bytes([secrets.randbelow(200) + 4])
+        else:                                                  # (r, s) casuali: quasi sempre non su curva
+            sig = secrets.token_bytes(64) + bytes([secrets.randbelow(2)])
+        casi += 1
+
+        def esito_nostro():
+            try:
+                r_ = int.from_bytes(sig[:32], "big"); s_ = int.from_bytes(sig[32:64], "big")
+                S.recover_public_key(msg, r_, s_, sig[64])
+                return "accetta"
+            except Exception:                                  # noqa: BLE001
+                return "rifiuta"
+
+        def esito_riferimento():
+            try:
+                PublicKey.from_signature_and_message(sig, msg, hasher=None)
+                return "accetta"
+            except Exception:                                  # noqa: BLE001
+                return "rifiuta"
+
+        a, b = esito_nostro(), esito_riferimento()
+        if a != b:
+            divergenze.append({"tipo": scelta, "lib": a, "riferimento": b, "sig": sig.hex()[:32]})
+    return {"casi": casi, "divergenze": len(divergenze), "esempi": divergenze[:3], "ok": not divergenze}
+
+
 def cross_vettori():
     """I vettori della suite, ri-verificati con le librerie di riferimento invece che con lib/."""
     vdir = os.path.join(BASE, "vectors")
@@ -82,11 +130,15 @@ def cross_vettori():
         try:
             pub = PublicKey.from_signature_and_message(sig, digest, hasher=None).format(compressed=False)[1:]
             rec_rif = "0x" + keccak_rif(pub).hex()[-40:]
-        except Exception as e2:                               # noqa: BLE001
-            rec_rif = f"errore: {type(e2).__name__}"
+        except Exception:                                     # noqa: BLE001
+            # Recupero non definito anche per la libreria di riferimento: e' lo STESSO esito di
+            # `recovered_address: null`, non una divergenza. (Confondere i due dava un falso allarme
+            # "non usare i vettori" appena sono entrati i casi con firma malformata.)
+            rec_rif = None
         atteso = v["expected"]["recovered_address"]
-        esiti.append({"vettore": v["id"], "atteso": atteso, "riferimento": rec_rif,
-                      "ok": str(rec_rif).lower() == str(atteso).lower()})
+        concorde = (rec_rif is None and atteso is None) or (
+            rec_rif is not None and atteso is not None and rec_rif.lower() == str(atteso).lower())
+        esiti.append({"vettore": v["id"], "atteso": atteso, "riferimento": rec_rif, "ok": concorde})
     return esiti
 
 
@@ -98,12 +150,15 @@ def main():
     r = cross_recover()
     print(f"recover vs coincurve/libsecp256k1: {r['casi']} firme reali, {r['divergenze']} divergenze -> "
           f"{'IDENTICI' if r['ok'] else 'DIVERGENZA ' + str(r['esempi'])}")
+    neg = cross_rifiuti()
+    print(f"RIFIUTI su input degeneri        : {neg['casi']} casi, {neg['divergenze']} divergenze -> "
+          f"{'STESSI RIFIUTI' if neg['ok'] else 'DIVERGENZA ' + str(neg['esempi'])}")
     v = cross_vettori()
     ko = [x for x in v if not x["ok"]]
     print(f"vettori ri-verificati con coincurve: {len(v)} vettori, {len(ko)} discordanti -> "
           f"{'TUTTI CONCORDI' if not ko else str(ko)}")
-    ok = k["ok"] and r["ok"] and not ko
-    json.dump({"keccak": k, "recover": r, "vettori": v, "ok": ok},
+    ok = k["ok"] and r["ok"] and neg["ok"] and not ko
+    json.dump({"keccak": k, "recover": r, "rifiuti": neg, "vettori": v, "ok": ok},
               open(os.path.join(BASE, "audit", "crossvalidation.json"), "w"), indent=2)
     print(f"\nesito: {'lib/ CONCORDA con le implementazioni di riferimento' if ok else 'DIVERGENZA — non usare i vettori'}")
     return 0 if ok else 1

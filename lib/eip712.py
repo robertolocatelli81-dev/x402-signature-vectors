@@ -89,8 +89,17 @@ def type_hash(primary: str, types: dict) -> bytes:
 
 
 def encode_value(tipo: str, valore, types: dict | None = None) -> bytes:
-    """encodeData. Profilo x402: solo string e uint256. Le struct annidate sono gestite (hashStruct
-    ricorsivo) perche' servono al controllo positivo contro l'esempio canonico della EIP-712."""
+    """encodeData secondo EIP-712.
+
+    Copre i tipi atomici del profilo x402 (string, uint*, address, bool, bytes32), le struct
+    annidate (hashStruct ricorsivo) e gli ARRAY: l'encoding di un array e' keccak256 della
+    CONCATENAZIONE degli encodeData dei suoi elementi — non del JSON dell'array. Il supporto agli
+    array e' stato aggiunto quando il vettore 019 lo ha preteso: prima la libreria sollevava
+    ValueError, che e' esattamente il buco che quel vettore esiste per trovare.
+    """
+    if tipo.endswith("]"):
+        base = tipo[:tipo.rindex("[")]
+        return keccak256(b"".join(encode_value(base, el, types) for el in valore))
     if types and tipo in types:
         return hash_struct(tipo, types, valore)
     if tipo == "string":

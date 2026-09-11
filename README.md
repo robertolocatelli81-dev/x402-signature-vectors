@@ -15,9 +15,11 @@ python3 tools/check_schema.py      # every vector against schema/vector.schema.j
 python3 tools/audit_spec_examples.py
 ```
 
-**Cross-validated.** `lib/` is not trusted on its own authority: Keccak-256 is checked against
-`eth-hash` over 2000 inputs, and recovery against `coincurve`/libsecp256k1 over 500 real signatures —
-zero divergences. Those libraries are *not* a dependency of the suite; they are used only to prove
+**Cross-validated in both directions.** `lib/` is not trusted on its own authority: Keccak-256 against
+`eth-hash` over 2000 inputs (including rate boundaries), recovery against `coincurve`/libsecp256k1 over
+500 signatures *produced by* libsecp256k1, and — the half that is usually missing — **600 degenerate
+inputs checked for matching rejections**, because the real risk is not failing to read a good
+signature, it is accepting one the reference library would refuse. Zero divergences in all three. Those libraries are *not* a dependency of the suite; they are used only to prove
 `lib/` has no blind spot of its own (`tools/crossvalidate.py`, run in its own CI job).
 
 ## Why this exists
@@ -82,7 +84,7 @@ test private key  0x4646…4646   (published on purpose: a conformance vector mu
 test address      0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f
 ```
 
-Current set: **18 vectors — 7 `accept`, 11 `reject`** (v0.2.0), against
+Current set: **22 vectors — 11 `accept`, 11 `reject`** (v0.3.0), against
 [`schema/vector.schema.json`](schema/vector.schema.json).
 
 Beyond message-binding mutations (amount off by one, substituted recipient, one-second validity
@@ -96,6 +98,14 @@ shift, wrong-chain domain), the set covers the cryptographic edges where verifie
   `recovered_address` is `null`. A library that raises here instead of rejecting is a denial of service.
 - **uint256 boundaries and non-ASCII domain names** — these are `accept`: the signature is valid, and
   rejecting them is *policy*, not signature verification. Keeping the two apart is the point.
+- **EIP-712 encoding structure** — arrays of structs (hashed as the concatenation of element
+  hashStructs, not as JSON), two-level nesting, a string containing a NUL byte (hashed whole, not
+  truncated C-style), and referenced-type ordering in `encodeType` (alphabetical, regardless of
+  declaration order). These are where SDKs diverge before a payment is ever involved.
+
+**Each layer is testable in isolation.** Every vector carries `type_hash`, `domain_separator`,
+`hash_struct` and `signing_digest` alongside the verdict. An implementation that fails learns *which*
+layer failed — the EIP-712 encoding or the ECDSA recovery — instead of just "does not verify".
 
 ## The bench proves itself before it measures
 

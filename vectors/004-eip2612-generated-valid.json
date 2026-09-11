@@ -2,6 +2,7 @@
   "id": "004-eip2612-generated-valid",
   "origin": "generated",
   "standard": "EIP-2612 Permit",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
   "eip712": {
     "domain": {
       "name": "USDC",
@@ -45,7 +46,11 @@
   "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d2f7c51c35df7f7c68e441d9eb39a4fddabe123b1a0ee5bd9e976acea651b19f31b",
   "expected": {
     "verdict": "accept",
-    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f"
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0x27f7c2ffb4cc8a097e78524a233f5c0655c8e9e80c7351d3cd74dc54a5a88316",
+    "signing_digest": "0x4698daaccf75345dc90f9927e14c68d29655ce1b6726f5347966175f10ee1636"
   },
   "notes": [
     "Il vettore valido per EIP-2612 che la spec non offre (il suo esempio e' il 002).",

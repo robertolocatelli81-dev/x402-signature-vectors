@@ -2,6 +2,7 @@
   "id": "001-eip3009-spec-example",
   "origin": "spec",
   "standard": "EIP-3009 TransferWithAuthorization",
+  "signer": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
   "eip712": {
     "domain": {
       "name": "USDC",
@@ -50,7 +51,11 @@
   "signature": "0x2d6a7588d6acca505cbf0d9a4a227e0c52c6c34008c8e8986a1283259764173608a2ce6496642e377d6da8dbbf5836e9bd15092f9ecab05ded3d6293af148b571c",
   "expected": {
     "verdict": "accept",
-    "recovered_address": "0x857b06519E91e3A54538791bDbb0E22373e36b66"
+    "recovered_address": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+    "type_hash": "0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0x49ad644555c7bdf3ea4fc022a4940ae5589b230b1dde0065c5504fa19bbe39a4",
+    "signing_digest": "0xf256992871671abcb27ff92885a7afa46218724e5fc0bac35d050115aa1d22e6"
   },
   "notes": [
     "Payload e firma da specs/schemes/exact/scheme_exact_evm.md (Phase 1 example).",

@@ -1,0 +1,44 @@
+{
+  "id": "021-eip712-string-null-byte",
+  "origin": "generated",
+  "standard": "EIP-712 encoding (stringhe)",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "Messaggio": [
+        {
+          "name": "chi",
+          "type": "address"
+        },
+        {
+          "name": "testo",
+          "type": "string"
+        }
+      ]
+    },
+    "primaryType": "Messaggio",
+    "message": {
+      "chi": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "testo": "prima\u0000dopo"
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d392ed50a17ca0ae92730fe8745dcdb51333b3b05305cb2b8396ce0fa1a71bfe21b",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0x409bf89d827133da70309ad226e068df3c42ccfcc9e1e40a94c7bb31471115fd",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0xda18d0f0c42cc519a8acc60e7de4e1c7ffe64e3f4ab317fa1e11b8bfe4626422",
+    "signing_digest": "0xabef7b9564dc6a0ac2f6dc88dbaa8a8670c30d91a971a285d30af51814c98783"
+  },
+  "notes": [
+    "La stringa contiene un byte NULLO a meta'. EIP-712 hasha i byte UTF-8 per intero: una implementazione che tratta le stringhe alla maniera del C tronca a 'prima' e ottiene un hashStruct diverso.",
+    "E' il caso che separa chi lavora sui byte da chi lavora su stringhe C."
+  ]
+}

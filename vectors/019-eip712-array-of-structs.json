@@ -1,0 +1,64 @@
+{
+  "id": "019-eip712-array-of-structs",
+  "origin": "generated",
+  "standard": "EIP-712 encoding (array di struct)",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "Ordine": [
+        {
+          "name": "acquirente",
+          "type": "address"
+        },
+        {
+          "name": "voci",
+          "type": "Voce[]"
+        }
+      ],
+      "Voce": [
+        {
+          "name": "sku",
+          "type": "string"
+        },
+        {
+          "name": "quantita",
+          "type": "uint256"
+        }
+      ]
+    },
+    "primaryType": "Ordine",
+    "message": {
+      "acquirente": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "voci": [
+        {
+          "sku": "A-1",
+          "quantita": 2
+        },
+        {
+          "sku": "B-2",
+          "quantita": 1
+        }
+      ]
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d6b89d0d96b7cf718b7f21307603eaf462b5b9fd60ec7021b77d69010e9fcdd361c",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+    "type_hash": "0xa516013c3c096bc6efa571fa8f934471f583e946c57ef6ce2197a87d781d68dd",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0x81b05b3f1f56dd216e7fb019503083ac96028eb6b4c6c9efc1b4a4ab21f5a282",
+    "signing_digest": "0x6ffd3426c95da5a1acdb6339a392549bbbf31290773ce9ece010790bdb38941e"
+  },
+  "notes": [
+    "Array dinamico di struct: l'hash di un array e' keccak256 della CONCATENAZIONE degli hashStruct dei suoi elementi, non del JSON dell'array.",
+    "encodeType deve produrre Ordine(address acquirente,Voce[] voci)Voce(string sku,uint256 quantita): i tipi referenziati seguono in ordine alfabetico.",
+    "Un'implementazione che serializza l'array come stringa fallisce qui e in nessun altro vettore."
+  ]
+}
