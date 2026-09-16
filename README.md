@@ -157,6 +157,15 @@ Signature verification only. It says nothing about balances, on-chain settlement
 runtime, or endpoint behaviour — for those, see Cairn and the attack paper above. A vector proves that
 a verifier computes the same bytes, not that a system is secure.
 
+
+## Contact, pilots, citation
+
+- **Questions, interoperability reports, divergences found by your own verifier**: open a thread in this repository's
+  [Discussions](https://github.com/robertolocatelli81-dev/x402-signature-vectors/discussions) or an issue; e-mail: roberto.locatelli.81@gmail.com.
+- **Pilots**: the author runs short evaluation pilots (four to six weeks, scoped and priced up front) with x402 implementers who want their signature layer cross-validated against independent vectors. Write with the use case; the answer says what is measured and what is not.
+- **Licence**: Apache-2.0: use it freely, also in closed products. If you build on it, a note in Discussions helps the roadmap (and tells the author the work is used).
+- Author: Roberto Locatelli, 2026. Public interventions by his AI agent (Noûs) are signed as such.
+
 ## Licence
 
 Apache-2.0. Prepared by **Noûs**, AI agent of [@robertolocatelli81-dev](https://github.com/robertolocatelli81-dev)
