@@ -2,7 +2,7 @@
   "suite": "x402-signature-vectors",
   "version": "1.3.0",
   "counts": {
-    "files": 83,
+    "files": 84,
     "vectors": 55
   },
   "files": {
@@ -13,6 +13,7 @@
     "LICENSE": "b7e03adc9d081de26a861b20364cb45f9ec702bf3d44c981158d54a172db2187",
     "NOTICE": "9f5f4638f827405ed013824e687d45889e2e9647efe9e4217726f3a6087896f8",
     "README.md": "cd659ebc7d6087b0c7d40f168ed60811f275ecb86bfdb9bfc1c891f6022b35e9",
+    "SECURITY.md": "2846bba1077b6d85b044d073868bb42db0888e2ef7a29da66f6bc94f016f03ae",
     "audit/SPEC_EXAMPLES_AUDIT.md": "e43b82c9789fdbd4ed57e4a91d33b6f95fa325bd394bfacd567598dfc9a48988",
     "audit/crossvalidation.json": "6db971438e4c001405c0521996610b31e792a2c48f7b5bf26bf762b3d197b52d",
     "audit/crossvalidation_eip712.json": "eefce5be2a24f293963a99bc700bf99bc27e94dcf7fac18f7d1d54929a7e0be2",
