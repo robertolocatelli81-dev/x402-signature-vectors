@@ -1,0 +1,48 @@
+{
+  "id": "081-struct-named-like-atomic-type",
+  "origin": "generated",
+  "standard": "EIP-712 encoding — one reading of the text, the domain and the type names",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "Pay": [
+        {
+          "name": "to",
+          "type": "address"
+        }
+      ],
+      "address": [
+        {
+          "name": "a",
+          "type": "uint256"
+        }
+      ]
+    },
+    "primaryType": "Pay",
+    "message": {
+      "to": {
+        "a": 5
+      }
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d1962d227837fcd5e5bd04d2be2516aac4b42f1b4adc51268171a96a4425a0f591c",
+  "expected": {
+    "verdict": "reject",
+    "recovered_address": null,
+    "type_hash": null,
+    "domain_separator": null,
+    "hash_struct": null,
+    "signing_digest": null,
+    "reject_reason": "encoding_error"
+  },
+  "notes": [
+    "Una struct si chiama `address`: il campo `to`, dichiarato address, veniva codificato come quella struct. eth-account calcola un digest diverso.",
+    "Firma VERA della chiave di test sul messaggio che il runner precedente ricavava da questo JSON: quel runner ACCETTA. Il JSON mostrato ammette un'altra lettura: la sola risposta sicura e' il rifiuto."
+  ]
+}

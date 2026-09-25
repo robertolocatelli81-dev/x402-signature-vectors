@@ -1,0 +1,83 @@
+{
+  "id": "080-domain-chainid-declared-string",
+  "origin": "generated",
+  "standard": "EIP-712 encoding — one reading of the text, the domain and the type names",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "TransferWithAuthorization": [
+        {
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "name": "validAfter",
+          "type": "uint256"
+        },
+        {
+          "name": "validBefore",
+          "type": "uint256"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        }
+      ],
+      "EIP712Domain": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        },
+        {
+          "name": "chainId",
+          "type": "string"
+        },
+        {
+          "name": "verifyingContract",
+          "type": "address"
+        }
+      ]
+    },
+    "primaryType": "TransferWithAuthorization",
+    "message": {
+      "from": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "to": "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+      "value": 10000,
+      "validAfter": 1740672089,
+      "validBefore": 1740672154,
+      "nonce": "0xf3746613c2d920b5fdabc0856f2aeb2d4f88ee6037b8cc5d04a71a4462f13480"
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d12bdb8654363b6038c470a60dd5cc8ab93b0cb83e85021a62c2784f516455f291b",
+  "expected": {
+    "verdict": "reject",
+    "recovered_address": null,
+    "type_hash": null,
+    "domain_separator": null,
+    "hash_struct": null,
+    "signing_digest": null,
+    "reject_reason": "encoding_error"
+  },
+  "notes": [
+    "`types.EIP712Domain` dichiara `chainId` di tipo `string`; veniva codificato uint256 comunque.",
+    "Firma VERA della chiave di test sul messaggio che il runner precedente ricavava da questo JSON: quel runner ACCETTA. Il JSON mostrato ammette un'altra lettura: la sola risposta sicura e' il rifiuto."
+  ]
+}

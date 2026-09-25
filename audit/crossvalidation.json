@@ -346,6 +346,162 @@
       "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
       "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
       "ok": true
+    },
+    {
+      "vettore": "056-uint-float-fraction",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "057-uint-float-timestamp",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "058-domain-chainid-float",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "059-uint-string-unicode-digits",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "060-uint-string-whitespace",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "061-uint-string-underscore",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "062-uint-string-plus-sign",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "063-uint-string-leading-zero",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "064-uint-bool",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "065-address-bad-prefix",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "066-address-trailing-whitespace",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "067-domain-verifying-contract-bad-prefix",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "068-bytes32-internal-whitespace",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "069-bytes32-bad-prefix",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "070-bytes-internal-whitespace",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "071-domain-version-integer",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "072-bool-as-string-false",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "073-array-given-as-string",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "074-array-fixed-length-mismatch",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "075-uint-width-not-multiple-of-8",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "076-uint-decimal-string-accepted",
+      "atteso": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "riferimento": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+      "ok": true
+    },
+    {
+      "vettore": "077-json-duplicate-member",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "078-domain-unknown-member",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "079-domain-types-inconsistent",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "080-domain-chainid-declared-string",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
+    },
+    {
+      "vettore": "081-struct-named-like-atomic-type",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
     }
   ],
   "ok": true

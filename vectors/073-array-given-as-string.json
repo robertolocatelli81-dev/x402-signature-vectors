@@ -1,0 +1,40 @@
+{
+  "id": "073-array-given-as-string",
+  "origin": "generated",
+  "standard": "EIP-712 encoding — strict JSON value forms",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "Lotto": [
+        {
+          "name": "quantita",
+          "type": "uint256[]"
+        }
+      ]
+    },
+    "primaryType": "Lotto",
+    "message": {
+      "quantita": "123"
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d3846a145748116ab016e4c8d6b9b95aae4c6f5ed6dbe851ea967392c6ed284591c",
+  "expected": {
+    "verdict": "reject",
+    "recovered_address": null,
+    "type_hash": null,
+    "domain_separator": null,
+    "hash_struct": null,
+    "signing_digest": null,
+    "reject_reason": "encoding_error"
+  },
+  "notes": [
+    "`quantita` (uint256[]) = \"123\": iterare una stringa da' i caratteri, firmato [1, 2, 3].",
+    "Firma VERA della chiave di test sul messaggio che un parser permissivo ricava da questo JSON: un verificatore che normalizza il valore recupera il firmatario dichiarato e ACCETTA. Il JSON mostrato non e' il messaggio firmato: e' un differenziale di parsing, e la sola risposta sicura e' encoding_error."
+  ]
+}

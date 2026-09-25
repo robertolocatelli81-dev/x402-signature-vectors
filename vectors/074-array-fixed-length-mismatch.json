@@ -1,0 +1,44 @@
+{
+  "id": "074-array-fixed-length-mismatch",
+  "origin": "generated",
+  "standard": "EIP-712 encoding — strict JSON value forms",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "Coppia": [
+        {
+          "name": "v",
+          "type": "uint256[2]"
+        }
+      ]
+    },
+    "primaryType": "Coppia",
+    "message": {
+      "v": [
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d2e1819f7efd4aee56e2a339563433aa0a01839660e24ce796870ce1caad0b5dc1c",
+  "expected": {
+    "verdict": "reject",
+    "recovered_address": null,
+    "type_hash": null,
+    "domain_separator": null,
+    "hash_struct": null,
+    "signing_digest": null,
+    "reject_reason": "encoding_error"
+  },
+  "notes": [
+    "`v` dichiarato uint256[2] con 3 elementi: la lunghezza del tipo non veniva controllata.",
+    "Firma VERA della chiave di test sul messaggio che un parser permissivo ricava da questo JSON: un verificatore che normalizza il valore recupera il firmatario dichiarato e ACCETTA. Il JSON mostrato non e' il messaggio firmato: e' un differenziale di parsing, e la sola risposta sicura e' encoding_error."
+  ]
+}

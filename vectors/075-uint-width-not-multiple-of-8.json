@@ -1,0 +1,40 @@
+{
+  "id": "075-uint-width-not-multiple-of-8",
+  "origin": "generated",
+  "standard": "EIP-712 encoding — strict JSON value forms",
+  "signer": "0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "Piccolo": [
+        {
+          "name": "x",
+          "type": "uint7"
+        }
+      ]
+    },
+    "primaryType": "Piccolo",
+    "message": {
+      "x": 5
+    }
+  },
+  "signature": "0xbb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d4f94a4bb0d486042c5d834a112e5dbe4379541ca58da97ec952cb9734e1c117d1c",
+  "expected": {
+    "verdict": "reject",
+    "recovered_address": null,
+    "type_hash": null,
+    "domain_separator": null,
+    "hash_struct": null,
+    "signing_digest": null,
+    "reject_reason": "encoding_error"
+  },
+  "notes": [
+    "Tipo `uint7`: EIP-712 ammette uint8..uint256 a passi di 8. Il nome veniva tagliato con int(tipo[4:]) e codificato comunque.",
+    "Firma VERA della chiave di test sul messaggio che un parser permissivo ricava da questo JSON: un verificatore che normalizza il valore recupera il firmatario dichiarato e ACCETTA. Il JSON mostrato non e' il messaggio firmato: e' un differenziale di parsing, e la sola risposta sicura e' encoding_error."
+  ]
+}

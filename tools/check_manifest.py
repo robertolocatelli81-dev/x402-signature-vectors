@@ -61,7 +61,9 @@ def verifica():
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--genera":
-        json.dump(genera(), open(os.path.join(BASE, "manifest.json"), "w"), indent=2)
+        with open(os.path.join(BASE, "manifest.json"), "w") as fh:
+            json.dump(genera(), fh, indent=2)
+            fh.write("\n")                          # file di testo POSIX: termina con newline
         print("manifest generato")
         sys.exit(0)
     sys.exit(verifica())

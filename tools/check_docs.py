@@ -47,6 +47,23 @@ def main():
         if v["expected"]["recovered_address"] is None and "recupero e' definito" in note:
             problemi.append(f"{v['id']}: la nota dice 'recupero definito' ma recovered_address e' null")
 
+    # Le classi di reject sono enumerate in TRE posti (tools/reject_reasons.py, lo schema, il README):
+    # una classe aggiunta in uno solo e' un filtro a valle che la ignora in silenzio. Devono coincidere.
+    sys.path.insert(0, os.path.join(BASE, "tools"))
+    from reject_reasons import CLASSI                                   # noqa: E402
+    schema = json.load(open(os.path.join(BASE, "schema", "vector.schema.json")))
+    enum = set(schema["properties"]["expected"]["properties"]["reject_reason"]["enum"])
+    m = re.search(r"declares \*\*`reject_reason`\*\* — one of (.*?) \(defined in", readme, re.S)
+    nel_readme = set(re.findall(r"`([a-z_]+)`", m.group(1))) if m else set()
+    if not m:
+        problemi.append("README: elenco delle classi di reject non trovato nel formato atteso")
+    elif not (set(CLASSI) == enum == nel_readme):
+        problemi.append(f"classi di reject incoerenti: reject_reasons={sorted(CLASSI)} "
+                        f"schema={sorted(enum)} README={sorted(nel_readme)}")
+    usate = {v["expected"].get("reject_reason") for v in vec} - {None}
+    if not usate <= set(CLASSI):
+        problemi.append(f"vettori con classi non definite: {sorted(usate - set(CLASSI))}")
+
     changelog = open(os.path.join(BASE, "CHANGELOG.md")).read()
     if f"## {versione} — " not in changelog:
         problemi.append(f"CHANGELOG: manca la voce per la versione {versione} del manifest")

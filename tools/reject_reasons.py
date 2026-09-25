@@ -14,9 +14,11 @@ CLASSI = {
     "signature_malformed":     "non e' una firma: non 0x, non esadecimale, lunghezza != 65, v non in {27,28}",
     "signature_out_of_range":  "r o s fuori da [1, N-1]",
     "signature_high_s":        "s > N/2: firma malleabile (EIP-2)",
-    "encoding_error":          "il messaggio EIP-712 non e' codificabile (campo mancante, primaryType ignoto)",
+    "encoding_error":          "il messaggio EIP-712 non e' codificabile (campo mancante, primaryType ignoto, valore non nella forma stretta del suo tipo)",
     "recovery_undefined":      "firma ben formata ma il recupero non produce una chiave (x non sulla curva, punto all'infinito)",
     "signer_mismatch":         "recupera a un indirizzo diverso dal `signer` dichiarato",
+    "input_not_object":        "l'input non e' un oggetto JSON (null, array, stringa, numero, bool): nessun campo leggibile",
+    "json_ambiguous":          "il testo JSON ha due letture: un membro ripetuto (vince l'ultimo in un lettore, il primo in un altro) o NaN/Infinity",
 }
 
 REJECT_REASON = {
@@ -45,6 +47,32 @@ REJECT_REASON = {
     "050-primary-type-not-in-types": "encoding_error",
     "051-recovery-point-at-infinity-address-zero": "recovery_undefined",
     "052-recovery-point-at-infinity-zero-point-address": "recovery_undefined",
+    # 056-075: valore JSON non nella forma stretta del suo tipo EIP-712 (lib/eip712.py, 25/09/2026)
+    "056-uint-float-fraction": "encoding_error",
+    "057-uint-float-timestamp": "encoding_error",
+    "058-domain-chainid-float": "encoding_error",
+    "059-uint-string-unicode-digits": "encoding_error",
+    "060-uint-string-whitespace": "encoding_error",
+    "061-uint-string-underscore": "encoding_error",
+    "062-uint-string-plus-sign": "encoding_error",
+    "063-uint-string-leading-zero": "encoding_error",
+    "064-uint-bool": "encoding_error",
+    "065-address-bad-prefix": "encoding_error",
+    "066-address-trailing-whitespace": "encoding_error",
+    "067-domain-verifying-contract-bad-prefix": "encoding_error",
+    "068-bytes32-internal-whitespace": "encoding_error",
+    "069-bytes32-bad-prefix": "encoding_error",
+    "070-bytes-internal-whitespace": "encoding_error",
+    "071-domain-version-integer": "encoding_error",
+    "072-bool-as-string-false": "encoding_error",
+    "073-array-given-as-string": "encoding_error",
+    "074-array-fixed-length-mismatch": "encoding_error",
+    "075-uint-width-not-multiple-of-8": "encoding_error",
+    "077-json-duplicate-member": "json_ambiguous",
+    "078-domain-unknown-member": "encoding_error",
+    "079-domain-types-inconsistent": "encoding_error",
+    "080-domain-chainid-declared-string": "encoding_error",
+    "081-struct-named-like-atomic-type": "encoding_error",
 }
 
 

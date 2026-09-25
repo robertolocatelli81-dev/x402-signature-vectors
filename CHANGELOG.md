@@ -4,6 +4,60 @@ Vectors are versioned so that an implementation can state *which* set it passes.
 stable and never reused: a vector that turns out to be wrong is corrected in place and the change is
 recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
+## Unreleased
+
+- **One reading of the text, the domain and the type names (vectors 077–081, 25/09/2026, second review round).**
+  After the strict value forms, the JSON shown could still differ from the message signed:
+  a repeated member (`"value": 99999999999, "value": 10000`: `json` keeps the last) — new class
+  `json_ambiguous` and a strict reader `verify.leggi_json_stretto` / `verdetto_da_testo`; a domain member
+  outside the five EIP-712 names; a `types.EIP712Domain` that does not match the domain (including `chainId`
+  declared `string`); a struct named like an atomic type. Each new vector carries a real signature that the
+  previous runner ACCEPTED (5/5 measured) and that this one rejects for the declared class; each check,
+  ablated, turns exactly its own vectors red. eth-account 0.14.0 raises on 078 (`Invalid domain key`) and 079
+  (`ValidationError`), computes a different digest on 081, and cannot see 077 (it receives a parsed dict).
+  `tools/crossvalidate.py` now applies the same two reading rules before the cryptographic check.
+- **Declared, not repaired:** the strict value forms of the first round also turned three inputs that the
+  1.3.0 runner accepted, and that eth-account 0.14.0 encodes with the same digest, into `encoding_error`:
+  `"-0"` for an `intN`, the width-less type `uint`, and the zero-length array type `uint256[0]`. None is a
+  canonical EIP-712 form.
+
+Fixes for two defects measured by a malformed-input fuzz on 2026-09-25. No version bump yet: the
+manifest still says 1.3.0, and the "Current set" line of the README carries that version because
+`tools/check_docs.py` ties it to the manifest.
+
+- **Strict value encoding in `lib/eip712.py`.** The encoder called `int()`, `str()` and
+  `bytes.fromhex()` on JSON values, which *normalize*: `10000.9`, `"١٠٠٠٠"` (Arabic-Indic digits),
+  `" 10000\n"`, `"10_000"`, `"+10000"` all encoded as 10000; an address or `bytes32` with `XX` or `::`
+  instead of `0x`, or with spaces inside, encoded as the clean value; `"false"` encoded as `true`; the
+  string `"123"` typed `uint256[]` encoded as `[1, 2, 3]`; a `uint256[2]` with three elements and a
+  `uint7` were encoded anyway. The runner therefore returned `accept` on messages whose displayed JSON
+  is not the signed message. Now each EIP-712 type admits one JSON form (table in the README, rule in
+  the `lib/eip712.py` source) and anything else is `encoding_error`. Admitted for integers: a JSON
+  integer or a canonical ASCII decimal string; hex strings (`"0x2710"`) are **not** admitted — one
+  textual form per number is the point.
+- **056–076**, 21 new vectors: 20 `reject` / `encoding_error`, each signed by the test key over the
+  message a normalizing parser derives, plus 076 `accept` (canonical decimal string `"10000"`, same
+  signature as 003). Measured: the runner at `fa91c0f` accepts all 20 rejects (56/76 conformant); with
+  the fix 76/76. 31 accept / 45 reject. All 76 vectors regenerate byte-identical from
+  `tools/genera_vettori*.py`; 001–055 are unchanged.
+- **eth-account 0.14.0 differs from this rule on 6 of the 20** (measured with `encode_typed_data` +
+  `Account.recover_message`, offline): it recovers the declared signer on 059–063 (decimal strings with
+  non-ASCII digits, whitespace, `_`, `+`, leading zeros) and 074 (fixed-array length). The other 14 it
+  refuses or recovers to a different address. Its encoding still agrees with `lib/` on every encodable
+  vector: 54 compared, 0 divergences (the 22 non-encodable ones are skipped by construction).
+- **New reject class `input_not_object`.** A payload that is not a JSON object (`null`, array, string,
+  number, boolean) raised `AttributeError` on `vec.get`, which landed in the signature branch and came
+  out as `signature_malformed`: right verdict, wrong reason. Added to `tools/reject_reasons.py`, the
+  schema enum and the README list; `tools/check_docs.py` now fails if those three lists disagree, and
+  `tools/fuzz_runner.py` checks 10 non-object roots (0/10 right at `fa91c0f`, 10/10 now) plus a table
+  of 20 admitted and 44 non-admitted value forms (31 wrong at `fa91c0f`, 0 now).
+- **`verify.py digest_di`**: `vec["eip712"]` is read inside the `try`, so a vector without the block is
+  `encoding_error` instead of an unhandled `KeyError`.
+- **Schema**: the value constraints on `eip712.domain` members were removed (the members stay
+  required). A malformed domain value is what 058, 067 and 071 test; rejecting it is the verifier's job,
+  as the schema already said for the signature length.
+- **`tools/check_manifest.py --genera`** now ends `manifest.json` with a newline.
+
 ## 1.3.0 — 2026-09-11
 
 Second adversarial review (Gemini 3.1 Pro), this time over the complete code. Everything it found was

@@ -22,7 +22,9 @@ import sys
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE, "lib"))
 
-from eip712 import keccak256 as keccak_nostro, hash_struct   # noqa: E402
+from eip712 import keccak256 as keccak_nostro, hash_struct, valida_struttura   # noqa: E402
+sys.path.insert(0, BASE)
+from verify import leggi_json_stretto                        # noqa: E402
 import secp256k1 as S                                        # noqa: E402
 
 try:
@@ -121,10 +123,16 @@ def cross_vettori():
     for nome in sorted(os.listdir(vdir)):
         if not nome.endswith(".json"):
             continue
-        v = json.load(open(os.path.join(vdir, nome)))
+        testo = open(os.path.join(vdir, nome), encoding="utf-8").read()
+        v = json.loads(testo)
         e = v["eip712"]
         campi = [{"name": n, "type": t} for n, t in ordine if n in e["domain"]]
         try:
+            # 25/09/2026: le due regole di LETTURA (una sola lettura del testo, del dominio e dei nomi dei tipi)
+            # vengono prima della crittografia, come nel runner; senza, 077-081 davano un falso "discordante".
+            # La struttura e' confrontata con eth-account in crossvalidate_eip712.py; qui si confronta la crittografia.
+            leggi_json_stretto(testo)
+            valida_struttura(e["domain"], e["types"])
             ds = hash_struct("EIP712Domain", {"EIP712Domain": campi}, e["domain"])
             hs = hash_struct(e["primaryType"], e["types"], e["message"])
         except Exception:                                     # noqa: BLE001

@@ -14,7 +14,7 @@ import sys
 BASE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(BASE, "lib"))
 
-from eip712 import keccak256, hash_struct, self_test as banco_eip712    # noqa: E402
+from eip712 import keccak256, hash_struct, valida_struttura, self_test as banco_eip712    # noqa: E402
 import secp256k1 as S                                                    # noqa: E402
 
 # Ordine canonico dei campi di EIP712Domain. I campi sono OPZIONALI: il typeHash si calcola su
@@ -63,9 +63,47 @@ class EncodingError(Exception):
     """Il messaggio EIP-712 non si puo' codificare: e' un fallimento DIVERSO dal recupero."""
 
 
-def digest_di(vec):
-    e = vec["eip712"]
+class JsonAmbiguo(ValueError):
+    """Il testo JSON ammette due letture: un membro ripetuto (RFC 8259 §4: i nomi SHOULD essere unici e il
+    comportamento con duplicati e' imprevedibile) o NaN/Infinity."""
+
+
+def _no_duplicati(coppie):
+    visti = {}
+    for k, v in coppie:
+        if k in visti:
+            raise JsonAmbiguo(f"membro JSON ripetuto: {k!r}")
+        visti[k] = v
+    return visti
+
+
+def _no_costanti(nome):
+    raise JsonAmbiguo(f"{nome} non e' JSON")
+
+
+def leggi_json_stretto(testo):
+    """Il lettore che un verificatore deve usare: il `json` della libreria standard tiene l'ULTIMO di due membri
+    con lo stesso nome, un altro lettore il primo, e i due vedono importi diversi sotto la stessa firma
+    (25/09/2026: `"value": 99999999999, "value": 10000` era `accept`). `verdetto(dict)` riceve un oggetto gia'
+    letto e non puo' piu' vedere i duplicati: chi integra deve leggere con questa funzione, o usare
+    `verdetto_da_testo`."""
+    return json.loads(testo, object_pairs_hook=_no_duplicati, parse_constant=_no_costanti)
+
+
+def verdetto_da_testo(testo):
     try:
+        vec = leggi_json_stretto(testo)
+    except JsonAmbiguo as ex:
+        return "reject", None, "json_ambiguous", str(ex)
+    except ValueError as ex:
+        return "reject", None, "input_not_object", f"testo non leggibile come JSON: {ex}"
+    return verdetto(vec)
+
+
+def digest_di(vec):
+    try:
+        e = vec["eip712"]       # dentro il try: un vettore SENZA il blocco sollevava KeyError (fuzz 25/09, root={})
+        valida_struttura(e["domain"], e["types"])
         ds = hash_struct("EIP712Domain", {"EIP712Domain": campi_dominio(e["domain"])}, e["domain"])
         return keccak256(b"\x19\x01" + ds + hash_struct(e["primaryType"], e["types"], e["message"]))
     except Exception as ex:                                  # noqa: BLE001 — l'input non e' fidato
@@ -86,7 +124,17 @@ def verdetto(vec):
     che non capisce (l'input arriva dalla rete: sollevare e' un denial of service), ma dice PERCHE':
     senza la classe, un vettore rotto che solleva un'eccezione diventa un "reject" e passa per il
     motivo sbagliato. Le classi sono in tools/reject_reasons.py.
+
+    La codifica dei valori del messaggio e' STRETTA (lib/eip712.py): un valore che non ha la forma
+    ammessa per il suo tipo EIP-712 (10000.9 per un uint256, "XX"+hex per un address, "false" per un
+    bool…) e' `encoding_error`, non viene normalizzato — altrimenti il JSON mostrato non e' il
+    messaggio firmato.
     """
+    # Un input che non e' un oggetto JSON (null, array, stringa, numero, bool) non ha campi da
+    # leggere: prima vec.get() sollevava AttributeError, l'eccezione finiva nel ramo della firma e il
+    # rifiuto usciva come `signature_malformed` — verdetto giusto, ragione sbagliata (fuzz 25/09).
+    if not isinstance(vec, dict):
+        return "reject", None, "input_not_object", f"l'input e' {type(vec).__name__}, non un oggetto JSON"
     try:
         problema = controlli_firma(vec.get("signature"))
     except Exception:                                        # noqa: BLE001 — nessun input deve passare oltre
@@ -137,8 +185,9 @@ def main():
     file = sorted(f for f in os.listdir(vdir) if f.endswith(".json"))
     righe, falliti = [], 0
     for nome in file:
-        vec = json.load(open(os.path.join(vdir, nome)))
-        v, rec, classe, perche = verdetto(vec)
+        testo = open(os.path.join(vdir, nome), encoding="utf-8").read()
+        vec = json.loads(testo)          # SOLO per leggere expected/id: il verdetto passa dal lettore stretto
+        v, rec, classe, perche = verdetto_da_testo(testo)
         atteso = vec["expected"]["verdict"]
         ok = v == atteso
         att_addr = vec["expected"]["recovered_address"]

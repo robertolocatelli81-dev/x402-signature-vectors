@@ -74,9 +74,40 @@ recovers to. Nothing is implicit, including the domain that the specification le
 
 Every `reject` vector also declares **`reject_reason`** — one of `signature_malformed`,
 `signature_out_of_range`, `signature_high_s`, `encoding_error`, `recovery_undefined`,
-`signer_mismatch` (defined in `tools/reject_reasons.py`). A verifier is conformant on a reject vector
+`signer_mismatch`, `input_not_object`, `json_ambiguous` (defined in `tools/reject_reasons.py`). A verifier is conformant on a reject vector
 only if it rejects **for that class of reason**: a vector rejected for the wrong reason is how a broken
-test passes, and a reject vector without a declared class fails the schema gate.
+test passes, and a reject vector without a declared class fails the schema gate. `input_not_object`
+(the payload is `null`, an array, a string, a number or a boolean) cannot appear in a vector file,
+which is an object by construction; the runner emits it and `tools/fuzz_runner.py` checks it.
+
+**Value encoding is strict.** The runner's encoder (`lib/eip712.py`) admits exactly one JSON form per EIP-712
+type and rejects everything else with `encoding_error`, instead of normalizing it:
+
+| EIP-712 type | admitted JSON value |
+|---|---|
+| `uintN` / `intN` (N = 8…256, multiple of 8) | a JSON integer (not a boolean, not a number with a fraction or exponent — `10000.0` is rejected), or an ASCII decimal string in canonical form: `^(0\|[1-9][0-9]*)$`, with an optional leading `-` for `intN` (`"-0"` excluded). No `+`, whitespace, `_`, leading zeros, non-ASCII digits or `0x`. Then the range of the type. |
+| `address` | a string matching `^0x[0-9a-fA-F]{40}$` exactly (the EIP-55 checksum is not checked, see 040) |
+| `bytes32` | a string matching `^0x[0-9a-fA-F]{64}$` exactly (other `bytesN` are outside the x402 profile) |
+| `bytes` | a string matching `^0x([0-9a-fA-F]{2})*$` |
+| `string` | a JSON string |
+| `bool` | `true` or `false` |
+| `T[]` / `T[k]` | a JSON array; exactly `k` elements for `T[k]` |
+
+Why: a library that calls `int()`, `str()` or `bytes.fromhex()` on the value reads `10000.9`,
+`"١٠٠٠٠"`, `" 10000\n"`, `"10_000"` and `"+10000"` as 10000, an address with `XX` instead of `0x`, a
+`bytes32` with spaces in it, and the string `"false"` as `true`. The JSON a person or a policy engine
+reads is then not the message that was signed. Vectors 056–075 carry a real signature by the test key
+over the message such a parser derives, so a normalizing verifier **accepts** them; 076 is the check in
+the other direction (the canonical decimal string is admitted). This is a rule of this suite, stated
+here; EIP-712 itself defines the encoding of values, not their JSON spelling.
+
+The same reasoning applies to what surrounds the values (vectors 077–081). A member repeated in the text
+(`"value": 99999999999, "value": 10000`) is read as its last occurrence by Python's `json` and as its
+first by other readers, so the runner reads every vector with a strict reader (`verify.leggi_json_stretto`,
+class `json_ambiguous`); `verdetto(dict)` receives an object already read and cannot see a duplicate, so an
+integrator must read with that function or call `verdetto_da_testo`. A domain member outside the five
+EIP-712 names, a `types.EIP712Domain` that does not match the domain's members (names, types, order), and
+a struct named like an atomic type (`address`) are `encoding_error`.
 
 `origin` separates two statuses that must not be mixed:
 
@@ -90,7 +121,7 @@ test private key  0x4646…4646   (published on purpose: a conformance vector mu
 test address      0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f
 ```
 
-Current set: **55 vectors — 30 `accept`, 25 `reject`** (v1.3.0), against
+Current set: **81 vectors — 31 `accept`, 50 `reject`** (v1.3.0), against
 [`schema/vector.schema.json`](schema/vector.schema.json).
 
 Beyond message-binding mutations (amount off by one, substituted recipient, one-second validity
@@ -115,6 +146,15 @@ shift, wrong-chain domain), the set covers the cryptographic edges where verifie
 - **Robustness** — signatures too short, too long, empty; a message missing a declared field; a
   `primaryType` absent from `types`. These must be clean rejections: the input comes from the network,
   and a library that raises here is a denial of service.
+- **Strict value forms** — 056–075: a JSON value that a permissive parser normalizes into the value that
+  was actually signed (fractional numbers, non-ASCII digits, whitespace, `_`, `+`, leading zeros,
+  booleans as integers, `XX` instead of `0x`, spaces inside hex, an integer where a string is typed,
+  `"false"` for a boolean, a string where an array is typed, the wrong length for a fixed array, a
+  `uint7`). Rejected as `encoding_error`; 076 accepts the canonical decimal string.
+- **One reading of the text, the domain and the type names** — 077–081: a repeated JSON member
+  (`json_ambiguous`), an unknown domain member, a declared `EIP712Domain` that differs from the domain, a
+  `chainId` declared `string`, a struct named `address` (`encoding_error`). Each carries a real signature
+  the previous runner accepted.
 - **EIP-712 encoding structure** — arrays of structs (hashed as the concatenation of element
   hashStructs, not as JSON), two-level nesting, a string containing a NUL byte (hashed whole, not
   truncated C-style), and referenced-type ordering in `encodeType` (alphabetical, regardless of
@@ -128,11 +168,11 @@ layer failed — the EIP-712 encoding or the ECDSA recovery — instead of just 
 
 | test | result |
 |---|---|
-| **EIP-712 encoding vs `eth-account` 0.14.0** (reference implementation) | 53 vectors compared (the 2 whose message is not encodable by construction are skipped), **0 divergences** — arrays, nesting, NUL byte, partial domains, signed integers, dynamic bytes and undeclared fields included |
+| **EIP-712 encoding vs `eth-account` 0.14.0** (reference implementation) | 54 vectors compared (the 22 whose message is not encodable by construction are skipped), **0 divergences** — arrays, nesting, NUL byte, partial domains, signed integers, dynamic bytes, undeclared fields and canonical decimal strings included |
 | **Primitives vs `coincurve`/libsecp256k1 and `eth-hash`** | 2000 Keccak inputs, 500 signatures produced *by* libsecp256k1, **600 degenerate inputs checked on rejections** — 0 divergences |
 | **Reproducibility** | regenerated from scratch, **byte-identical** to the committed vectors |
 | **Clean clone** | `git clone` into an empty directory, all gates green with no local state |
-| **Hostile input (`tools/fuzz_runner.py`)** | 600 malformed vectors → **600 rejected, 0 unhandled exceptions** |
+| **Hostile input (`tools/fuzz_runner.py`)** | 600 malformed vectors → **600 rejected, 0 unhandled exceptions**; 10 non-object payloads → 10 `input_not_object`; strict value forms, 20 admitted + 44 not admitted → 0 wrong |
 
 That last row was not green at first: the runner raised `ValueError` on 79 of 600 inputs because it
 called `fromhex` on an unvalidated string. On a facilitator that is a denial of service — hostile

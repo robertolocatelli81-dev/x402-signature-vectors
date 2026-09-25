@@ -7,6 +7,8 @@ La correttezza è verificata contro vettori pubblici noti in `self_test()`.
 """
 from __future__ import annotations
 
+import re
+
 _RC = [0x0000000000000001, 0x0000000000008082, 0x800000000000808A, 0x8000000080008000,
        0x000000000000808B, 0x0000000080000001, 0x8000000080008081, 0x8000000000008009,
        0x000000000000008A, 0x0000000000000088, 0x0000000080008009, 0x000000008000000A,
@@ -88,47 +90,145 @@ def type_hash(primary: str, types: dict) -> bytes:
     return keccak256(encode_type(primary, types))
 
 
-def encode_value(tipo: str, valore, types: dict | None = None) -> bytes:
-    """encodeData secondo EIP-712.
+class ValoreNonConforme(ValueError):
+    """Il valore JSON non ha la forma STRETTA che questa libreria ammette per il suo tipo EIP-712."""
 
-    Copre i tipi atomici del profilo x402 (string, uint*, address, bool, bytes32), le struct
-    annidate (hashStruct ricorsivo) e gli ARRAY: l'encoding di un array e' keccak256 della
+
+# Codifica STRETTA dei valori JSON (regola adottata il 25/09/2026, dopo il fuzz di input malformati).
+#
+# Prima ogni valore passava per int() / str() / bytes.fromhex(), che NORMALIZZANO: 10000.9 diventava
+# 10000, "١٠٠٠٠" (cifre arabo-indiche), " 10000\n", "10_000" e "+10000" diventavano 10000, "XX"+hex
+# passava per un indirizzo, bytes.fromhex saltava gli spazi, il bool "false" valeva true, la stringa
+# "123" dichiarata uint256[] diventava l'array [1, 2, 3]. Risultato misurato: `accept` su messaggi il
+# cui JSON MOSTRATO non e' il messaggio FIRMATO — un differenziale di parsing fra chi legge e chi
+# verifica. Qui un valore ha UNA forma testuale ammessa per tipo; tutto il resto solleva
+# ValoreNonConforme, che per il runner e' `encoding_error`.
+#
+#   uintN / intN   N in {8, 16, …, 256}. Intero JSON (non bool, non float: 10000.0 e' un float), oppure
+#                  stringa decimale ASCII canonica: ^(0|[1-9][0-9]*)$ per uintN, ^-?(0|[1-9][0-9]*)$ per
+#                  intN, "-0" escluso; niente segno "+", spazi, underscore, zeri iniziali, "0x".
+#                  Poi controllo di range del tipo.
+#   address        stringa ^0x[0-9a-fA-F]{40}$ esatta (il checksum EIP-55 NON e' verificato: vettore 040).
+#   bytes32        stringa ^0x[0-9a-fA-F]{64}$ esatta. (Gli altri bytesN restano fuori profilo.)
+#   bytes          stringa ^0x([0-9a-fA-F]{2})*$.
+#   string         str JSON (un intero NON diventa la sua forma decimale).
+#   bool           true / false JSON.
+#   T[] / T[k]     array JSON; per T[k] esattamente k elementi.
+#
+# Le classi di caratteri sono esplicite ([0-9], non \d, che in Python accetta cifre Unicode) e il
+# confronto usa fullmatch (un `$` accetta un "\n" finale).
+_RE_DEC_UINT = re.compile(r"0|[1-9][0-9]{0,77}")       # 2**256 ha 78 cifre: nessuna int() quadratica
+_RE_DEC_INT = re.compile(r"-?(?:0|[1-9][0-9]{0,77})")
+_RE_ADDRESS = re.compile(r"0x[0-9a-fA-F]{40}")
+_RE_BYTES32 = re.compile(r"0x[0-9a-fA-F]{64}")
+_RE_BYTES = re.compile(r"0x(?:[0-9a-fA-F]{2})*")
+_RE_TIPO_INT = re.compile(r"(u?)int([0-9]+)")
+_RE_ARRAY = re.compile(r"(.+)\[((?:[1-9][0-9]*)?)\]")
+
+
+def _intero_stretto(tipo: str, firmato: bool, valore) -> int:
+    if isinstance(valore, bool):                     # bool e' sottoclasse di int in Python
+        raise ValoreNonConforme(f"{tipo}: bool non e' un intero")
+    if isinstance(valore, int):
+        return valore
+    if isinstance(valore, str):
+        if (_RE_DEC_INT if firmato else _RE_DEC_UINT).fullmatch(valore) and valore != "-0":
+            return int(valore)
+        raise ValoreNonConforme(f"{tipo}: stringa non in forma decimale canonica: {valore[:40]!r}")
+    raise ValoreNonConforme(f"{tipo}: atteso intero JSON o stringa decimale, trovato {type(valore).__name__}")
+
+
+def _stringa_che_combacia(tipo: str, regex, valore) -> str:
+    if not isinstance(valore, str) or not regex.fullmatch(valore):
+        raise ValoreNonConforme(f"{tipo}: valore non conforme a {regex.pattern}: {str(valore)[:48]!r}")
+    return valore
+
+
+def encode_value(tipo: str, valore, types: dict | None = None) -> bytes:
+    """encodeData secondo EIP-712, con codifica STRETTA dei valori JSON (vedi la regola sopra).
+
+    Copre i tipi atomici del profilo x402 (string, uintN/intN, address, bool, bytes32, bytes), le
+    struct annidate (hashStruct ricorsivo) e gli ARRAY: l'encoding di un array e' keccak256 della
     CONCATENAZIONE degli encodeData dei suoi elementi — non del JSON dell'array. Il supporto agli
     array e' stato aggiunto quando il vettore 019 lo ha preteso: prima la libreria sollevava
     ValueError, che e' esattamente il buco che quel vettore esiste per trovare.
+
+    Un valore che non ha la forma ammessa per il suo tipo solleva ValoreNonConforme: la libreria non
+    indovina cosa intendeva il mittente (vettori 056-075).
     """
-    if tipo.endswith("]"):
-        base = tipo[:tipo.rindex("[")]
+    m = _RE_ARRAY.fullmatch(tipo)
+    if m:
+        base, lunghezza = m.group(1), m.group(2)
+        if not isinstance(valore, list):
+            raise ValoreNonConforme(f"{tipo}: atteso un array JSON, trovato {type(valore).__name__}")
+        if lunghezza and len(valore) != int(lunghezza):
+            raise ValoreNonConforme(f"{tipo}: {len(valore)} elementi, il tipo ne dichiara {lunghezza}")
         return keccak256(b"".join(encode_value(base, el, types) for el in valore))
     if types and tipo in types:
         return hash_struct(tipo, types, valore)
     if tipo == "string":
-        return keccak256(str(valore).encode("utf-8"))
+        if not isinstance(valore, str):
+            raise ValoreNonConforme(f"string: trovato {type(valore).__name__}")
+        return keccak256(valore.encode("utf-8"))
     if tipo == "bytes":
-        # Dal JSON arriva una stringa "0x…", non byte raw: senza questo, keccak256 su una str solleva
-        # TypeError. Bug dormiente trovato dalla revisione Gemini 3.1 Pro dell'11/09/2026 (nessun
-        # vettore usava `bytes` dinamico, solo `bytes32`). Coperto dal vettore 054.
-        return keccak256(bytes.fromhex(str(valore)[2:]) if isinstance(valore, str) else valore)
-    if tipo.startswith("uint") or tipo.startswith("int"):
+        # Dal JSON arriva una stringa "0x…", non byte raw (bug dormiente trovato dalla revisione
+        # Gemini 3.1 Pro dell'11/09/2026, vettore 054). bytes.fromhex salta gli spazi: la regex prima.
+        return keccak256(bytes.fromhex(_stringa_che_combacia(tipo, _RE_BYTES, valore)[2:]))
+    m = _RE_TIPO_INT.fullmatch(tipo)
+    if m:
         # `intN` e' con segno: complemento a due su 32 byte (EIP-712: "encoded as uint256/int256").
         # Prima mancava signed=… e un int256 negativo — messaggio VALIDO — sollevava OverflowError:
         # una libreria che rifiuta un messaggio valido e' peggio di una che esplode. Vettore 053.
         # Un valore fuori dal range del tipo solleva OverflowError -> per il runner e' encoding_error.
-        bits = int(tipo[4:] or 256) if tipo.startswith("uint") else int(tipo[3:] or 256)
-        v = int(valore)
-        if tipo.startswith("uint") and not (0 <= v < 2 ** bits):
+        firmato, bits = m.group(1) == "", int(m.group(2))
+        if bits % 8 or not 8 <= bits <= 256 or m.group(2).startswith("0"):
+            raise ValoreNonConforme(f"{tipo}: larghezza non ammessa da EIP-712 (8..256, multipla di 8)")
+        v = _intero_stretto(tipo, firmato, valore)
+        if not firmato and not (0 <= v < 2 ** bits):
             raise OverflowError(f"{tipo}: {v} fuori range")
-        if tipo.startswith("int") and not (-(2 ** (bits - 1)) <= v < 2 ** (bits - 1)):
+        if firmato and not (-(2 ** (bits - 1)) <= v < 2 ** (bits - 1)):
             raise OverflowError(f"{tipo}: {v} fuori range")
-        return v.to_bytes(32, "big", signed=tipo.startswith("int"))
+        return v.to_bytes(32, "big", signed=firmato)
     if tipo == "address":
-        return bytes(12) + bytes.fromhex(str(valore)[2:])
+        return bytes(12) + bytes.fromhex(_stringa_che_combacia(tipo, _RE_ADDRESS, valore)[2:])
     if tipo == "bool":
+        if not isinstance(valore, bool):
+            raise ValoreNonConforme(f"bool: atteso true/false JSON, trovato {type(valore).__name__}")
         return (1 if valore else 0).to_bytes(32, "big")
     if tipo == "bytes32":
-        b = bytes.fromhex(str(valore)[2:]) if isinstance(valore, str) else valore
-        return b.rjust(32, b"\x00")
+        return bytes.fromhex(_stringa_che_combacia(tipo, _RE_BYTES32, valore)[2:])
     raise ValueError(f"tipo non gestito nel profilo x402: {tipo}")
+
+
+_ORDINE_DOMINIO_EIP712 = [("name", "string"), ("version", "string"), ("chainId", "uint256"),
+                          ("verifyingContract", "address"), ("salt", "bytes32")]
+_RE_NOME_STRUCT = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*", re.ASCII)
+_RE_TIPO_ATOMICO = re.compile(r"u?int[0-9]*|address|bool|string|bytes[0-9]*", re.ASCII)
+
+
+def valida_struttura(dominio, types) -> None:
+    """Il dominio e i nomi dei tipi hanno UNA sola lettura (25/09/2026, revisione 4 menti round 2).
+
+    Prima venivano ignorati: membri del dominio fuori dall'elenco EIP-712 (`chainID`, `verifyingcontract`),
+    un `types.EIP712Domain` dichiarato ma diverso dai campi presenti (anche `chainId` dichiarato `string`),
+    e una struct chiamata come un tipo atomico (`address`), che ne oscurava il tipo. In tutti e tre i casi il
+    JSON mostrato non era il messaggio firmato; eth-account li rifiuta o calcola un digest diverso.
+    """
+    if not isinstance(dominio, dict) or not isinstance(types, dict):
+        raise ValoreNonConforme("domain e types devono essere oggetti JSON")
+    noti = [n for n, _ in _ORDINE_DOMINIO_EIP712]
+    estranei = sorted(k for k in dominio if k not in noti)
+    if estranei:
+        raise ValoreNonConforme(f"domain: membri estranei a EIP-712 {estranei} (i nomi ammessi sono {noti})")
+    if "EIP712Domain" in types:
+        atteso = [{"name": n, "type": t} for n, t in _ORDINE_DOMINIO_EIP712 if n in dominio]
+        if types["EIP712Domain"] != atteso:
+            raise ValoreNonConforme("types.EIP712Domain non coincide con i campi del domain (nomi, tipi e ordine EIP-712)")
+    for nome in types:
+        if not isinstance(nome, str) or not _RE_NOME_STRUCT.fullmatch(nome):
+            raise ValoreNonConforme(f"nome di struct non valido: {nome!r}")
+        if nome != "EIP712Domain" and _RE_TIPO_ATOMICO.fullmatch(nome):
+            raise ValoreNonConforme(f"struct chiamata come un tipo atomico: {nome!r} ne oscurerebbe il tipo")
 
 
 def hash_struct(primary: str, types: dict, dati: dict) -> bytes:
@@ -157,6 +257,7 @@ def domain_separator(dominio: dict, campi: list | None = None) -> bytes:
 def signing_digest(dominio: dict, primary: str, types: dict, messaggio: dict,
                    campi_dominio: list | None = None) -> bytes:
     """Il digest EIP-712 firmato: keccak256(0x19 0x01 ‖ domainSeparator ‖ hashStruct(message))."""
+    valida_struttura(dominio, types)
     return keccak256(b"\x19\x01" + domain_separator(dominio, campi_dominio)
                      + hash_struct(primary, types, messaggio))
 
