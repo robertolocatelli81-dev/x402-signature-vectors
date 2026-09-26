@@ -4,7 +4,7 @@ Vectors are versioned so that an implementation can state *which* set it passes.
 stable and never reused: a vector that turns out to be wrong is corrected in place and the change is
 recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
-## Unreleased
+## 1.4.0 — 2026-09-26
 
 - **One reading of the text, the domain and the type names (vectors 077–081, 25/09/2026, second review round).**
   After the strict value forms, the JSON shown could still differ from the message signed:
@@ -21,9 +21,7 @@ recorded here, so a verdict recorded against v0.2.0 stays meaningful.
   `"-0"` for an `intN`, the width-less type `uint`, and the zero-length array type `uint256[0]`. None is a
   canonical EIP-712 form.
 
-Fixes for two defects measured by a malformed-input fuzz on 2026-09-25. No version bump yet: the
-manifest still says 1.3.0, and the "Current set" line of the README carries that version because
-`tools/check_docs.py` ties it to the manifest.
+Fixes for two defects measured by a malformed-input fuzz on 2026-09-25.
 
 - **Strict value encoding in `lib/eip712.py`.** The encoder called `int()`, `str()` and
   `bytes.fromhex()` on JSON values, which *normalize*: `10000.9`, `"١٠٠٠٠"` (Arabic-Indic digits),

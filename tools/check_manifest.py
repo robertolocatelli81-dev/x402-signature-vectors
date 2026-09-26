@@ -29,7 +29,7 @@ def genera():
             rel = os.path.relpath(os.path.join(radice, f), BASE)
             voci[rel] = sha256(os.path.join(BASE, rel))
     vettori = sorted(v for v in voci if v.startswith("vectors/"))
-    return {"suite": "x402-signature-vectors", "version": "1.3.0",
+    return {"suite": "x402-signature-vectors", "version": "1.4.0",
             "counts": {"files": len(voci), "vectors": len(vettori)},
             "files": dict(sorted(voci.items()))}
 
