@@ -6,22 +6,11 @@ recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
 ## 1.4.0 — 2026-09-26
 
-- **One reading of the text, the domain and the type names (vectors 077–081, 25/09/2026, second review round).**
-  After the strict value forms, the JSON shown could still differ from the message signed:
-  a repeated member (`"value": 99999999999, "value": 10000`: `json` keeps the last) — new class
-  `json_ambiguous` and a strict reader `verify.leggi_json_stretto` / `verdetto_da_testo`; a domain member
-  outside the five EIP-712 names; a `types.EIP712Domain` that does not match the domain (including `chainId`
-  declared `string`); a struct named like an atomic type. Each new vector carries a real signature that the
-  previous runner ACCEPTED (5/5 measured) and that this one rejects for the declared class; each check,
-  ablated, turns exactly its own vectors red. eth-account 0.14.0 raises on 078 (`Invalid domain key`) and 079
-  (`ValidationError`), computes a different digest on 081, and cannot see 077 (it receives a parsed dict).
-  `tools/crossvalidate.py` now applies the same two reading rules before the cryptographic check.
-- **Declared, not repaired:** the strict value forms of the first round also turned three inputs that the
-  1.3.0 runner accepted, and that eth-account 0.14.0 encodes with the same digest, into `encoding_error`:
-  `"-0"` for an `intN`, the width-less type `uint`, and the zero-length array type `uint256[0]`. None is a
-  canonical EIP-712 form.
+Two review rounds on 25/09/2026: a malformed-input fuzz (vectors 056–076) and a second round on the text of the
+payload (077–081). Figures dated 25/09 are from those rounds and were not all re-measured; the 26/09 re-run on the
+release commit is at the end of this entry.
 
-Fixes for two defects measured by a malformed-input fuzz on 2026-09-25.
+### First round (056–076): fixes for two defects measured by the malformed-input fuzz
 
 - **Strict value encoding in `lib/eip712.py`.** The encoder called `int()`, `str()` and
   `bytes.fromhex()` on JSON values, which *normalize*: `10000.9`, `"١٠٠٠٠"` (Arabic-Indic digits),
@@ -29,32 +18,64 @@ Fixes for two defects measured by a malformed-input fuzz on 2026-09-25.
   instead of `0x`, or with spaces inside, encoded as the clean value; `"false"` encoded as `true`; the
   string `"123"` typed `uint256[]` encoded as `[1, 2, 3]`; a `uint256[2]` with three elements and a
   `uint7` were encoded anyway. The runner therefore returned `accept` on messages whose displayed JSON
-  is not the signed message. Now each EIP-712 type admits one JSON form (table in the README, rule in
+  is not the signed message. Now each EIP-712 type admits one reading (table in the README, rule in
   the `lib/eip712.py` source) and anything else is `encoding_error`. Admitted for integers: a JSON
-  integer or a canonical ASCII decimal string; hex strings (`"0x2710"`) are **not** admitted — one
-  textual form per number is the point.
+  integer or its canonical ASCII decimal string, both the same number, and no other spelling; hex strings
+  (`"0x2710"`) are **not** admitted — one textual form per number is the point.
 - **056–076**, 21 new vectors: 20 `reject` / `encoding_error`, each signed by the test key over the
   message a normalizing parser derives, plus 076 `accept` (canonical decimal string `"10000"`, same
   signature as 003). Measured: the runner at `fa91c0f` accepts all 20 rejects (56/76 conformant); with
-  the fix 76/76. 31 accept / 45 reject. All 76 vectors regenerate byte-identical from
-  `tools/genera_vettori*.py`; 001–055 are unchanged.
+  the fix 76/76. 31 accept / 45 reject at the end of this round. All 76 vectors regenerated
+  byte-identical from `tools/genera_vettori*.py` on 25/09; 001–055 are unchanged.
 - **eth-account 0.14.0 differs from this rule on 6 of the 20** (measured with `encode_typed_data` +
   `Account.recover_message`, offline): it recovers the declared signer on 059–063 (decimal strings with
   non-ASCII digits, whitespace, `_`, `+`, leading zeros) and 074 (fixed-array length). The other 14 it
   refuses or recovers to a different address. Its encoding still agrees with `lib/` on every encodable
-  vector: 54 compared, 0 divergences (the 22 non-encodable ones are skipped by construction).
+  vector: 54 compared, 0 divergences (the 22 non-encodable ones are skipped by construction, and the 6
+  differences above are all among them).
 - **New reject class `input_not_object`.** A payload that is not a JSON object (`null`, array, string,
   number, boolean) raised `AttributeError` on `vec.get`, which landed in the signature branch and came
   out as `signature_malformed`: right verdict, wrong reason. Added to `tools/reject_reasons.py`, the
   schema enum and the README list; `tools/check_docs.py` now fails if those three lists disagree, and
   `tools/fuzz_runner.py` checks 10 non-object roots (0/10 right at `fa91c0f`, 10/10 now) plus a table
-  of 20 admitted and 44 non-admitted value forms (31 wrong at `fa91c0f`, 0 now).
+  of 20 admitted and 44 non-admitted value forms (31 wrong at `fa91c0f`, 0 after the fix; counts of 25/09).
 - **`verify.py digest_di`**: `vec["eip712"]` is read inside the `try`, so a vector without the block is
   `encoding_error` instead of an unhandled `KeyError`.
 - **Schema**: the value constraints on `eip712.domain` members were removed (the members stay
   required). A malformed domain value is what 058, 067 and 071 test; rejecting it is the verifier's job,
   as the schema already said for the signature length.
 - **`tools/check_manifest.py --genera`** now ends `manifest.json` with a newline.
+
+### Second round (077–081)
+
+- **One reading of the text, the domain and the type names.**
+  After the strict value forms, the JSON shown could still differ from the message signed:
+  a repeated member (`"value": 99999999999, "value": 10000`: `json` keeps the last) — new class
+  `json_ambiguous` and a strict reader `verify.leggi_json_stretto` / `verdetto_da_testo`; a domain member
+  outside the five EIP-712 names; a `types.EIP712Domain` that does not match the domain (including `chainId`
+  declared `string`); a struct named like an atomic type. Each new vector carries a real signature; this runner
+  rejects each for the declared class, and each check, ablated on 25/09, turned exactly its own vectors red.
+  Measured 26/09: the 1.3.0 runner (`af02a79`) accepts all five, and all 25 rejects added in 1.4.0 (056–081 without
+  076): 56/81 conformant.
+- **eth-account 0.14.0 on 077–081** (measured 26/09 with `encode_typed_data` + `Account.recover_message`): it raises
+  on 078 (`Invalid domain key`) and 079 (`ValidationError`); it recovers a different address on 081 (its digest
+  differs); it recovers the declared signer on 080 (`chainId` declared `string` in `types.EIP712Domain`) — it
+  accepts that message; and it cannot see 077, because it receives a dict already parsed (and recovers the declared
+  signer from it). These five are among the 27 vectors that `tools/crossvalidate_eip712.py` skips (no digest is
+  declared for a non-encodable message), so its "0 divergences" does not cover them; the results above are direct
+  calls. `tools/crossvalidate.py` now applies the same two reading rules before the cryptographic check.
+- **Declared, not repaired (measured 25/09):** the strict value forms of the first round also turned three
+  inputs that the 1.3.0 runner accepted, and that eth-account 0.14.0 encodes with the same digest as the 1.3.0 runner, into
+  `encoding_error`: `"-0"` for an `intN`, the width-less type `uint`, and the zero-length array type `uint256[0]`.
+  None has a canonical form under the rule in the README: the EIP-712 text states that "there are no aliases `uint` and `int`",
+  `-0` is not the canonical decimal of 0, and the EIP-712 text is silent on zero-length arrays.
+
+### Re-run on 26/09/2026 on the release commit
+
+81 vectors, 81 conformant (31 `accept` / 50 `reject`); schema 81/81; manifest 112 files, every sha256 matching; all
+81 vectors regenerated from `tools/genera_vettori*.py` into an empty directory, byte-identical; `tools/crossvalidate.py`
+(coincurve + eth-hash): 81 re-verified, 0 discordant; `tools/crossvalidate_eip712.py` (eth-account 0.14.0): 54
+compared, 27 skipped, 0 divergences; `tools/fuzz_runner.py`: no panic, classes and forms as declared.
 
 ## 1.3.0 — 2026-09-11
 
