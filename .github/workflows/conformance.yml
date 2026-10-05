@@ -10,8 +10,8 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: { python-version: "3.11" }
 
       # Nessuna installazione: la suite gira sulla sola stdlib, ed è metà del punto.
@@ -33,8 +33,8 @@ jobs:
   crossvalidate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: { python-version: "3.11" }
       # Le librerie di riferimento servono SOLO qui: dimostrano che lib/ non ha un punto cieco
       # proprio. La suite non dipende da loro.
