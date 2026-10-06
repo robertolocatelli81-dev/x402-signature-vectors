@@ -4,6 +4,13 @@ Vectors are versioned so that an implementation can state *which* set it passes.
 stable and never reused: a vector that turns out to be wrong is corrected in place and the change is
 recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
+## Unreleased
+
+Review attributions no longer name the reviewing models (the reviews are still recorded as independent
+adversarial reviews, with their dates and findings). The two raw review transcripts under `audit/` were
+removed from the tree (they remain in the repository history); `manifest.json` regenerated: 110 files, 81 vectors.
+No vector, verdict or tool changed.
+
 ## 1.4.0 — 2026-09-26
 
 Two review rounds on 25/09/2026: a malformed-input fuzz (vectors 056–076) and a second round on the text of the
@@ -79,7 +86,7 @@ compared, 27 skipped, 0 divergences; `tools/fuzz_runner.py`: no panic, classes a
 
 ## 1.3.0 — 2026-09-11
 
-Second adversarial review (Gemini 3.1 Pro), this time over the complete code. Everything it found was
+Second independent adversarial review, this time over the complete code. Everything it found was
 checked against the code and the curve; everything that held is fixed here. Rule applied: a wrong
 statement is not softened, it is replaced by the true one.
 
@@ -109,7 +116,7 @@ statement is not softened, it is replaced by the true one.
 
 ## 1.2.0 — 2026-09-11
 
-Adversarial review (Gemini 3.1 Pro, same day) of the whole v1.1.0. Three findings survived
+Independent adversarial review (same day) of the whole v1.1.0. Three findings survived
 verification and are fixed here; the others were checked against the code and rejected (r=0/s=0 are
 vectors 013/014; the domain mapping in x402 PR #324 reads `extra` from the *resource server's*
 requirements and settlement uses the contract's own domain on-chain).

@@ -6,7 +6,7 @@ chiunque, per qualunque motivo. Qui si simulano le due mappature difettose che i
 di catturare — il recupero al punto all'infinito serializzato come address(0) (la sentinella di
 `ecrecover` in Solidity) o come keccak256 di 64 byte zero (l'identita' rappresentata come (0,0)) —
 e si verifica che ENTRAMBE accetterebbero. Se una non accetta, il vettore non discrimina e il test
-fallisce. (Rilievo di Gemini 3.1 Pro, 11/09/2026: "stai testando il tuo hard-coding".)
+fallisce. (Rilievo della revisione indipendente, 11/09/2026: "stai testando il tuo hard-coding".)
 """
 import json
 import os

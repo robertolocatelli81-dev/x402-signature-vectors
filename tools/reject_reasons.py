@@ -3,7 +3,7 @@
 Perche' esiste: un runner che rifiuta tutto cio' che non capisce (giusto: l'input arriva dalla rete)
 puo' dare verde a un vettore ROTTO — un JSON con una chiave sbagliata produce un'eccezione, l'eccezione
 diventa "reject", e se il vettore si aspettava "reject" il runner dice CONFORME. Passa per il motivo
-sbagliato. (Rilievo di Gemini 3.1 Pro, 11/09/2026: prima di questo, 049 e 050 rifiutavano con la
+sbagliato. (Rilievo della revisione indipendente, 11/09/2026: prima di questo, 049 e 050 rifiutavano con la
 stessa ragione di un recupero fallito, e nessuno lo vedeva.)
 
 La classe e' dichiarata QUI, a mano, per ogni vettore — non dedotta dal runner, altrimenti il

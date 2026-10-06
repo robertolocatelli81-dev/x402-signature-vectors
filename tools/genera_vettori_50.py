@@ -326,7 +326,7 @@ def parte_due(v, campi3):
                              "firmatario viene accettata."],
                             signer=signer))
 
-    # ── G. confini di codifica trovati dalla revisione (Gemini 3.1 Pro, 11/09/2026) ──────
+    # ── G. confini di codifica trovati dalla revisione indipendente (11/09/2026) ──────
     # lib/eip712.py aveva due bug DORMIENTI perche' nessun vettore li toccava: int256 negativo ->
     # OverflowError (un messaggio VALIDO rifiutato), bytes dinamico -> TypeError. Questi vettori li
     # coprono, validati contro eth-account 0.14.0. Il 055 fissa un confine che entrambe le
