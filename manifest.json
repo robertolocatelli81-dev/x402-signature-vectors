@@ -2,14 +2,14 @@
   "suite": "x402-signature-vectors",
   "version": "1.4.0",
   "counts": {
-    "files": 110,
+    "files": 111,
     "vectors": 81
   },
   "files": {
-    ".github/workflows/conformance.yml": "67f53e998a4b306bd52a437e8a2f48b2fc517b6e7d58bd4d2ed368181226665d",
+    ".github/workflows/conformance.yml": "68ada79a7d6a5408bdefd6aa9ac3b434cf73263a4fc247cc3e9742668b52d455",
     ".gitignore": "53a0b2adecc6ddcc82f1542a209e791edb669904176d8c851a2b5a832d3d6288",
     ".gitleaks.toml": "897622f6d5d20265f81c32a00a05cba6a8cb6355ceba9121d8ff745522e05c13",
-    "CHANGELOG.md": "435379e5bf7b2d9c00de7ea568f0ddc8c0e7b32bf475cac689ebcb57af9902b9",
+    "CHANGELOG.md": "bab886a4376ddcad01d144a7ee72738b9aa1b56c4a94f8d8c8534213baaee015",
     "LICENSE": "b7e03adc9d081de26a861b20364cb45f9ec702bf3d44c981158d54a172db2187",
     "NOTICE": "9f5f4638f827405ed013824e687d45889e2e9647efe9e4217726f3a6087896f8",
     "README.md": "515310ea881b16c1e08a3e3f14d1fe50644fa174f3e0c47a62cfb3c6fa9056ad",
@@ -34,6 +34,7 @@
     "tools/genera_vettori_76.py": "a80748839e1d87c220106b924e68bbb0525d15e76b94aefea49984e41a4ef582",
     "tools/genera_vettori_81.py": "3385e42661b56c3aad80f9872e44186504825191c52991c7a9ae2eeb8e213e20",
     "tools/reject_reasons.py": "6806272b43fcc52f2e2b63b0d22a106ac80237e384a53ba48ac68f626e0bea45",
+    "tools/test_runner_schema.py": "e1dc554e80530ca0118c282e984b17a8c5dcb670c3a10b1550ff9b11ba2d225d",
     "vectors/001-eip3009-spec-example.json": "16f3581af0fe84d0081d460308a91f50bb5ed7a6ce4e5cba06148766c2cb1457",
     "vectors/002-eip2612-spec-example.json": "ef2ab43beb74b0231d538d2592e925b4264ca2e5094289b21924b485e182088c",
     "vectors/003-eip3009-generated-valid.json": "0682461c525565aa4f4decb34ed305e55cbf229e3d9703f1e8721fff2a7d671e",
@@ -115,6 +116,6 @@
     "vectors/079-domain-types-inconsistent.json": "a3babb4fa6f6e35dc66cdd408dff298c0521bf0e2c6420cb335af4f78902c49a",
     "vectors/080-domain-chainid-declared-string.json": "de6f0d57d4ce0799aaa8851427269fe729613cbfa3439200db39d461d7e6dc08",
     "vectors/081-struct-named-like-atomic-type.json": "19830fba2f8e388045d59f8462b7ac1d855b9dc2a3e4de63115a81a4de8bfc79",
-    "verify.py": "8a4cd93086d3be3cad0f0ba11ec702e1fcd70e249b97f19c93d0292df4383baa"
+    "verify.py": "b235262b687608993576ede99222c043c2c9d324d31154649455fc7ad06c167f"
   }
 }

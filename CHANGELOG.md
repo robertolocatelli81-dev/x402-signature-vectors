@@ -4,12 +4,23 @@ Vectors are versioned so that an implementation can state *which* set it passes.
 stable and never reused: a vector that turns out to be wrong is corrected in place and the change is
 recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
-## Unreleased
+## Unreleased — 2026-10-10 — the runner enforces the vector schema (closed)
+
+- `verify.py` validates every vector against `schema/vector.schema.json` (`additionalProperties: false` at the levels
+  the schema closes) BEFORE judging the signature: a vector carrying a field the schema does not define is `FALLITO`
+  with the reason `schema: <path>: campo non previsto '<field>'`, printed in full so the field is named (review 2026-10-11:
+  the first version cut the reason at 55/60 characters and dropped the field name; `tools/test_runner_schema.py`, run in CI,
+  plants the three fields in a temporary copy) (the container is read with the standard reader for this check, so the repeated-member
+  vector 077 still reaches the strict verdict path and rejects as `json_ambiguous`, as the suite expects). Measured
+  on 1.4.0 (2026-10-10): `x_unknown_2026` at the top level, inside `eip712` and inside `expected` left the vector
+  «conforme» with no trace in the runner's output; only the separate CI step `tools/check_schema.py` saw it. The
+  schema is unchanged; `verdetto()` / `verdetto_da_testo()` (the signature verdict on an already-read vector) are
+  unchanged — the closure is the runner's, where the suite's grammar is decided.
 
 Review attributions no longer name the reviewing models (the reviews are still recorded as independent
 adversarial reviews, with their dates and findings). The two raw review transcripts under `audit/` were
-removed from the tree (they remain in the repository history); `manifest.json` regenerated: 110 files, 81 vectors.
-No vector, verdict or tool changed.
+removed from the tree (they remain in the repository history); `manifest.json` regenerated at that commit: 110
+files, 81 vectors. That change touched no vector, verdict or tool.
 
 ## 1.4.0 — 2026-09-26
 

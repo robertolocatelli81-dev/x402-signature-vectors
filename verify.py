@@ -183,10 +183,21 @@ def main():
 
     vdir = os.path.join(BASE, "vectors")
     file = sorted(f for f in os.listdir(vdir) if f.endswith(".json"))
+    # Schema chiuso (10/10/2026): un vettore con un campo che lo schema non prevede NON e' un vettore della suite. Prima il
+    # runner lo leggeva e giudicava la firma ignorando il campo (misurato: `x_unknown_2026` al primo livello, in `eip712`
+    # e in `expected` → «conforme», nessuna traccia); lo schema lo rifiutava solo in CI, in un passo separato.
+    sys.path.insert(0, os.path.join(BASE, "tools"))
+    from check_schema import valida as _valida_schema          # noqa: E402
+    schema = json.load(open(os.path.join(BASE, "schema", "vector.schema.json"), encoding="utf-8"))
     righe, falliti = [], 0
     for nome in file:
         testo = open(os.path.join(vdir, nome), encoding="utf-8").read()
-        vec = json.loads(testo)          # SOLO per leggere expected/id: il verdetto passa dal lettore stretto
+        vec = json.loads(testo)          # SOLO per leggere expected/id e per lo schema: il verdetto passa dal lettore stretto
+        # (un vettore con un membro ripetuto, come 077, e' un vettore della suite che DEVE dare reject/json_ambiguous)
+        errori_schema = _valida_schema(vec, schema, "") if isinstance(vec, dict) else ["non e' un oggetto"]   # percorso senza il nome del file: il campo resta leggibile
+        if errori_schema:
+            falliti += 1; righe.append((str(vec.get("id", nome)) if isinstance(vec, dict) else nome, str(vec.get("origin", "?")) if isinstance(vec, dict) else "?",
+                                        "?", "?", "FALLITO", f"schema: {errori_schema[0]}")); continue   # intero: il campo non previsto e' NOMINATO
         v, rec, classe, perche = verdetto_da_testo(testo)
         atteso = vec["expected"]["verdict"]
         ok = v == atteso
@@ -209,7 +220,7 @@ def main():
 
     print(f"{'vettore':32s} {'origine':10s} {'atteso':8s} {'ottenuto':9s} {'esito':8s} ragione del reject")
     for r in righe:
-        print(f"{r[0]:32s} {r[1]:10s} {r[2]:8s} {r[3]:9s} {r[4]:8s} {r[5][:60]}")
+        print(f"{r[0]:32s} {r[1]:10s} {r[2]:8s} {r[3]:9s} {r[4]:8s} {r[5] if r[5].startswith('schema: ') else r[5][:60]}")
     print(f"\n{len(righe)} vettori · {len(righe)-falliti} conformi · {falliti} falliti")
     return 0 if falliti == 0 else 1
 
