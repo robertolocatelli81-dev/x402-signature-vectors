@@ -4,6 +4,8 @@
 
     python3 tools/genera_vettori_onchain.py                         # offline: write the vectors from
                                                                     # audit/onchain_sources.json
+    python3 tools/genera_vettori_onchain.py --confronta              # offline gate: the committed vectors are
+                                                                    # byte-identical to the rebuild
     python3 tools/genera_vettori_onchain.py --verifica RPC          # re-read every source from a public node and
                                                                     # compare it with audit/onchain_sources.json
     python3 tools/genera_vettori_onchain.py --raccogli RPC TX...    # write audit/onchain_sources.json from the chain
@@ -146,6 +148,16 @@ def main(argv):
         print(f"fonti confermate dal nodo: {len(src['transactions'])} transazioni, dominio e DOMAIN_SEPARATOR()")
         return 0
     vdir = os.path.join(BASE, "vectors")
+    if argv[:1] == ["--confronta"]:
+        # offline, without git: the committed vectors must be the bytes this tool writes from the sources
+        diversi = [v["id"] for v in vectors(src)
+                   if open(os.path.join(vdir, v["id"] + ".json"), encoding="utf-8").read()
+                   != json.dumps(annota(v), indent=2, ensure_ascii=False)]
+        if diversi:
+            print(f"VETTORI ONCHAIN DIVERSI DALLE FONTI: {diversi}")
+            return 1
+        print(f"vettori onchain identici alla ricostruzione dalle fonti: {len(src['transactions'])}")
+        return 0
     for vec in vectors(src):
         with open(os.path.join(vdir, vec["id"] + ".json"), "w", encoding="utf-8") as fh:
             json.dump(annota(vec), fh, indent=2, ensure_ascii=False)

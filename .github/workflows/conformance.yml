@@ -28,7 +28,9 @@ jobs:
       - name: Conformance run
         run: python3 verify.py
       - name: Real-payment vectors rebuild byte-identical from audit/onchain_sources.json (offline)
-        run: python3 tools/genera_vettori_onchain.py && git diff --exit-code -- vectors/
+        run: python3 tools/genera_vettori_onchain.py --confronta
+      - name: runner compares class, address and verdict (wrong expectations planted, each must fail)
+        run: python3 tools/test_runner_compares.py
       - name: runner closed schema (planted fields named, intact suite green)
         run: python3 tools/test_runner_schema.py
       - name: Audit of the specification examples (recomputed; must equal audit/spec_examples_audit.json)
@@ -37,6 +39,16 @@ jobs:
         run: python3 tools/fuzz_runner.py
       - name: Positive control of the point-at-infinity vectors (a defective recovery must ACCEPT them)
         run: python3 tools/discriminate_infinity.py
+
+  positive-control:
+    # 15 sabotages of lib/, verify.py and the runner, one per fresh copy: every one must be caught by a gate above
+    # and change behaviour on a batch that is not the vectors (audit/POSITIVE_CONTROL.md). About 17 minutes.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with: { python-version: "3.11" }
+      - run: python3 tools/positive_control.py
 
   crossvalidate:
     runs-on: ubuntu-latest
