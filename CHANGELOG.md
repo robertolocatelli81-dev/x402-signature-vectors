@@ -6,6 +6,13 @@ recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
 ## Unreleased — 2026-10-10 — the runner enforces the vector schema (closed)
 
+README rewritten on 2026-11-13: problem, finding, run, evidence first; limits in "Guarantees and assumptions".
+Upstream facts re-measured against `x402-foundation/x402@2178d4b` (the repository `coinbase/x402` now points to):
+the reused signature appears 15 times in 13 documents under `specs/` (the README said seven times in five), the
+eth-account row now says 27 skipped vectors (it said 22; `tools/crossvalidate_eip712.py` prints 27). `CITATION.cff`
+added (Zenodo concept DOI 10.5281/zenodo.24172853, v1.4.0 DOI 10.5281/zenodo.24172854). No vector, verdict or
+tool changed.
+
 - `verify.py` validates every vector against `schema/vector.schema.json` (`additionalProperties: false` at the levels
   the schema closes) BEFORE judging the signature: a vector carrying a field the schema does not define is `FALLITO`
   with the reason `schema: <path>: campo non previsto '<field>'`, printed in full so the field is named (review 2026-10-11:

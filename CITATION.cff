@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use these vectors, cite them as below. This is not an official x402 Foundation or Coinbase artifact."
+title: "x402 signature conformance vectors"
+type: software
+version: 1.4.0
+date-released: "2026-11-12"
+doi: 10.5281/zenodo.24172853
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.24172853
+    description: "Concept DOI: always resolves to the latest version"
+  - type: doi
+    value: 10.5281/zenodo.24172854
+    description: "Version 1.4.0"
+license: Apache-2.0
+authors:
+  - family-names: Locatelli
+    given-names: Roberto
+repository-code: "https://github.com/robertolocatelli81-dev/x402-signature-vectors"
+abstract: "Byte-level conformance vectors for the signature layer of x402: EIP-712 typed-data digests and secp256k1 recovery for the exact scheme on EVM (EIP-3009, Permit2 witness transfer, EIP-2612 permit), with the expected verdict, the reject class and the intermediate hashes of every vector, checked by a runner that needs only the Python standard library."
+keywords:
+  - x402
+  - EIP-712
+  - secp256k1
+  - conformance vectors
+  - EIP-3009
+  - Permit2

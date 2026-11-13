@@ -2,17 +2,18 @@
   "suite": "x402-signature-vectors",
   "version": "1.4.0",
   "counts": {
-    "files": 111,
+    "files": 112,
     "vectors": 81
   },
   "files": {
     ".github/workflows/conformance.yml": "68ada79a7d6a5408bdefd6aa9ac3b434cf73263a4fc247cc3e9742668b52d455",
     ".gitignore": "53a0b2adecc6ddcc82f1542a209e791edb669904176d8c851a2b5a832d3d6288",
     ".gitleaks.toml": "897622f6d5d20265f81c32a00a05cba6a8cb6355ceba9121d8ff745522e05c13",
-    "CHANGELOG.md": "bab886a4376ddcad01d144a7ee72738b9aa1b56c4a94f8d8c8534213baaee015",
+    "CHANGELOG.md": "4556edc383d7512dd26126862a8e43bd5839037e74ab2c047c837010f37d40d2",
+    "CITATION.cff": "b06c0bb61b7f173ea867758e226329e62a0c6629760d4f3cac159097894b86c0",
     "LICENSE": "b7e03adc9d081de26a861b20364cb45f9ec702bf3d44c981158d54a172db2187",
     "NOTICE": "9f5f4638f827405ed013824e687d45889e2e9647efe9e4217726f3a6087896f8",
-    "README.md": "515310ea881b16c1e08a3e3f14d1fe50644fa174f3e0c47a62cfb3c6fa9056ad",
+    "README.md": "1a3f86dbf61fc8b98b83fa8c744dce9424d68c739ebfff05916fe359d1242b7b",
     "SECURITY.md": "2846bba1077b6d85b044d073868bb42db0888e2ef7a29da66f6bc94f016f03ae",
     "audit/SPEC_EXAMPLES_AUDIT.md": "e43b82c9789fdbd4ed57e4a91d33b6f95fa325bd394bfacd567598dfc9a48988",
     "audit/crossvalidation.json": "7add270fae6f7e635cf330726e28ba68e4fbdf15b940d04e96934f2267511201",
