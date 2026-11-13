@@ -6,14 +6,37 @@ recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
 ## 1.5.0 — unreleased (work since 1.4.0; no tag yet)
 
-### 2026-10-10 — the runner enforces the vector schema (closed)
+### 2026-11-13 — specification, audit at `2178d4b`, two official SDKs, real payments, positive control
 
-README rewritten on 2026-11-13: problem, finding, run, evidence first; limits in "Guarantees and assumptions".
-Upstream facts re-measured against `x402-foundation/x402@2178d4b` (the repository `coinbase/x402` now points to):
-the reused signature appears 15 times in 13 documents under `specs/` (the README said seven times in five), the
-eth-account row now says 27 skipped vectors (it said 22; `tools/crossvalidate_eip712.py` prints 27). `CITATION.cff`
-added (Zenodo concept DOI 10.5281/zenodo.24172853, v1.4.0 DOI 10.5281/zenodo.24172854). No vector, verdict or
-tool changed.
+- **`SPEC.md`** (1.1): the vector format field by field, the value forms, the order of the checks, the closed list
+  of reject classes, three levels of conformance, the input/output contract of an adapter
+  (`schema/adapter-result.schema.json`), how divergences are classified. `tools/check_spec.py` (CI) checks that every
+  field of the two schemas has one clause and every clause a field (28/28), with a built-in positive control.
+- **Audit re-derived at `x402-foundation/x402@2178d4b`**: all 15 occurrences of the reused signature in 13
+  documents — 7 valid (one message), 5 do not verify, 3 not encodable. Two models of the September audit were
+  wrong: `erc20_gas_sponsoring.md` carries the signature in a Permit2 payload (it recovers to `0x468d6ad8…`, not
+  `0xd259c196…`), and `sign-in-with-x.md` does publish the signed SIWE string (it recovers to `0x5b2acbca…`; the case
+  was "indicative"). `tools/audit_spec_examples.py` was not a gate (it rewrote its JSON and exited 0); it now exits 1
+  when the recomputation differs, and `--specs` checks every case against the upstream text.
+- **`tools/check_manifest.py` in a git worktree**: a `.git` file was reported as undeclared and recorded by
+  `--genera`; it is skipped now (`tools/test_check_manifest.py`, failed on the old code). `node_modules` skipped too.
+- **Two official SDKs** (`@x402/evm` 2.31.0, `x402` 2.28.0, tagged at `07c4caf`): adapters in `tools/adapters/`,
+  runner `tools/run_sdk_adapters.py`, results `audit/SDK_RESULTS.md` / `audit/sdk_results.json`, CI job `sdk`. 19
+  divergences, all on rules of this suite or on inputs that cannot reach the entry through x402; three findings on
+  reason codes (TypeScript `invalid_exact_evm_signature` vs the specified `invalid_exact_evm_payload_signature`; the
+  two facilitators disagree on an empty domain `name`/`version`; Python calls a wrong-length EOA signature an
+  undeployed smart wallet). `tools/test_sdk_adapters.py` was committed before the adapters.
+- **Vectors 082–084** (`origin` `onchain`, new): three x402 payments settled on Base Sepolia by the signer the
+  default facilitator publishes, derived from calldata; sources in `audit/onchain_sources.json`, rebuilt offline in
+  CI (`tools/genera_vettori_onchain.py --confronta`). The contract's `DOMAIN_SEPARATOR()` equals the separator the
+  suite computes. 84 vectors, 34 accept / 50 reject; `crossvalidate_eip712.py` 57 compared, 0 divergences.
+- **Positive control** (`tools/positive_control.py`, CI job `positive-control`): 15 sabotages, 15 caught, 15
+  non-equivalent. Before `tools/test_runner_compares.py` the runner's class and address comparisons could be
+  switched off with every gate green (13/15); `audit/POSITIVE_CONTROL.md`.
+- README rewritten: problem, finding, run, evidence first; limits in "Guarantees and assumptions"; `CITATION.cff`
+  (Zenodo concept DOI 10.5281/zenodo.24172853, v1.4.0 DOI 10.5281/zenodo.24172854).
+
+### 2026-10-10 — the runner enforces the vector schema (closed)
 
 - `verify.py` validates every vector against `schema/vector.schema.json` (`additionalProperties: false` at the levels
   the schema closes) BEFORE judging the signature: a vector carrying a field the schema does not define is `FALLITO`

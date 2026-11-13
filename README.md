@@ -2,8 +2,10 @@
 
 Byte-level test vectors for the **signature layer** of [x402](https://github.com/x402-foundation/x402):
 EIP-712 typed-data digests and secp256k1 recovery for the `exact` scheme on EVM (EIP-3009, Permit2 witness
-transfer, EIP-2612 permit). 84 JSON vectors, each with the expected verdict, the reason class of every reject
-and the intermediate hashes, checked by a runner that needs only the Python standard library.
+transfer, EIP-2612 permit). 84 JSON vectors — three of them from real x402 payments — each with the expected
+verdict, the reason class of every reject and the intermediate hashes, checked by a runner that needs only the
+Python standard library, and run through the official TypeScript and Python SDKs. Format and meaning of
+"conforms": [`SPEC.md`](SPEC.md).
 
 ## The problem
 
@@ -26,17 +28,60 @@ example of `scheme_exact_evm.md` (Base Sepolia USDC), which `x402-specification-
 Permit2 witness transfers and as an ERC-4361 sign-in. An ECDSA signature binds one digest, so those examples
 cannot verify against the declared signer.
 
-`tools/audit_spec_examples.py` reproduces the two EIP-712 cases with the domain the example implies
-(USDC on Base Sepolia, `version` "2"):
+`tools/audit_spec_examples.py` recomputes every occurrence with the domain each example implies (a CI gate):
 
-| example | standard | result |
+| occurrences | message as published | result |
 |---|---|---|
-| `schemes/exact/scheme_exact_evm.md` | EIP-3009 `TransferWithAuthorization` | **valid**: recovers to the declared `from` (`0x857b0651…`) |
-| `extensions/eip2612_gas_sponsoring.md` | EIP-2612 `Permit` | **placeholder**: recovers to `0xd259c196…` |
+| 7 (`scheme_exact_evm.md`, `x402-specification-v1.md`, `x402-specification-v2.md`, `transports-v1/{http,mcp}.md`, `transports-v2/{http,mcp}.md`) | EIP-3009 `TransferWithAuthorization`, Base Sepolia USDC | **valid**: recovers to the declared `0x857b0651…` |
+| 3 (`scheme_exact_evm.md`, `eip2612_gas_sponsoring.md`, `erc20_gas_sponsoring.md`) | Permit2 `PermitWitnessTransferFrom` | **does not verify**: `0x468d6ad8…` |
+| 1 (`eip2612_gas_sponsoring.md`) | EIP-2612 `Permit` | **does not verify**: `0xd259c196…` |
+| 1 (`sign-in-with-x.md`) | the ERC-4361 string the document publishes, EIP-191 | **does not verify**: `0x5b2acbca…` |
+| 3 (`transports-v1/a2a.md`, `transports-v2/a2a.md`, `scheme_upto_evm.md`) | placeholders (`0xServerWalletAddressHere`, `0xFacilitatorAddress…`) where an address is required | **not encodable** |
 
-A developer who takes a placeholder example as a reference builds a verifier against a value that cannot
-verify, and concludes that their own implementation is broken. The September audit, with every case:
-[`audit/SPEC_EXAMPLES_AUDIT.md`](audit/SPEC_EXAMPLES_AUDIT.md).
+With `r`, `s` and `v` fixed, the recovered key is an injective function of the digest, so the five "does not
+verify" verdicts hold for any domain or string one might assume instead. A developer who takes such an example as a
+reference builds a verifier against a value that cannot verify, and concludes that their own implementation is
+broken. Every case, with document, line and pinned commit: [`audit/SPEC_EXAMPLES_AUDIT.md`](audit/SPEC_EXAMPLES_AUDIT.md).
+
+## The official SDKs on the vectors
+
+The vectors run through `@x402/evm` 2.31.0 (npm) and `x402` 2.28.0 (PyPI), both released from `07c4caf`, the parent
+of `2178d4b`, on two entry points each: the SDK's typed-data signature check and the exact facilitator's `verify()`
+on EIP-3009 payloads, off chain (no RPC; the token contract's own on-chain check is not part of the measure).
+
+| SDK / entry | match | divergence | not applicable | not reached |
+|---|---|---|---|---|
+| TypeScript typed-data | 76 | 7 | 1 | 0 |
+| TypeScript facilitator | 47 | 2 | 31 | 4 |
+| Python typed-data | 75 | 8 | 1 | 0 |
+| Python facilitator | 49 | 2 | 31 | 2 |
+
+All 19 divergences are on rules of this suite that the standards leave open, or on inputs that cannot reach that
+entry through x402: both SDKs accept a raw recovery id `v` = 0 and normalise it before the chain, and both
+facilitators read `"010000"` as 10000. On these 84 inputs no SDK produced a signature verdict that breaks EIP-712,
+EIP-2, EIP-3009 or the x402 text. What the run did find is in the reason codes:
+
+- the TypeScript facilitator answers `invalid_exact_evm_signature` where `x402-specification-v2.md` §9 defines
+  `invalid_exact_evm_payload_signature`, which clients "MUST use" to match the condition (18 vectors); the Python
+  facilitator answers the specified code;
+- with an empty EIP-712 domain `name` or `version`, the TypeScript facilitator refuses the payment as missing its
+  domain and the Python facilitator accepts it;
+- the Python facilitator reports a 0-, 64- or 66-byte signature from an address with no code as an undeployed smart
+  wallet.
+
+Commands, versions, the entry points called, every divergence with its file and line, and the per-vector table:
+[`audit/SDK_RESULTS.md`](audit/SDK_RESULTS.md). The CI job `sdk` re-runs it on every push.
+
+## Signatures from real payments
+
+Vectors 082–084 are three x402 payments settled on Base Sepolia by the signer that the SDKs' default facilitator
+(`https://x402.org/facilitator`) publishes, each a successful `transferWithAuthorization` call to USDC from a
+different payer. The message and the signature come from the calldata alone; the domain comes from the contract,
+and the separator the suite computes equals the contract's `DOMAIN_SEPARATOR()` — the same separator the
+generated vectors have used since 003 for the domain the specification leaves unstated. All three verify with
+`verify.py`, with `coincurve` and with the four SDK entries; `eth-account` computes the same digests. Transaction hashes, blocks and derivation:
+[`audit/onchain_sources.json`](audit/onchain_sources.json), rebuilt offline in CI and re-read from any public node
+with `python3 tools/genera_vettori_onchain.py --verifica https://sepolia.base.org`.
 
 ## Run it
 
@@ -56,18 +101,22 @@ vettore                          origine    atteso   ottenuto  esito    ragione 
 
 Exit code 0 = every vector conformant, 1 = at least one failure, 2 = the bench self-test failed and no verdict
 was emitted. No `pip install`. To test your own verifier, feed it each `vectors/*.json` and compare its verdict,
-its reject class and, where it fails, the intermediate hashes in `expected` (see [Vector format](#vector-format)).
+its reject class and, where it fails, the intermediate hashes in `expected` (see [Vector format](#vector-format));
+[`SPEC.md`](SPEC.md) §5 defines the levels of conformance and the input/output contract of an adapter, with the two
+SDK adapters in `tools/adapters/` as examples.
 The other gates (`tools/check_manifest.py`, `check_schema.py`, `check_docs.py`, `audit_spec_examples.py`,
 `fuzz_runner.py`, …) run the same way; [`conformance.yml`](.github/workflows/conformance.yml) lists them all.
 
 ## Evidence
 
-- **CI**: [`conformance.yml`](.github/workflows/conformance.yml) runs on every push, every pull request and every Monday. Its two
-  jobs (`verify`, stdlib only; `crossvalidate`, with the reference libraries) passed on the latest run on
-  `master` (run 42638580919, 9 November 2026, commit `8d1af30`).
+- **CI**: [`conformance.yml`](.github/workflows/conformance.yml) runs on every push, every pull request and every
+  Monday, in four jobs: `verify` (stdlib only), `positive-control` (the gates against 15 sabotages),
+  `crossvalidate` (with the reference libraries) and `sdk` (the two official SDKs, pinned). The latest run on
+  `master` passed (run 42638580919, 9 November 2026, commit `8d1af30`, before the `positive-control` and `sdk` jobs
+  existed).
 - **Release**: [v1.4.0](https://github.com/robertolocatelli81-dev/x402-signature-vectors/releases/tag/v1.4.0)
   (tag on `985b46d`; release published 12 November 2026 with the tarball and `SHA256SUMS`). `master` is v1.4.0
-  plus the changes under "Unreleased" in [`CHANGELOG.md`](CHANGELOG.md).
+  plus the changes under "1.5.0 — unreleased" in [`CHANGELOG.md`](CHANGELOG.md).
 - **Archive**: Zenodo, concept DOI [10.5281/zenodo.24172853](https://doi.org/10.5281/zenodo.24172853) (resolves to
   the latest version), v1.4.0 DOI [10.5281/zenodo.24172854](https://doi.org/10.5281/zenodo.24172854). Citation
   metadata: [`CITATION.cff`](CITATION.cff).
@@ -79,6 +128,7 @@ The other gates (`tools/check_manifest.py`, `check_schema.py`, `check_docs.py`, 
 | **EIP-712 encoding vs `eth-account` 0.14.0** (`tools/crossvalidate_eip712.py`) | 57 vectors compared (the 27 whose message is not encodable by construction are skipped), **0 divergences**: arrays, nesting, NUL byte, partial domains, signed integers, dynamic bytes, undeclared fields and canonical decimal strings included |
 | **Primitives vs `coincurve`/libsecp256k1 and `eth-hash`** (`tools/crossvalidate.py`) | 2000 Keccak inputs, 500 signatures produced *by* libsecp256k1, 600 degenerate inputs checked for matching **rejections**, all 84 vectors re-verified with `coincurve`: 0 divergences |
 | **Reproducibility** | the five `tools/genera_vettori*.py` regenerate all 84 vectors **byte-identical** to the committed ones |
+| **The gates can fail** (`tools/positive_control.py`) | 15 sabotages of `lib/`, `verify.py` and the runner (Keccak padding, low-s removed or off by one, domain without `version`, unsorted `encodeType`, raw `v`, `r` = 0, lax JSON reader, array length, NUL, point at infinity, signer case, class / address / schema comparison off): **15 caught**, each changing behaviour on a batch that is not the vectors ([`audit/POSITIVE_CONTROL.md`](audit/POSITIVE_CONTROL.md)) |
 | **Hostile input** (`tools/fuzz_runner.py`) | 600 malformed vectors → 600 rejected, 0 unhandled exceptions; 10 non-object payloads → 10 `input_not_object`; strict value forms, 20 admitted + 44 not admitted → 0 wrong |
 
 ## Vector format
@@ -129,12 +179,14 @@ integrator must read with that function or call `verdetto_da_testo`. A domain me
 EIP-712 names, a `types.EIP712Domain` that does not match the domain's members (names, types, order), and
 a struct named like an atomic type (`address`) are `encoding_error`.
 
-`origin` separates two statuses that must not be mixed:
+`origin` separates three statuses that must not be mixed:
 
 - **`spec`** — payload and signature taken verbatim from the x402 specifications. The expected verdict
   is the audit result, whatever it is.
 - **`generated`** — signed here with the test key below, so that a valid vector exists even where the
   spec offers none.
+- **`onchain`** — taken from the calldata of a real x402 payment (082–084, see
+  [Signatures from real payments](#signatures-from-real-payments)).
 
 ```
 test private key  0x4646…4646   (published on purpose: a conformance vector must hold no secrets)
@@ -194,9 +246,10 @@ reconcile, and an undeclared file is a failure.
   the vectors checkable without dependencies. It is not an audited cryptographic library and must not be
   used in production. Its agreement with `eth-hash`, libsecp256k1 and `eth-account` is measured on the
   inputs listed above, not proven in general.
-- **Spec-derived vectors** (001, 002) reflect the x402 documents as audited in September 2026; the counts in
-  [What the published examples show](#what-the-published-examples-show) were re-measured on 13 November 2026
-  against `2178d4b`. The upstream examples can change after that commit.
+- **Spec-derived vectors** (001, 002) and the audit reflect the x402 documents at `2178d4b` (13 November 2026); the
+  upstream examples can change after that commit.
+- **SDK results** are off-chain verdicts of the pinned releases on these vectors, not a security assessment of the
+  SDKs; the Go and Java SDKs were not run.
 - **Adjacent layers** covered elsewhere: JSON canonicalisation vectors
   ([AlgoVoi JCS conformance vectors](https://github.com/chopmob-cloud/algovoi-jcs-conformance-vectors)), paid
   signed x402 conformance reports ([Cairn](https://cairnwake.com/reports.html)), protocol-level attacks
