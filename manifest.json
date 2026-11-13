@@ -2,11 +2,11 @@
   "suite": "x402-signature-vectors",
   "version": "1.4.0",
   "counts": {
-    "files": 113,
+    "files": 115,
     "vectors": 81
   },
   "files": {
-    ".github/workflows/conformance.yml": "68ada79a7d6a5408bdefd6aa9ac3b434cf73263a4fc247cc3e9742668b52d455",
+    ".github/workflows/conformance.yml": "68bd3efc754549864da9d56b03d72e03600fda3385ac9e58c8c7489a42edfc44",
     ".gitignore": "53a0b2adecc6ddcc82f1542a209e791edb669904176d8c851a2b5a832d3d6288",
     ".gitleaks.toml": "897622f6d5d20265f81c32a00a05cba6a8cb6355ceba9121d8ff745522e05c13",
     "CHANGELOG.md": "4556edc383d7512dd26126862a8e43bd5839037e74ab2c047c837010f37d40d2",
@@ -22,11 +22,13 @@
     "audit/spec_examples_audit.json": "b3981175ee06d11fc9f0307ce5499833f8af45c7063765550b8f2061b5cea051",
     "lib/eip712.py": "0273e5357cfd69e81b6d418ac3e9f31759620f18bc5303d5017974e179d5cb21",
     "lib/secp256k1.py": "7e10ceb85840d1049dc2fbdef4c03e14a5af9a29c78eba54d4393695402a1f69",
+    "schema/adapter-result.schema.json": "c0e7403bf8c747b7de0cc79d327dad6de0cffd72c25649c68915c7caca9798a6",
     "schema/vector.schema.json": "365b1008a5b0f3280964a10eac7702bcf73d32b36147bd7226b57f16d1230013",
     "tools/audit_spec_examples.py": "23ea699e1acfb4f369ac4b1a48dd6f71982c58cf3d2f5c887b515d3c6e3db35c",
     "tools/check_docs.py": "ff492b2b44bc2316311b76916641cf46d12f7b270cfa12695d0371f46d9cf2a7",
     "tools/check_manifest.py": "3268e23e3c78272dee9117775cb5e88bd1cdbcd850668206b6be0ae2d40a593c",
     "tools/check_schema.py": "a954b052be1d133c772a6d42aaf844c1df0373251ccf67608901c3b0a7a4537b",
+    "tools/check_spec.py": "c90ddde19b2bb895c251971edce00f00874a994eb6041d60629a61cd55ad51c8",
     "tools/crossvalidate.py": "ff3f93fdb1d156a6aa653abbf48f98125287e9fddf31e0648da94b1b720b46b2",
     "tools/crossvalidate_eip712.py": "44e11c2a4a532f89a780f8978ad0d92b6903a41e336957cecaff74d16b324032",
     "tools/discriminate_infinity.py": "6ff94796a8eeb981bfbf58733f4f9945ef7e6ccdc612910981675dcafd680170",

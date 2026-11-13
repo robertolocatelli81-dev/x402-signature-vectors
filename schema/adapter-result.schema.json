@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/robertolocatelli81-dev/x402-signature-vectors/schema/adapter-result.schema.json",
+  "title": "x402 signature vectors: one adapter answer",
+  "description": "One line written by an adapter for one vector (SPEC.md §5.2). Closed: tools/run_sdk_adapters.py rejects a line with any other member.",
+  "type": "object",
+  "required": ["id", "sdk", "entry", "verdict", "reject_reason", "sdk_reason", "detail"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9]{3}-[a-z0-9-]+$",
+      "description": "The vector's id."
+    },
+    "sdk": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "The verifier under test."
+    },
+    "entry": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "The entry point used, as named by the adapter."
+    },
+    "verdict": {
+      "enum": ["accept", "reject", "not_applicable", "not_reached", "error"],
+      "description": "SPEC.md §5.2."
+    },
+    "reject_reason": {
+      "enum": [
+        "signature_malformed",
+        "signature_out_of_range",
+        "signature_high_s",
+        "encoding_error",
+        "recovery_undefined",
+        "signer_mismatch",
+        "input_not_object",
+        "json_ambiguous",
+        null
+      ],
+      "description": "A class of SPEC.md §4 when the verifier's own reason maps one-to-one to it, else null."
+    },
+    "sdk_reason": {
+      "type": ["string", "null"],
+      "description": "The verifier's own answer, verbatim."
+    },
+    "detail": {
+      "type": ["string", "null"],
+      "description": "Free text: message, exception, or why not applicable."
+    }
+  }
+}

@@ -19,6 +19,8 @@ jobs:
         run: python3 tools/check_manifest.py
       - name: Vector schema
         run: python3 tools/check_schema.py
+      - name: SPEC.md covers every schema field, and nothing else (closed list of reject classes)
+        run: python3 tools/check_spec.py
       - name: Prose numbers match the data (README counts, per-vector notes, changelog entry)
         run: python3 tools/check_docs.py
       - name: Conformance run
