@@ -12,7 +12,8 @@ Known answers (not SDK findings; they fail when the ADAPTER is wrong):
   - 009 (high-s) reject with class signature_high_s on every entry: both SDKs have a low-s check with its own code;
   - typed-data: 004, 011, 031, 041 accept — they carry integers above 2^53, which reach the SDK exact only if the
     adapter reads the vector without losing digits;
-  - facilitator-exact: 019 (not an EIP-3009 message) not_applicable;
+  - facilitator-exact: 019 (not an EIP-3009 message) and 067 (a domain no server holds) not_applicable; 056
+    (fractional value) reject, from the SDK's payload check;
   - an unknown entry name exits 2; the runner rejects a line with a member the schema does not define.
 """
 import json
@@ -61,6 +62,10 @@ def main():
                     want(vid, "accept")
             else:
                 want("019-eip712-array-of-structs", "not_applicable")
+                # a domain value a server cannot hold is not sent to the SDK (it raised on 067 before);
+                # a fractional amount must reach the SDK's payload check, not break the adapter (056 raised before)
+                want("067-domain-verifying-contract-bad-prefix", "not_applicable")
+                want("056-uint-float-fraction", "reject")
         rc, _ = R.run_adapter(sdk, "no-such-entry", paths[:1], ts_env=ts_env, py=py)
         if rc != 2:
             errors.append(f"{sdk}: unknown entry gave exit {rc}, expected 2")

@@ -1,0 +1,10 @@
+{
+  "name": "x402-signature-vectors-ts-adapter",
+  "private": true,
+  "description": "Environment of the TypeScript SDK adapter: @x402/evm pinned to the release tagged on x402-foundation/x402@07c4caf.",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@x402/core": "2.31.0",
+    "@x402/evm": "2.31.0"
+  }
+}

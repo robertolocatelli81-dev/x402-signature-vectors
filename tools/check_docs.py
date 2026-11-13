@@ -64,6 +64,20 @@ def main():
     if not usate <= set(CLASSI):
         problemi.append(f"vettori con classi non definite: {sorted(usate - set(CLASSI))}")
 
+    # Il riepilogo di audit/SDK_RESULTS.md deve essere quello di audit/sdk_results.json (i risultati misurati).
+    sdk_json = os.path.join(BASE, "audit", "sdk_results.json")
+    if os.path.exists(sdk_json):
+        riepilogo = json.load(open(sdk_json))["summary"]
+        testo = open(os.path.join(BASE, "audit", "SDK_RESULTS.md")).read()
+        righe = dict(re.findall(r"^\| ([a-z]+/[a-z-]+) \| (\d+ \| \d+ \| \d+ \| \d+) \|$", testo, re.M))
+        for chiave, c in riepilogo.items():
+            atteso = " | ".join(str(c.get(k, 0)) for k in ("match", "divergence", "not_applicable", "not_reached"))
+            if righe.get(chiave) != atteso or c.get("reason_divergence", 0):
+                problemi.append(f"SDK_RESULTS.md {chiave}: '{righe.get(chiave)}', i risultati dicono '{atteso}'"
+                                f" (reason_divergence {c.get('reason_divergence', 0)})")
+        if set(righe) != set(riepilogo):
+            problemi.append(f"SDK_RESULTS.md: righe {sorted(righe)} != {sorted(riepilogo)}")
+
     changelog = open(os.path.join(BASE, "CHANGELOG.md")).read()
     if f"## {versione} — " not in changelog:
         problemi.append(f"CHANGELOG: manca la voce per la versione {versione} del manifest")

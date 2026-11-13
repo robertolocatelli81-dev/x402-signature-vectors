@@ -21,7 +21,8 @@ def genera():
     voci = {}
     for radice, _, file in os.walk(BASE):
         # Esclusi: .git, cache e il venv locale di cross-validazione (.xval); .github resta dentro.
-        if any(p in radice for p in ("/.git/", "__pycache__", "/.xval")) or radice.endswith("/.git"):
+        # node_modules: l'ambiente dell'adattatore TypeScript (`npm ci --prefix tools/adapters/typescript`), non la suite.
+        if any(p in radice for p in ("/.git/", "__pycache__", "/.xval", "/node_modules")) or radice.endswith("/.git"):
             continue
         for f in sorted(file):
             # `.git` come FILE: in una worktree o in un submodule e' un puntatore ("gitdir: …"), non un file della suite

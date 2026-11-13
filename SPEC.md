@@ -220,6 +220,8 @@ to add.
   exactly those four members in a form a server could hold (chainId an integer of at most 32 digits, the CAIP-2
   reference length; `verifyingContract` matching `^0x[0-9a-fA-F]{40}$`; `name`, `version` strings), or whose types
   are not the six EIP-3009 members, is `not_applicable` there.
+  The requirements' `payTo` is the message's `to` and `amount` is the value's integer when the value is a JSON
+  integer or a string of ASCII digits (the price the server asked), else `"0"`.
 - Off-chain only: the adapter supplies a signer that reports no code at the payer (an EOA), code at the asset, and
   successful contract calls, and pins the clock inside the authorization window. The verdict is therefore the
   verifier's OFF-CHAIN verdict; a deployed facilitator also simulates the transfer on chain, where the token

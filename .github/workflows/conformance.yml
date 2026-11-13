@@ -49,3 +49,23 @@ jobs:
         run: python3 tools/crossvalidate.py
       - name: Cross-validate EIP-712 encoding against eth-account
         run: python3 tools/crossvalidate_eip712.py
+
+  sdk:
+    # The vectors through two official x402 SDKs, pinned: npm @x402/evm 2.31.0 (package-lock.json, integrity hashes)
+    # and PyPI x402 2.28.0 (requirements.txt). Off-chain only; see audit/SDK_RESULTS.md and SPEC.md §5.
+    runs-on: ubuntu-latest
+    env:
+      X402_TS_ENV: tools/adapters/typescript
+      X402_PY: ${{ runner.temp }}/x402py/bin/python
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with: { python-version: "3.11" }
+      - uses: actions/setup-node@v7
+        with: { node-version: "24" }
+      - run: npm ci --ignore-scripts --no-audit --no-fund --prefix tools/adapters/typescript
+      - run: python3 -m venv "$RUNNER_TEMP/x402py" && "$RUNNER_TEMP/x402py/bin/pip" install -r tools/adapters/python/requirements.txt
+      - name: Adapters answer every vector (known answers, closed lines)
+        run: python3 tools/test_sdk_adapters.py
+      - name: SDK results equal audit/sdk_results.json, every divergence classified
+        run: python3 tools/run_sdk_adapters.py
