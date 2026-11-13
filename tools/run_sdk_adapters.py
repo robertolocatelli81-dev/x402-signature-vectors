@@ -21,6 +21,8 @@ import sys
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE, "tools"))
 from check_schema import valida                                   # noqa: E402
+sys.path.insert(0, BASE)
+from verify import leggi_json_stretto                             # noqa: E402
 
 SDKS = ("typescript", "python")
 ENTRIES = ("typed-data", "facilitator-exact")
@@ -47,7 +49,8 @@ def run_adapter(sdk, entry, paths, ts_env=None, py=None):
     lines = []
     for raw in p.stdout.splitlines():
         try:
-            lines.append(json.loads(raw))
+            # SPEC.md §5.2: a line is one JSON object, read strictly (a repeated member or NaN is not an answer).
+            lines.append(leggi_json_stretto(raw))
         except ValueError:
             lines.append({"unparsable": raw[:200]})
     return p.returncode, lines

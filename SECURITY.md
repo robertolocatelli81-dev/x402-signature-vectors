@@ -27,9 +27,7 @@ vector, what it asserts, and what you measured instead.
 
 Only the **latest tagged release** receives fixes.
 
-## Honest scope
+## About this policy
 
-This project is non-commercial open source, published by a natural person. It
-is outside the EU Cyber Resilience Act's obligations for manufacturers of
-commercial products, and this file is not a legal conformity claim: it exists
+This file is a reporting channel, not a legal conformity statement: it exists
 because a project that asks others for a reporting channel should have one.

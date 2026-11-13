@@ -1,6 +1,6 @@
 # x402 signature vectors — format and conformance
 
-**Specification version 1.1 · 13 November 2026 · applies to vector format 1 (`schema/vector.schema.json`).**
+**Specification version 1.2 · 13 November 2026 · applies to vector format 1 (`schema/vector.schema.json`).**
 The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
 
 This document says what a vector is, how its verdict is reached, what "conforms" means for a verifier, and what
@@ -20,7 +20,9 @@ A vector is one UTF-8 JSON file in `vectors/`, holding one JSON object. The suit
 standard reader, to validate it against the schema, and with the strict reader of §3.1, which decides the verdict.
 The schema is closed: a member that the schema does not define, at a level where the schema says
 `additionalProperties: false`, makes the file not a vector of this suite, and the runner reports it as `FALLITO`
-with the member named, before any signature verdict.
+with the member named, before any signature verdict. A member repeated in the text outside `/eip712` makes the file
+not a vector either (its own expectations would have two readings); inside `/eip712` it is a test case (§3.1). A
+`pattern` of the schema is read as JSON Schema reads it: `$` ends the string (a trailing newline does not match).
 
 ### `/id`
 Zero-padded ordinal and slug (`^[0-9]{3}-[a-z0-9-]+$`). Stable; never reused for a different vector. A vector found
@@ -56,7 +58,8 @@ The EIP-712 struct definitions. `EIP712Domain` MAY be present; if present it MUS
 MUST NOT be spelled like an atomic type (`address`, `uint256`, `bytes32`…), otherwise `encoding_error`.
 
 ### `/eip712/types/*/name`
-A member name of a struct.
+A member name of a struct. A member definition holds exactly `name` and `type`; any other key makes the file not a
+vector (§1).
 
 ### `/eip712/types/*/type`
 A member type: an atomic type of §2, a struct name defined in `types`, or an array `T[]` / `T[k]` of either.
@@ -85,7 +88,8 @@ rejected by a rule while recovery is still defined (high-s, signer mismatch) car
 verifier can tell "rejected by a rule" from "not recoverable".
 
 ### `/expected/type_hash`
-`keccak256(encodeType(primaryType))`, or `null` when the message is not encodable.
+`keccak256(encodeType(primaryType))`, or `null` when the message is not encodable. The runner checks this value and
+the three below against its own computation; a difference makes the vector `FALLITO`.
 
 ### `/expected/domain_separator`
 `hashStruct(EIP712Domain, domain)`, or `null` when the message is not encodable.
@@ -176,7 +180,7 @@ An adapter runs one entry point of one verifier. It is invoked as
 
     <adapter> <entry> <vector-path> [<vector-path>…]
 
-and writes, for each path in order, one line holding one JSON object that matches
+and writes, for each path in order, one line holding one JSON object (read with the strict reader of §3.1) that matches
 `schema/adapter-result.schema.json` (closed: a line with another member, a missing member or a value outside the
 lists is rejected by the runner, `tools/run_sdk_adapters.py`). Exit status 0 when every path was answered, 2 when the
 adapter could not start (usage, missing environment). The adapter MUST report what the verifier answered and MUST
@@ -255,5 +259,8 @@ vector states that the same bytes verify off chain under §3.
 
 ## 7. Versions of this document
 1.0 (13 November 2026): first version, written against the runner at `cd434c0` and the 81 vectors of v1.4.0.
-1.1 (13 November 2026): `origin` value `onchain` and §6. A new `origin`, a new class or a new value form is a new
+1.1 (13 November 2026): `origin` value `onchain` and §6.
+1.2 (13 November 2026): member definitions in `types` closed; a member repeated outside `/eip712` and a schema string
+with a trailing newline make the file not a vector; the runner checks the four intermediate values; adapter lines are
+read strictly. No vector changed. A new `origin`, a new class or a new value form is a new
 version, recorded here and in `CHANGELOG.md` together with the schema change.

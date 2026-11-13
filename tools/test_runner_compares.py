@@ -21,6 +21,9 @@ PLANTS = [
     ("009-ecdsa-malleability-high-s", "reject_reason", "signer_mismatch"),
     ("005-mutated-value", "recovered_address", "0x" + "11" * 20),
     ("003-eip3009-generated-valid", "verdict", "reject"),
+    # 13/11/2026: no gate read type_hash or domain_separator; a wrong value in a vector passed every gate.
+    ("003-eip3009-generated-valid", "type_hash", "0x" + "ab" * 32),
+    ("041-permit2-witness-transfer", "domain_separator", "0x" + "cd" * 32),
 ]
 
 
@@ -52,7 +55,7 @@ def main():
             assert rc == 1 and len(rows) == 1 and rows[0].startswith(vid), (vid, field, rc, rows)
             with open(p, "w", encoding="utf-8") as fh:
                 fh.write(orig)
-        print(f"runner: {len(PLANTS)}/{len(PLANTS)} attese sbagliate (classe, indirizzo, verdetto) -> FALLITO sul vettore "
+        print(f"runner: {len(PLANTS)}/{len(PLANTS)} attese sbagliate (classe, indirizzo, verdetto, type_hash, domain_separator) -> FALLITO sul vettore "
               f"giusto; suite intatta verde")
         return 0
     finally:

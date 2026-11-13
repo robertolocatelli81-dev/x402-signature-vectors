@@ -55,7 +55,8 @@ The three real-payment vectors (082–084, signatures that settled x402 payments
 are accepted by all four entries. No entry raised an exception on any vector, and no reject class disagreed where a class was reported. **Every
 divergence is of class (c)**: the SDK follows the standard and this suite is stricter, or the input cannot reach
 that entry through x402. None of the 84 vectors produced a signature verdict that breaks EIP-712, EIP-2, EIP-3009 or
-the x402 text at an entry reachable through x402. That says what these 84 inputs show; it is not a proof that the
+the x402 text on an input that can reach that entry through x402 (074 and 080 depart from EIP-712 on the typed-data
+entries, on inputs no x402 `exact` payload can carry). That says what these 84 inputs show; it is not a proof that the
 SDKs have no signature defect.
 
 Not applicable: 077 on every entry (a repeated JSON member cannot reach an entry that takes a parsed object); on
@@ -82,9 +83,11 @@ on an entry without a divergence.
 ## Findings about the SDKs
 
 1. **The TypeScript facilitator reports a bad EIP-3009 signature with a code the x402 specification does not
-   define.** `x402-specification-v2.md` §9 (line 601) lists `invalid_exact_evm_payload_signature` — "Payment
-   authorization signature is invalid or improperly signed" — and says "When matching specific error conditions,
-   clients MUST use the corresponding `invalidReason` or `errorReason` code". `@x402/evm` returns
+   list.** `x402-specification-v2.md` §9 lists `invalid_exact_evm_payload_signature` — "Payment authorization
+   signature is invalid or improperly signed" (line 601) — among codes that "may be returned by facilitators or
+   resource servers" (line 593), and says "When matching specific error conditions, clients MUST use the
+   corresponding `invalidReason` or `errorReason` code and MUST NOT rely on message text" (line 595). The list does
+   not say it is exhaustive, and both SDKs return codes outside it. `@x402/evm` returns
    `invalid_exact_evm_signature` (`exact/facilitator/errors.ts:15`, returned at `eip3009.ts:237`): measured on 18
    vectors (005–008, 013–016, 023, 025–027, 029, 046–048, 051, 052). The Python facilitator returns the specified
    code (on 14 of those 18; on the other four it answers with the codes of finding 3 and
@@ -95,8 +98,8 @@ on an entry without a divergence.
    `extra.version` = "" (034), the TypeScript facilitator answers `invalid_exact_evm_missing_eip712_domain`
    (`eip3009.ts:102`, `!requirements.extra?.name || !requirements.extra?.version`) and the Python facilitator
    verifies the signature and accepts (`exact/facilitator.py:232`, `"name" not in extra`). `scheme_exact_evm.md:72-73`
-   calls both fields "required" and does not say whether an empty string satisfies it; EIP-712 allows an empty
-   string. The same signed payment is valid in one official SDK and refused in the other.
+   calls both fields "required" and does not say whether an empty string satisfies it; EIP-712 does not exclude an
+   empty `name` or `version`. The same signed payment is valid in one official SDK and refused in the other.
 3. **The Python facilitator reports a wrong-length signature from an address with no code as an undeployed smart
    wallet.** On 046–048 (64, 66 and 0 bytes, payer without code) it answers
    `invalid_exact_evm_payload_undeployed_smart_wallet` (`exact/eip3009_utils.py:125`: any signature whose length is

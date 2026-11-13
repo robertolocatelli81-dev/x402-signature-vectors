@@ -17,7 +17,9 @@ recorded here, so a verdict recorded against v0.2.0 stays meaningful.
   wrong: `erc20_gas_sponsoring.md` carries the signature in a Permit2 payload (it recovers to `0x468d6ad8…`, not
   `0xd259c196…`), and `sign-in-with-x.md` does publish the signed SIWE string (it recovers to `0x5b2acbca…`; the case
   was "indicative"). `tools/audit_spec_examples.py` was not a gate (it rewrote its JSON and exited 0); it now exits 1
-  when the recomputation differs, and `--specs` checks every case against the upstream text.
+  when the recomputation differs, and `--specs` checks against an upstream checkout that the 15 occurrences sit at the
+  documents and lines of the cases and that the SIWE string is the published one (the EIP-712 messages are constants
+  of the tool, compared with the documents by hand).
 - **`tools/check_manifest.py` in a git worktree**: a `.git` file was reported as undeclared and recorded by
   `--genera`; it is skipped now (`tools/test_check_manifest.py`, failed on the old code). `node_modules` skipped too.
 - **Two official SDKs** (`@x402/evm` 2.31.0, `x402` 2.28.0, tagged at `07c4caf`): adapters in `tools/adapters/`,
@@ -30,9 +32,17 @@ recorded here, so a verdict recorded against v0.2.0 stays meaningful.
   default facilitator publishes, derived from calldata; sources in `audit/onchain_sources.json`, rebuilt offline in
   CI (`tools/genera_vettori_onchain.py --confronta`). The contract's `DOMAIN_SEPARATOR()` equals the separator the
   suite computes. 84 vectors, 34 accept / 50 reject; `crossvalidate_eip712.py` 57 compared, 0 divergences.
-- **Positive control** (`tools/positive_control.py`, CI job `positive-control`): 15 sabotages, 15 caught, 15
+- **Positive control** (`tools/positive_control.py`, CI job `positive-control`): 18 sabotages, 18 caught, 18
   non-equivalent. Before `tools/test_runner_compares.py` the runner's class and address comparisons could be
-  switched off with every gate green (13/15); `audit/POSITIVE_CONTROL.md`.
+  switched off with every gate green (13/15 of the first set); `audit/POSITIVE_CONTROL.md`.
+- **Review of this branch (same day)**: four sabotages and three second readings passed every gate, and are caught
+  now. No gate read `expected.type_hash` or `expected.domain_separator`: `verify.py` now checks the four intermediate
+  values (`tools/test_runner_compares.py` plants two wrong ones). `NaN`/`Infinity` and a struct named `string` or
+  `bool` had no test (`tools/fuzz_runner.py`, 16 cases). A member definition in `types` with an extra key, a vector
+  member repeated outside `/eip712` (two readings of the vector's own expectations) and a schema string with a
+  trailing newline (Python's `$`) were accepted by the runner; they are `FALLITO` now (`tools/test_runner_schema.py`).
+  A malformed signature with `v` = 29/30 and a small `r` reported a recovered address, against SPEC.md §1; it is
+  `null` now. `tools/run_sdk_adapters.py` reads adapter lines with the strict reader. SPEC.md 1.2. No vector changed.
 - README rewritten: problem, finding, run, evidence first; limits in "Guarantees and assumptions"; `CITATION.cff`
   (Zenodo concept DOI 10.5281/zenodo.24172853, v1.4.0 DOI 10.5281/zenodo.24172854).
 
@@ -49,8 +59,8 @@ recorded here, so a verdict recorded against v0.2.0 stays meaningful.
   schema is unchanged; `verdetto()` / `verdetto_da_testo()` (the signature verdict on an already-read vector) are
   unchanged — the closure is the runner's, where the suite's grammar is decided.
 
-Review attributions no longer name the reviewing models (the reviews are still recorded as independent
-adversarial reviews, with their dates and findings). The two raw review transcripts under `audit/` were
+Review attributions no longer name the reviewing models (the reviews, adversarial reviews run by the same author,
+are still recorded with their dates and findings). The two raw review transcripts under `audit/` were
 removed from the tree (they remain in the repository history); `manifest.json` regenerated at that commit: 110
 files, 81 vectors. That change touched no vector, verdict or tool.
 
@@ -129,7 +139,7 @@ compared, 27 skipped, 0 divergences; `tools/fuzz_runner.py`: no panic, classes a
 
 ## 1.3.0 — 2026-09-11
 
-Second independent adversarial review, this time over the complete code. Everything it found was
+Second adversarial review by the same author, this time over the complete code. Everything it found was
 checked against the code and the curve; everything that held is fixed here. Rule applied: a wrong
 statement is not softened, it is replaced by the true one.
 
@@ -159,7 +169,7 @@ statement is not softened, it is replaced by the true one.
 
 ## 1.2.0 — 2026-09-11
 
-Independent adversarial review (same day) of the whole v1.1.0. Three findings survived
+Adversarial review by the same author (same day) of the whole v1.1.0. Three findings survived
 verification and are fixed here; the others were checked against the code and rejected (r=0/s=0 are
 vectors 013/014; the domain mapping in x402 PR #324 reads `extra` from the *resource server's*
 requirements and settlement uses the contract's own domain on-chain).

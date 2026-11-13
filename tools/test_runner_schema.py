@@ -33,7 +33,25 @@ def main():
             assert rc == 1 and len(row) == 1 and KEY in row[0], (where or "top", rc, row)
             with open(os.path.join(vdir, first), "w", encoding="utf-8") as f:
                 f.write(orig)
-        print("runner chiuso: 3/3 campi non previsti -> FALLITO con il campo nominato; suite intatta verde")
+        # 13/11/2026: three more ways a vector file could pass the runner with a second reading. Each must be FALLITO.
+        altri = []
+        v = json.loads(orig); t0 = v["eip712"]["primaryType"]; v["eip712"]["types"][t0][0][KEY] = 1
+        altri.append(("membro di una definizione di tipo", json.dumps(v, ensure_ascii=False, indent=1), KEY))
+        v = json.loads(orig); v["signature"] += "\n"
+        altri.append(("firma con a capo finale", json.dumps(v, ensure_ascii=False, indent=1), "pattern"))
+        doppio = orig.rstrip()[:-1].rstrip() + ',\n "expected": ' + json.dumps(json.loads(orig)["expected"]) + "\n}\n"
+        altri.append(("membro ripetuto fuori da /eip712", doppio, "membro ripetuto"))
+        for nome, testo, segno in altri:
+            with open(os.path.join(vdir, first), "w", encoding="utf-8") as f:
+                f.write(testo)
+            rc, out = run(d)
+            row = [l for l in out.splitlines() if "FALLITO" in l]
+            assert rc == 1 and len(row) == 1 and segno in row[0], (nome, rc, row)
+            with open(os.path.join(vdir, first), "w", encoding="utf-8") as f:
+                f.write(orig)
+        print("runner chiuso: 3/3 campi non previsti -> FALLITO con il campo nominato; "
+              f"{len(altri)}/{len(altri)} seconde letture (membro di tipo, a capo finale, membro ripetuto) -> FALLITO; "
+              "suite intatta verde")
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

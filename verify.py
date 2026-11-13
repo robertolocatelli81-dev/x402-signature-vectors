@@ -14,7 +14,7 @@ import sys
 BASE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(BASE, "lib"))
 
-from eip712 import keccak256, hash_struct, valida_struttura, self_test as banco_eip712    # noqa: E402
+from eip712 import keccak256, hash_struct, type_hash, valida_struttura, self_test as banco_eip712    # noqa: E402
 import secp256k1 as S                                                    # noqa: E402
 
 # Ordine canonico dei campi di EIP712Domain. I campi sono OPZIONALI: il typeHash si calcola su
@@ -147,6 +147,10 @@ def verdetto(vec):
         return "reject", None, "encoding_error", "messaggio EIP-712 non codificabile"
     if problema:
         classe, testo = problema
+        # SPEC.md §1 (/expected/recovered_address): firma malformata o fuori range -> indirizzo null, anche quando
+        # il recupero sarebbe definito (v = 29/30 con r < p - N da' recovery id 2/3: prima l'indirizzo usciva).
+        if classe != "signature_high_s":
+            return "reject", None, classe, testo
         # Il verdetto e' reject, ma se il recupero e' comunque definito (caso tipico: firma
         # malleabile high-s, matematicamente valida) l'indirizzo si RIPORTA: serve a chi sta
         # debuggando, e distingue "rifiutata da una regola" da "non recuperabile".
@@ -167,6 +171,45 @@ def verdetto(vec):
     if ok:
         return "accept", rec, None, None
     return "reject", rec, "signer_mismatch", "recupera a un indirizzo diverso"
+
+
+STRATI = ("type_hash", "domain_separator", "hash_struct", "signing_digest")
+
+
+def strati(vec):
+    """I quattro valori intermedi di SPEC.md §1, o None se il messaggio non e' codificabile."""
+    try:
+        e = vec["eip712"]
+        valida_struttura(e["domain"], e["types"])
+        th = type_hash(e["primaryType"], e["types"])
+        ds = hash_struct("EIP712Domain", {"EIP712Domain": campi_dominio(e["domain"])}, e["domain"])
+        hs = hash_struct(e["primaryType"], e["types"], e["message"])
+    except Exception:                                        # noqa: BLE001 — l'input non e' fidato
+        return None
+    return {"type_hash": th, "domain_separator": ds, "hash_struct": hs,
+            "signing_digest": keccak256(b"\x19\x01" + ds + hs)}
+
+
+class _ConRipetuti(dict):
+    """Un oggetto che nel testo aveva un membro ripetuto (qui vince l'ultimo, come in json.loads)."""
+
+
+def _segna_ripetuti(coppie):
+    d = dict(coppie)
+    return _ConRipetuti(d) if len(d) != len(coppie) else d
+
+
+def ripetuto_fuori_da_eip712(o, percorso=()):
+    """Il percorso del primo oggetto con un membro ripetuto FUORI da /eip712, o None. Dentro /eip712 un membro
+    ripetuto e' un caso di prova (077, json_ambiguous); fuori, le attese stesse del vettore avrebbero due letture."""
+    if isinstance(o, _ConRipetuti) and percorso[:1] != ("eip712",):
+        return "/" + "/".join(map(str, percorso))
+    figli = o.items() if isinstance(o, dict) else enumerate(o) if isinstance(o, list) else ()
+    for k, v in figli:
+        p = ripetuto_fuori_da_eip712(v, percorso + (k,))
+        if p is not None:
+            return p
+    return None
 
 
 def main():
@@ -192,9 +235,11 @@ def main():
     righe, falliti = [], 0
     for nome in file:
         testo = open(os.path.join(vdir, nome), encoding="utf-8").read()
-        vec = json.loads(testo)          # SOLO per leggere expected/id e per lo schema: il verdetto passa dal lettore stretto
+        vec = json.loads(testo, object_pairs_hook=_segna_ripetuti)          # SOLO per leggere expected/id e per lo schema: il verdetto passa dal lettore stretto
         # (un vettore con un membro ripetuto, come 077, e' un vettore della suite che DEVE dare reject/json_ambiguous)
         errori_schema = _valida_schema(vec, schema, "") if isinstance(vec, dict) else ["non e' un oggetto"]   # percorso senza il nome del file: il campo resta leggibile
+        if not errori_schema and ripetuto_fuori_da_eip712(vec) is not None:
+            errori_schema = [f"{ripetuto_fuori_da_eip712(vec)}: membro ripetuto fuori da /eip712"]
         if errori_schema:
             falliti += 1; righe.append((str(vec.get("id", nome)) if isinstance(vec, dict) else nome, str(vec.get("origin", "?")) if isinstance(vec, dict) else "?",
                                         "?", "?", "FALLITO", f"schema: {errori_schema[0]}")); continue   # intero: il campo non previsto e' NOMINATO
@@ -212,10 +257,19 @@ def main():
             ok_ragione = att_classe is not None and classe == att_classe
             if not ok_ragione:
                 perche = f"ragione {classe} != dichiarata {att_classe}"
-        if not (ok and ok_addr and ok_ragione):
+        # I quattro valori intermedi (SPEC.md §1, livello "layer"): null se il messaggio non si codifica, altrimenti
+        # quelli che il runner calcola. Prima nessun gate leggeva type_hash e domain_separator.
+        calc = None if classe in ("json_ambiguous", "encoding_error") else strati(vec)
+        ok_strati = all((calc is None and vec["expected"][k] is None) or (
+            calc is not None and isinstance(vec["expected"][k], str)
+            and vec["expected"][k].lower() == "0x" + calc[k].hex()) for k in STRATI)
+        if not ok_strati and ok and ok_addr and ok_ragione:
+            perche = "valori intermedi diversi da expected"
+            classe = classe or "strati"
+        if not (ok and ok_addr and ok_ragione and ok_strati):
             falliti += 1
         righe.append((vec["id"], vec["origin"], atteso, v,
-                      "OK" if (ok and ok_addr and ok_ragione) else "FALLITO",
+                      "OK" if (ok and ok_addr and ok_ragione and ok_strati) else "FALLITO",
                       f"{classe}: {perche}" if classe else ""))
 
     print(f"{'vettore':32s} {'origine':10s} {'atteso':8s} {'ottenuto':9s} {'esito':8s} ragione del reject")

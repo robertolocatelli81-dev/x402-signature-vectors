@@ -66,11 +66,21 @@ SABOTAGES = [
     ("runner-schema-skipped", "verify.py",
      "        errori_schema = _valida_schema(vec, schema, \"\") if isinstance(vec, dict) else [\"non e' un oggetto\"]",
      "        errori_schema = []", "runner: vector schema not enforced"),
+    # 13/11/2026 (review): three sabotages no gate saw before the runner checked the four intermediate values and
+    # tools/fuzz_runner.py read NaN/Infinity and every atomic struct name.
+    ("nan-admitted", "verify.py",
+     "    return json.loads(testo, object_pairs_hook=_no_duplicati, parse_constant=_no_costanti)",
+     "    return json.loads(testo, object_pairs_hook=_no_duplicati)", "NaN/Infinity read as numbers"),
+    ("struct-named-string", "lib/eip712.py", 'r"u?int[0-9]*|address|bool|string|bytes[0-9]*"',
+     'r"u?int[0-9]*|address|bytes[0-9]*"', "a struct named `string` or `bool` admitted"),
+    ("runner-layers-ignored", "verify.py", "        ok_strati = all((calc is None and vec[\"expected\"][k] is None) or (",
+     "        ok_strati = True or all((calc is None and vec[\"expected\"][k] is None) or (",
+     "runner: the four intermediate values not compared"),
 ]
 
 GATES = [
-    ["tools/check_manifest.py"], ["tools/check_schema.py"], ["tools/check_spec.py"], ["tools/check_docs.py"],
-    ["verify.py"], ["tools/genera_vettori_onchain.py", "--confronta"], ["tools/test_runner_schema.py"],
+    ["tools/check_manifest.py"], ["tools/test_check_manifest.py"], ["tools/check_schema.py"], ["tools/check_spec.py"],
+    ["tools/check_docs.py"], ["verify.py"], ["tools/genera_vettori_onchain.py", "--confronta"], ["tools/test_runner_schema.py"],
     ["tools/test_runner_compares.py"], ["tools/audit_spec_examples.py"], ["tools/fuzz_runner.py"],
     ["tools/discriminate_infinity.py"],
 ]
@@ -162,11 +172,15 @@ def build_b1(seed=20261113, n=24):
         # repeated member in the text
         t = json.dumps(vec(dom, TIPI_3009, T, msg, hx(r, s, 27 + rec)))
         out.append(t.replace('"value": ', '"value": 1, "value": ', 1))
+        # a non-JSON constant in a member EIP-712 ignores; a struct named like an atomic type
+        out.append(t.replace('"validAfter": ', '"x": ' + rnd.choice(["NaN", "Infinity", "-Infinity"]) + ', "validAfter": ', 1))
+        ta2 = dict(TIPI_3009, **{rnd.choice(["string", "bool"]): [{"name": "a", "type": "uint256"}]})
+        out.append(json.dumps(vec(dom, ta2, T, msg, hx(r, s, 27 + rec))))
     return out
 
 
 def corrupt_b2(vdir):
-    """The vectors with `expected` corrupted, one way per vector, cycling over four ways."""
+    """The vectors with `expected` corrupted, one way per vector, cycling over five ways."""
     files = sorted(f for f in os.listdir(vdir) if f.endswith(".json"))
     for i, f in enumerate(files):
         p = os.path.join(vdir, f)
@@ -175,7 +189,7 @@ def corrupt_b2(vdir):
             continue
         v = json.loads(text)
         e = v["expected"]
-        way = i % 4
+        way = i % 5
         if way == 0 and e["verdict"] == "reject":
             e["reject_reason"] = "signer_mismatch" if e["reject_reason"] != "signer_mismatch" else "encoding_error"
         elif way == 1 and e["recovered_address"] is not None:
@@ -186,6 +200,8 @@ def corrupt_b2(vdir):
                 e.pop("reject_reason", None)
             else:
                 e["reject_reason"] = "signer_mismatch"
+        elif way == 3 and e["type_hash"] is not None:
+            e["type_hash"] = "0x" + "ab" * 32
         else:
             v["x_planted"] = 1
         with open(p, "w", encoding="utf-8") as fh:
@@ -246,6 +262,11 @@ def main():
             b1d, b2d = probe(d, b1_path, tmp)
             n1 = sum(a != b for a, b in zip(ref_b1, b1d)) if isinstance(b1d, list) and len(b1d) == len(ref_b1) else -1
             n2 = sum(a != b for a, b in zip(ref_b2, b2d)) + abs(len(ref_b2) - len(b2d))
+            if n1 < 0:
+                # the sabotaged copy could not even answer B1 (a patch that breaks the import): that is not a
+                # change of behaviour to measure, it is a broken control (13/11/2026: it was counted as non-equivalent)
+                print(f"{sid}: la copia sabotata non risponde sul lotto B1 — controllo non valido")
+                return 1
             caught += bool(f)
             noneq += (n1 != 0 or n2 != 0)
             names = ", ".join(os.path.basename(x.split()[0]) for x in f) or "NOT CAUGHT"

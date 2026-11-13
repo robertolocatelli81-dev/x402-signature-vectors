@@ -59,11 +59,17 @@ on EIP-3009 payloads, off chain (no RPC; the token contract's own on-chain check
 All 19 divergences are on rules of this suite that the standards leave open, or on inputs that cannot reach that
 entry through x402: both SDKs accept a raw recovery id `v` = 0 and normalise it before the chain, and both
 facilitators read `"010000"` as 10000. On these 84 inputs no SDK produced a signature verdict that breaks EIP-712,
-EIP-2, EIP-3009 or the x402 text. What the run did find is in the reason codes:
+EIP-2, EIP-3009 or the x402 text on an input that can reach that entry through x402; the two typed-data entries do
+depart from EIP-712 on inputs no x402 `exact` payload can carry (074, a `uint256[2]` with three elements, accepted by
+both; 080, a caller-supplied `EIP712Domain` with `string chainId`, accepted by Python). What the run did find is in
+the reason codes:
 
-- the TypeScript facilitator answers `invalid_exact_evm_signature` where `x402-specification-v2.md` §9 defines
-  `invalid_exact_evm_payload_signature`, which clients "MUST use" to match the condition (18 vectors); the Python
-  facilitator answers the specified code;
+- on the 18 vectors it rejects for their EIP-3009 signature, the TypeScript facilitator answers
+  `invalid_exact_evm_signature`, a code that `x402-specification-v2.md` §9 does not list; for that condition §9 lists
+  `invalid_exact_evm_payload_signature`, which the Python facilitator returns on 14 of the 18 (on the other four it
+  answers with codes that are not in the list either). §9 says its codes "may be returned" and that clients matching
+  an error condition "MUST use" the `invalidReason` code, not the message text, so a client written against the
+  listed code does not recognise the TypeScript answer;
 - with an empty EIP-712 domain `name` or `version`, the TypeScript facilitator refuses the payment as missing its
   domain and the Python facilitator accepts it;
 - the Python facilitator reports a 0-, 64- or 66-byte signature from an address with no code as an undeployed smart
@@ -110,7 +116,7 @@ The other gates (`tools/check_manifest.py`, `check_schema.py`, `check_docs.py`, 
 ## Evidence
 
 - **CI**: [`conformance.yml`](.github/workflows/conformance.yml) runs on every push, every pull request and every
-  Monday, in four jobs: `verify` (stdlib only), `positive-control` (the gates against 15 sabotages),
+  Monday, in four jobs: `verify` (stdlib only), `positive-control` (the gates against 18 sabotages),
   `crossvalidate` (with the reference libraries) and `sdk` (the two official SDKs, pinned). The latest run on
   `master` passed (run 42638580919, 9 November 2026, commit `8d1af30`, before the `positive-control` and `sdk` jobs
   existed).
@@ -128,8 +134,8 @@ The other gates (`tools/check_manifest.py`, `check_schema.py`, `check_docs.py`, 
 | **EIP-712 encoding vs `eth-account` 0.14.0** (`tools/crossvalidate_eip712.py`) | 57 vectors compared (the 27 whose message is not encodable by construction are skipped), **0 divergences**: arrays, nesting, NUL byte, partial domains, signed integers, dynamic bytes, undeclared fields and canonical decimal strings included |
 | **Primitives vs `coincurve`/libsecp256k1 and `eth-hash`** (`tools/crossvalidate.py`) | 2000 Keccak inputs, 500 signatures produced *by* libsecp256k1, 600 degenerate inputs checked for matching **rejections**, all 84 vectors re-verified with `coincurve`: 0 divergences |
 | **Reproducibility** | the five `tools/genera_vettori*.py` regenerate all 84 vectors **byte-identical** to the committed ones |
-| **The gates can fail** (`tools/positive_control.py`) | 15 sabotages of `lib/`, `verify.py` and the runner (Keccak padding, low-s removed or off by one, domain without `version`, unsorted `encodeType`, raw `v`, `r` = 0, lax JSON reader, array length, NUL, point at infinity, signer case, class / address / schema comparison off): **15 caught**, each changing behaviour on a batch that is not the vectors ([`audit/POSITIVE_CONTROL.md`](audit/POSITIVE_CONTROL.md)) |
-| **Hostile input** (`tools/fuzz_runner.py`) | 600 malformed vectors → 600 rejected, 0 unhandled exceptions; 10 non-object payloads → 10 `input_not_object`; strict value forms, 20 admitted + 44 not admitted → 0 wrong |
+| **The gates can fail** (`tools/positive_control.py`) | 15 sabotages of `lib/`, `verify.py` and the runner (Keccak padding, low-s removed or off by one, domain without `version`, unsorted `encodeType`, raw `v`, `r` = 0, lax JSON reader, array length, NUL, point at infinity, signer case, class / address / schema / intermediate-value comparison off, NaN read as a number, a struct named `string`): **18 caught**, each changing behaviour on a batch that is not the vectors ([`audit/POSITIVE_CONTROL.md`](audit/POSITIVE_CONTROL.md)) |
+| **Hostile input** (`tools/fuzz_runner.py`) | 600 malformed vectors → 600 rejected, 0 unhandled exceptions; 10 non-object payloads → 10 `input_not_object`; strict value forms, 20 admitted + 44 not admitted → 0 wrong; `NaN`/`Infinity` and struct names spelled like atomic types, 16 cases → 0 wrong |
 
 ## Vector format
 
@@ -148,8 +154,8 @@ test passes, and a reject vector without a declared class fails the schema gate.
 which is an object by construction; the runner emits it and `tools/fuzz_runner.py` checks it.
 
 **Each layer is testable in isolation.** Every vector carries `type_hash`, `domain_separator`,
-`hash_struct` and `signing_digest` alongside the verdict. An implementation that fails learns *which*
-layer failed — the EIP-712 encoding or the ECDSA recovery — instead of just "does not verify".
+`hash_struct` and `signing_digest` alongside the verdict, and the runner checks all four against its own
+computation. An implementation that fails learns *which* layer failed — the EIP-712 encoding or the ECDSA recovery — instead of just "does not verify".
 
 **Value encoding is strict.** The runner's encoder (`lib/eip712.py`) admits exactly one JSON form per EIP-712
 type and rejects everything else with `encoding_error`, instead of normalizing it:

@@ -41,8 +41,8 @@ jobs:
         run: python3 tools/discriminate_infinity.py
 
   positive-control:
-    # 15 sabotages of lib/, verify.py and the runner, one per fresh copy: every one must be caught by a gate above
-    # and change behaviour on a batch that is not the vectors (audit/POSITIVE_CONTROL.md). About 17 minutes.
+    # 18 sabotages of lib/, verify.py and the runner, one per fresh copy: every one must be caught by a gate above
+    # and change behaviour on a batch that is not the vectors (audit/POSITIVE_CONTROL.md). About 30 minutes.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

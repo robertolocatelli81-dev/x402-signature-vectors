@@ -15,6 +15,12 @@ TIPI = {"object": dict, "array": list, "string": str, "integer": int, "number": 
         "boolean": bool, "null": type(None)}
 
 
+def _pattern(p):
+    """Un `pattern` di JSON Schema con la semantica ECMA-262: `$` chiude la stringa. In Python `$` accetta anche un
+    "\n" finale, e "0x…\n" passava lo schema (13/11/2026); qui il `$` finale diventa `\Z`."""
+    return re.compile(p[:-1] + r"\Z" if p.endswith("$") and not p.endswith("\\$") else p)
+
+
 def valida(dato, schema, percorso=""):
     errori = []
     tipi = schema.get("type")
@@ -26,7 +32,7 @@ def valida(dato, schema, percorso=""):
                 return errori
     if "enum" in schema and dato not in schema["enum"]:
         errori.append(f"{percorso}: '{dato}' non e' fra {schema['enum']}")
-    if "pattern" in schema and isinstance(dato, str) and not re.match(schema["pattern"], dato):
+    if "pattern" in schema and isinstance(dato, str) and not _pattern(schema["pattern"]).search(dato):
         errori.append(f"{percorso}: non rispetta il pattern {schema['pattern']}")
     if isinstance(dato, dict):
         for req in schema.get("required", []):

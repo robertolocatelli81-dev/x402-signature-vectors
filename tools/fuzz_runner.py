@@ -97,6 +97,30 @@ print(f"  forme strette: {len(AMMESSI)} ammesse + {len(RIFIUTATI)} non ammesse -
 for r in forme_ko:
     print(f"      {r}")
 
-falliti = bool(panici or radici_ko or forme_ko)
+# ── Letture e nomi (13/11/2026, nessun gate li esercitava): le costanti non JSON di SPEC.md §3.1 sono
+# json_ambiguous ovunque nel testo, anche in un membro che EIP-712 ignora; una struct chiamata come uno dei tipi
+# atomici e' encoding_error per ogni nome atomico, non solo per `address` (vettore 081).
+_v3 = json.load(open(os.path.join(BASE, "vectors", "003-eip3009-generated-valid.json"), encoding="utf-8"))
+letture_ko = []
+for costante in ("NaN", "Infinity", "-Infinity"):
+    for testo in (json.dumps(_v3).replace('"value": 10000', '"value": ' + costante, 1),
+                  json.dumps(_v3).replace('"validAfter": ', '"x_ignorato": ' + costante + ', "validAfter": ', 1)):
+        assert costante in testo
+        esito = V.verdetto_da_testo(testo)
+        if esito[0] != "reject" or esito[2] != "json_ambiguous":
+            letture_ko.append(f"{costante}: {esito[0]}/{esito[2]}")
+ATOMICI = ("address", "bool", "string", "bytes", "bytes32", "bytes1", "uint256", "uint8", "int256", "int8")
+for nome in ATOMICI:
+    v = json.loads(json.dumps(_v3))
+    v["eip712"]["types"][nome] = [{"name": "a", "type": "uint256"}]
+    esito = V.verdetto_da_testo(json.dumps(v))
+    if esito[0] != "reject" or esito[2] != "encoding_error":
+        letture_ko.append(f"struct {nome!r}: {esito[0]}/{esito[2]}")
+print(f"  letture e nomi: {6 + len(ATOMICI)} casi (NaN/Infinity/-Infinity in due posti, {len(ATOMICI)} struct dal nome "
+      f"atomico) -> {len(letture_ko)} sbagliati")
+for r in letture_ko:
+    print(f"      {r}")
+
+falliti = bool(panici or radici_ko or forme_ko or letture_ko)
 print("  ESITO:", "nessun panic, classi e forme corrette" if not falliti else "DA CORREGGERE")
 sys.exit(0 if not falliti else 1)
