@@ -120,9 +120,10 @@ The other gates (`tools/check_manifest.py`, `check_schema.py`, `check_docs.py`, 
   `crossvalidate` (with the reference libraries) and `sdk` (the two official SDKs, pinned). The latest run on
   `master` passed (run 42638580919, 9 November 2026, commit `8d1af30`, before the `positive-control` and `sdk` jobs
   existed).
-- **Release**: [v1.4.0](https://github.com/robertolocatelli81-dev/x402-signature-vectors/releases/tag/v1.4.0)
-  (tag on `985b46d`; release published 12 November 2026 with the tarball and `SHA256SUMS`). `master` is v1.4.0
-  plus the changes under "1.5.0 — unreleased" in [`CHANGELOG.md`](CHANGELOG.md).
+- **Releases**: v1.5.0 (13 November 2026, this version; changes in [`CHANGELOG.md`](CHANGELOG.md)) and
+  [v1.4.0](https://github.com/robertolocatelli81-dev/x402-signature-vectors/releases/tag/v1.4.0) (tag on `985b46d`,
+  12 November 2026). Each GitHub release carries the tarball made by `git archive --format=tar.gz` of its tag and
+  its `SHA256SUMS`.
 - **Archive**: Zenodo, concept DOI [10.5281/zenodo.24172853](https://doi.org/10.5281/zenodo.24172853) (resolves to
   the latest version), v1.4.0 DOI [10.5281/zenodo.24172854](https://doi.org/10.5281/zenodo.24172854). Citation
   metadata: [`CITATION.cff`](CITATION.cff).
@@ -199,7 +200,7 @@ test private key  0x4646…4646   (published on purpose: a conformance vector mu
 test address      0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f
 ```
 
-Current set: **84 vectors — 34 `accept`, 50 `reject`** (v1.5.0, unreleased), against
+Current set: **84 vectors — 34 `accept`, 50 `reject`** (v1.5.0), against
 [`schema/vector.schema.json`](schema/vector.schema.json).
 
 Beyond message-binding mutations (amount off by one, substituted recipient, one-second validity

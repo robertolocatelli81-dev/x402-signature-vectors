@@ -4,7 +4,7 @@ Vectors are versioned so that an implementation can state *which* set it passes.
 stable and never reused: a vector that turns out to be wrong is corrected in place and the change is
 recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
-## 1.5.0 — unreleased (work since 1.4.0; no tag yet)
+## 1.5.0 — 2026-11-13
 
 ### 2026-11-13 — specification, audit at `2178d4b`, two official SDKs, real payments, positive control
 
