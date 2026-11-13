@@ -70,7 +70,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       X402_TS_ENV: tools/adapters/typescript
-      X402_PY: ${{ runner.temp }}/x402py/bin/python
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -80,6 +79,8 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund --prefix tools/adapters/typescript
       - run: python3 -m venv "$RUNNER_TEMP/x402py" && "$RUNNER_TEMP/x402py/bin/pip" install -r tools/adapters/python/requirements.txt
       - name: Adapters answer every vector (known answers, closed lines)
+        env: { X402_PY: "${{ runner.temp }}/x402py/bin/python" }
         run: python3 tools/test_sdk_adapters.py
       - name: SDK results equal audit/sdk_results.json, every divergence classified
+        env: { X402_PY: "${{ runner.temp }}/x402py/bin/python" }
         run: python3 tools/run_sdk_adapters.py
