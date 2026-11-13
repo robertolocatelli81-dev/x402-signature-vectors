@@ -24,9 +24,10 @@
     "origin": {
       "enum": [
         "spec",
-        "generated"
+        "generated",
+        "onchain"
       ],
-      "description": "'spec' = payload and signature taken verbatim from the x402 specifications, expected verdict is the audit result. 'generated' = signed with the published test key. The two must never be conflated."
+      "description": "'spec' = payload and signature taken verbatim from the x402 specifications, expected verdict is the audit result. 'generated' = signed with the published test key. 'onchain' = derived from the calldata of a real x402 payment on a public chain (SPEC.md §6). The three must never be conflated."
     },
     "standard": {
       "type": "string",

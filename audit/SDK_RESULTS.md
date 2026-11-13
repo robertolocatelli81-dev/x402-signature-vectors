@@ -46,15 +46,16 @@ with Node 24 and Python 3.11.
 
 | SDK / entry | match | divergence | not applicable | not reached |
 |---|---|---|---|---|
-| typescript/typed-data | 73 | 7 | 1 | 0 |
-| typescript/facilitator-exact | 44 | 2 | 31 | 4 |
-| python/typed-data | 72 | 8 | 1 | 0 |
-| python/facilitator-exact | 46 | 2 | 31 | 2 |
+| typescript/typed-data | 76 | 7 | 1 | 0 |
+| typescript/facilitator-exact | 47 | 2 | 31 | 4 |
+| python/typed-data | 75 | 8 | 1 | 0 |
+| python/facilitator-exact | 49 | 2 | 31 | 2 |
 
-No entry raised an exception on any vector, and no reject class disagreed where a class was reported. **Every
+The three real-payment vectors (082–084, signatures that settled x402 payments on Base Sepolia, see the README)
+are accepted by all four entries. No entry raised an exception on any vector, and no reject class disagreed where a class was reported. **Every
 divergence is of class (c)**: the SDK follows the standard and this suite is stricter, or the input cannot reach
-that entry through x402. None of the 81 vectors produced a signature verdict that breaks EIP-712, EIP-2, EIP-3009 or
-the x402 text at an entry reachable through x402. That says what these 81 inputs show; it is not a proof that the
+that entry through x402. None of the 84 vectors produced a signature verdict that breaks EIP-712, EIP-2, EIP-3009 or
+the x402 text at an entry reachable through x402. That says what these 84 inputs show; it is not a proof that the
 SDKs have no signature defect.
 
 Not applicable: 077 on every entry (a repeated JSON member cannot reach an entry that takes a parsed object); on
@@ -203,3 +204,6 @@ Cells: the SDK's verdict, with the class when it reported one; **bold** = diverg
 | 079-domain-types-inconsistent | reject `encoding_error` | reject | n/a | reject | n/a |
 | 080-domain-chainid-declared-string | reject `encoding_error` | reject | n/a | **accept** (c) | n/a |
 | 081-struct-named-like-atomic-type | reject `encoding_error` | reject | n/a | reject | n/a |
+| 082-onchain-x402-base-sepolia-55a0b820 | accept | accept | accept | accept | accept |
+| 083-onchain-x402-base-sepolia-5bf1e09a | accept | accept | accept | accept | accept |
+| 084-onchain-x402-base-sepolia-9537eb22 | accept | accept | accept | accept | accept |

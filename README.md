@@ -2,7 +2,7 @@
 
 Byte-level test vectors for the **signature layer** of [x402](https://github.com/x402-foundation/x402):
 EIP-712 typed-data digests and secp256k1 recovery for the `exact` scheme on EVM (EIP-3009, Permit2 witness
-transfer, EIP-2612 permit). 81 JSON vectors, each with the expected verdict, the reason class of every reject
+transfer, EIP-2612 permit). 84 JSON vectors, each with the expected verdict, the reason class of every reject
 and the intermediate hashes, checked by a runner that needs only the Python standard library.
 
 ## The problem
@@ -51,7 +51,7 @@ vettore                          origine    atteso   ottenuto  esito    ragione 
 …
 077-json-duplicate-member        generated  reject   reject    OK       json_ambiguous: membro JSON ripetuto: 'value'
 …
-81 vettori · 81 conformi · 0 falliti
+84 vettori · 84 conformi · 0 falliti
 ```
 
 Exit code 0 = every vector conformant, 1 = at least one failure, 2 = the bench self-test failed and no verdict
@@ -76,9 +76,9 @@ The other gates (`tools/check_manifest.py`, `check_schema.py`, `check_docs.py`, 
 
 | test | result |
 |---|---|
-| **EIP-712 encoding vs `eth-account` 0.14.0** (`tools/crossvalidate_eip712.py`) | 54 vectors compared (the 27 whose message is not encodable by construction are skipped), **0 divergences**: arrays, nesting, NUL byte, partial domains, signed integers, dynamic bytes, undeclared fields and canonical decimal strings included |
-| **Primitives vs `coincurve`/libsecp256k1 and `eth-hash`** (`tools/crossvalidate.py`) | 2000 Keccak inputs, 500 signatures produced *by* libsecp256k1, 600 degenerate inputs checked for matching **rejections**, all 81 vectors re-verified with `coincurve`: 0 divergences |
-| **Reproducibility** | the four `tools/genera_vettori*.py` regenerate all 81 vectors **byte-identical** to the committed ones |
+| **EIP-712 encoding vs `eth-account` 0.14.0** (`tools/crossvalidate_eip712.py`) | 57 vectors compared (the 27 whose message is not encodable by construction are skipped), **0 divergences**: arrays, nesting, NUL byte, partial domains, signed integers, dynamic bytes, undeclared fields and canonical decimal strings included |
+| **Primitives vs `coincurve`/libsecp256k1 and `eth-hash`** (`tools/crossvalidate.py`) | 2000 Keccak inputs, 500 signatures produced *by* libsecp256k1, 600 degenerate inputs checked for matching **rejections**, all 84 vectors re-verified with `coincurve`: 0 divergences |
+| **Reproducibility** | the five `tools/genera_vettori*.py` regenerate all 84 vectors **byte-identical** to the committed ones |
 | **Hostile input** (`tools/fuzz_runner.py`) | 600 malformed vectors → 600 rejected, 0 unhandled exceptions; 10 non-object payloads → 10 `input_not_object`; strict value forms, 20 admitted + 44 not admitted → 0 wrong |
 
 ## Vector format
@@ -141,7 +141,7 @@ test private key  0x4646…4646   (published on purpose: a conformance vector mu
 test address      0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f
 ```
 
-Current set: **81 vectors — 31 `accept`, 50 `reject`** (v1.4.0), against
+Current set: **84 vectors — 34 `accept`, 50 `reject`** (v1.5.0, unreleased), against
 [`schema/vector.schema.json`](schema/vector.schema.json).
 
 Beyond message-binding mutations (amount off by one, substituted recipient, one-second validity

@@ -4,7 +4,9 @@ Vectors are versioned so that an implementation can state *which* set it passes.
 stable and never reused: a vector that turns out to be wrong is corrected in place and the change is
 recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
-## Unreleased — 2026-10-10 — the runner enforces the vector schema (closed)
+## 1.5.0 — unreleased (work since 1.4.0; no tag yet)
+
+### 2026-10-10 — the runner enforces the vector schema (closed)
 
 README rewritten on 2026-11-13: problem, finding, run, evidence first; limits in "Guarantees and assumptions".
 Upstream facts re-measured against `x402-foundation/x402@2178d4b` (the repository `coinbase/x402` now points to):

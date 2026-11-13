@@ -1,6 +1,6 @@
 # x402 signature vectors — format and conformance
 
-**Specification version 1.0 · 13 November 2026 · applies to vector format 1 (`schema/vector.schema.json`).**
+**Specification version 1.1 · 13 November 2026 · applies to vector format 1 (`schema/vector.schema.json`).**
 The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
 
 This document says what a vector is, how its verdict is reached, what "conforms" means for a verifier, and what
@@ -29,7 +29,7 @@ to be wrong is corrected in place and the change is recorded in `CHANGELOG.md`.
 ### `/origin`
 `spec`: payload and signature taken verbatim from an x402 specification document; the expected verdict is the
 result of auditing that example, whatever it is. `generated`: signed in this repository with the published test
-key.
+key. `onchain`: derived from the calldata of a real x402 payment settled on a public chain (§6).
 
 ### `/standard`
 Free text naming the signing standard the vector exercises (for example `EIP-3009 TransferWithAuthorization`).
@@ -243,7 +243,17 @@ is classified in the results as exactly one of:
   {27, 28}, the domain members rule), or the input cannot reach the entry point through x402. Reported, not called a
   defect.
 
-## 6. Versions of this document
-1.0 (13 November 2026): first version, written against the runner at `cd434c0` and the 81 vectors of v1.4.0. A new
-`origin`, a new class or a new value form is a new version, recorded here and in `CHANGELOG.md` together with the
-schema change.
+## 6. Real-payment vectors (`onchain`)
+A vector of origin `onchain` comes from a transaction that settled an x402 payment on a public chain. Its `/notes`
+name the chain, the transaction hash, the block and the sender, and say how the vector was derived; the derivation
+uses the calldata only (the message is the decoded arguments of the token call, the signature is the transmitted
+`r ‖ s ‖ v`), and the domain is read from the token contract, with the domain separator it yields compared to the
+contract's `DOMAIN_SEPARATOR()`. The sources (transaction, block, sender, calldata, receipt status, domain) are kept in
+`audit/onchain_sources.json`, so that the vectors are rebuilt offline and the sources re-read from any public node
+(`tools/genera_vettori_onchain.py`). The transaction succeeding means the token contract accepted the signature; the
+vector states that the same bytes verify off chain under §3.
+
+## 7. Versions of this document
+1.0 (13 November 2026): first version, written against the runner at `cd434c0` and the 81 vectors of v1.4.0.
+1.1 (13 November 2026): `origin` value `onchain` and §6. A new `origin`, a new class or a new value form is a new
+version, recorded here and in `CHANGELOG.md` together with the schema change.

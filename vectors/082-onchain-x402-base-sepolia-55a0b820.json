@@ -1,0 +1,65 @@
+{
+  "id": "082-onchain-x402-base-sepolia-55a0b820",
+  "origin": "onchain",
+  "standard": "EIP-3009 TransferWithAuthorization — real x402 payment",
+  "signer": "0x466f1ca7e7a15d17cdf9dd4e5d69130f863a1105",
+  "eip712": {
+    "domain": {
+      "name": "USDC",
+      "version": "2",
+      "chainId": 84532,
+      "verifyingContract": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    },
+    "types": {
+      "TransferWithAuthorization": [
+        {
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "name": "validAfter",
+          "type": "uint256"
+        },
+        {
+          "name": "validBefore",
+          "type": "uint256"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32"
+        }
+      ]
+    },
+    "primaryType": "TransferWithAuthorization",
+    "message": {
+      "from": "0x466f1ca7e7a15d17cdf9dd4e5d69130f863a1105",
+      "to": "0xa849bbad82f9edafdf9a5550cc874276138779d9",
+      "value": 1000,
+      "validAfter": 1794561415,
+      "validBefore": 1794561560,
+      "nonce": "0x2f380aa465982eecc527d3942d1f48fde3d8843a99df8a92bda34ed5725d052e"
+    }
+  },
+  "signature": "0x06a9c5bbe3419df31afbd3997a8c616c9eb4c65e74c09f138db8b71e965f793532fc93068ae887adb33f297a8773309751705606394dda4d5c6e8c894f5929bb1c",
+  "expected": {
+    "verdict": "accept",
+    "recovered_address": "0x466f1ca7e7a15d17cdf9dd4e5d69130f863a1105",
+    "type_hash": "0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267",
+    "domain_separator": "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
+    "hash_struct": "0x11c3379c1da81728058d8fa7690e9811e3cb7feb108d6beaaddc6dba80969f38",
+    "signing_digest": "0x990e32dc695133647320a9fb5e4292d3c14c4b3e6bde7391f212aa8c9bd468ca"
+  },
+  "notes": [
+    "Real x402 payment on Base Sepolia (chain 84532): transaction 0x55a0b8205906891ef939cb4740ed858d4eff33cee69c5ad9602d2f06ef680225, block 58197892, receipt status 1.",
+    "Sent by 0xd407e409E34E0b9afb99EcCeb609bDbcD5e7f1bf, the EVM signer published by https://x402.org/facilitator (GET /supported), the default facilitator of the x402 SDKs, to USDC 0x036CbD53842c5426634e7929541eC2318f3dCF7e: transferWithAuthorization(…, v, r, s).",
+    "Derived from the calldata only: message = the six decoded arguments, signature = r ‖ s ‖ v; domain = name() and version() of the contract, chain 84532; the domain separator equals the contract's DOMAIN_SEPARATOR(). Rebuild: tools/genera_vettori_onchain.py; re-read from a node: --verifica <rpc>."
+  ]
+}

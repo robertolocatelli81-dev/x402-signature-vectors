@@ -25,7 +25,7 @@ def main():
     readme = open(os.path.join(BASE, "README.md")).read()
     problemi = []
 
-    m = re.search(r"Current set: \*\*(\d+) vectors — (\d+) `accept`, (\d+) `reject`\*\* \(v([\d.]+)\)", readme)
+    m = re.search(r"Current set: \*\*(\d+) vectors — (\d+) `accept`, (\d+) `reject`\*\* \(v([\d.]+)(?:, unreleased)?\)", readme)
     if not m:
         problemi.append("README: riga 'Current set' non trovata nel formato atteso")
     else:

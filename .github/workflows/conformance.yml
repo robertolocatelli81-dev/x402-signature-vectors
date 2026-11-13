@@ -27,6 +27,8 @@ jobs:
         run: python3 tools/check_docs.py
       - name: Conformance run
         run: python3 verify.py
+      - name: Real-payment vectors rebuild byte-identical from audit/onchain_sources.json (offline)
+        run: python3 tools/genera_vettori_onchain.py && git diff --exit-code -- vectors/
       - name: runner closed schema (planted fields named, intact suite green)
         run: python3 tools/test_runner_schema.py
       - name: Audit of the specification examples (recomputed; must equal audit/spec_examples_audit.json)

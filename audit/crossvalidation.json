@@ -502,6 +502,24 @@
       "atteso": null,
       "riferimento": null,
       "ok": true
+    },
+    {
+      "vettore": "082-onchain-x402-base-sepolia-55a0b820",
+      "atteso": "0x466f1ca7e7a15d17cdf9dd4e5d69130f863a1105",
+      "riferimento": "0x466f1ca7e7a15d17cdf9dd4e5d69130f863a1105",
+      "ok": true
+    },
+    {
+      "vettore": "083-onchain-x402-base-sepolia-5bf1e09a",
+      "atteso": "0xc99470977b75575fe0d40c52bc77b19e48d3978d",
+      "riferimento": "0xc99470977b75575fe0d40c52bc77b19e48d3978d",
+      "ok": true
+    },
+    {
+      "vettore": "084-onchain-x402-base-sepolia-9537eb22",
+      "atteso": "0xa849bbad82f9edafdf9a5550cc874276138779d9",
+      "riferimento": "0xa849bbad82f9edafdf9a5550cc874276138779d9",
+      "ok": true
     }
   ],
   "ok": true

@@ -5,23 +5,23 @@
  },
  "summary": {
   "typescript/typed-data": {
-   "match": 73,
+   "match": 76,
    "divergence": 7,
    "not_applicable": 1
   },
   "typescript/facilitator-exact": {
-   "match": 44,
+   "match": 47,
    "not_applicable": 31,
    "not_reached": 4,
    "divergence": 2
   },
   "python/typed-data": {
-   "match": 72,
+   "match": 75,
    "divergence": 8,
    "not_applicable": 1
   },
   "python/facilitator-exact": {
-   "match": 46,
+   "match": 49,
    "not_applicable": 31,
    "not_reached": 2,
    "divergence": 2
@@ -1015,6 +1015,42 @@
    "category": "match"
   },
   {
+   "id": "082-onchain-x402-base-sepolia-55a0b820",
+   "sdk": "typescript",
+   "entry": "typed-data",
+   "detail": null,
+   "verdict": "accept",
+   "reject_reason": null,
+   "sdk_reason": "true",
+   "expected": "accept",
+   "expected_reason": null,
+   "category": "match"
+  },
+  {
+   "id": "083-onchain-x402-base-sepolia-5bf1e09a",
+   "sdk": "typescript",
+   "entry": "typed-data",
+   "detail": null,
+   "verdict": "accept",
+   "reject_reason": null,
+   "sdk_reason": "true",
+   "expected": "accept",
+   "expected_reason": null,
+   "category": "match"
+  },
+  {
+   "id": "084-onchain-x402-base-sepolia-9537eb22",
+   "sdk": "typescript",
+   "entry": "typed-data",
+   "detail": null,
+   "verdict": "accept",
+   "reject_reason": null,
+   "sdk_reason": "true",
+   "expected": "accept",
+   "expected_reason": null,
+   "category": "match"
+  },
+  {
    "id": "001-eip3009-spec-example",
    "sdk": "typescript",
    "entry": "facilitator-exact",
@@ -1989,6 +2025,42 @@
    "expected": "reject",
    "expected_reason": "encoding_error",
    "category": "not_applicable"
+  },
+  {
+   "id": "082-onchain-x402-base-sepolia-55a0b820",
+   "sdk": "typescript",
+   "entry": "facilitator-exact",
+   "detail": null,
+   "verdict": "accept",
+   "reject_reason": null,
+   "sdk_reason": "isValid",
+   "expected": "accept",
+   "expected_reason": null,
+   "category": "match"
+  },
+  {
+   "id": "083-onchain-x402-base-sepolia-5bf1e09a",
+   "sdk": "typescript",
+   "entry": "facilitator-exact",
+   "detail": null,
+   "verdict": "accept",
+   "reject_reason": null,
+   "sdk_reason": "isValid",
+   "expected": "accept",
+   "expected_reason": null,
+   "category": "match"
+  },
+  {
+   "id": "084-onchain-x402-base-sepolia-9537eb22",
+   "sdk": "typescript",
+   "entry": "facilitator-exact",
+   "detail": null,
+   "verdict": "accept",
+   "reject_reason": null,
+   "sdk_reason": "isValid",
+   "expected": "accept",
+   "expected_reason": null,
+   "category": "match"
   },
   {
    "id": "001-eip3009-spec-example",
@@ -2979,6 +3051,42 @@
    "category": "match"
   },
   {
+   "id": "082-onchain-x402-base-sepolia-55a0b820",
+   "sdk": "python",
+   "entry": "typed-data",
+   "detail": null,
+   "verdict": "accept",
+   "reject_reason": null,
+   "sdk_reason": "True",
+   "expected": "accept",
+   "expected_reason": null,
+   "category": "match"
+  },
+  {
+   "id": "083-onchain-x402-base-sepolia-5bf1e09a",
+   "sdk": "python",
+   "entry": "typed-data",
+   "detail": null,
+   "verdict": "accept",
+   "reject_reason": null,
+   "sdk_reason": "True",
+   "expected": "accept",
+   "expected_reason": null,
+   "category": "match"
+  },
+  {
+   "id": "084-onchain-x402-base-sepolia-9537eb22",
+   "sdk": "python",
+   "entry": "typed-data",
+   "detail": null,
+   "verdict": "accept",
+   "reject_reason": null,
+   "sdk_reason": "True",
+   "expected": "accept",
+   "expected_reason": null,
+   "category": "match"
+  },
+  {
    "id": "001-eip3009-spec-example",
    "sdk": "python",
    "entry": "facilitator-exact",
@@ -3953,6 +4061,42 @@
    "expected": "reject",
    "expected_reason": "encoding_error",
    "category": "not_applicable"
+  },
+  {
+   "id": "082-onchain-x402-base-sepolia-55a0b820",
+   "sdk": "python",
+   "entry": "facilitator-exact",
+   "detail": null,
+   "verdict": "accept",
+   "reject_reason": null,
+   "sdk_reason": "is_valid",
+   "expected": "accept",
+   "expected_reason": null,
+   "category": "match"
+  },
+  {
+   "id": "083-onchain-x402-base-sepolia-5bf1e09a",
+   "sdk": "python",
+   "entry": "facilitator-exact",
+   "detail": null,
+   "verdict": "accept",
+   "reject_reason": null,
+   "sdk_reason": "is_valid",
+   "expected": "accept",
+   "expected_reason": null,
+   "category": "match"
+  },
+  {
+   "id": "084-onchain-x402-base-sepolia-9537eb22",
+   "sdk": "python",
+   "entry": "facilitator-exact",
+   "detail": null,
+   "verdict": "accept",
+   "reject_reason": null,
+   "sdk_reason": "is_valid",
+   "expected": "accept",
+   "expected_reason": null,
+   "category": "match"
   }
  ]
 }
