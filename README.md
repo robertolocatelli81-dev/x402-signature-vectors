@@ -117,15 +117,16 @@ The other gates (`tools/check_manifest.py`, `check_schema.py`, `check_docs.py`, 
 
 - **CI**: [`conformance.yml`](.github/workflows/conformance.yml) runs on every push, every pull request and every
   Monday, in four jobs: `verify` (stdlib only), `positive-control` (the gates against 18 sabotages),
-  `crossvalidate` (with the reference libraries) and `sdk` (the two official SDKs, pinned). The latest run on
-  `master` passed (run 42638580919, 9 November 2026, commit `8d1af30`, before the `positive-control` and `sdk` jobs
-  existed).
-- **Releases**: v1.5.0 (13 November 2026, this version; changes in [`CHANGELOG.md`](CHANGELOG.md)) and
+  `crossvalidate` (with the reference libraries) and `sdk` (the two official SDKs, pinned). All four passed on the
+  v1.5.0 tag (run 43433049744, 13 November 2026, commit `ec53f20`).
+- **Releases**: [v1.5.0](https://github.com/robertolocatelli81-dev/x402-signature-vectors/releases/tag/v1.5.0)
+  (tag on `ec53f20`, 13 November 2026; changes in [`CHANGELOG.md`](CHANGELOG.md)) and
   [v1.4.0](https://github.com/robertolocatelli81-dev/x402-signature-vectors/releases/tag/v1.4.0) (tag on `985b46d`,
   12 November 2026). Each GitHub release carries the tarball made by `git archive --format=tar.gz` of its tag and
   its `SHA256SUMS`.
 - **Archive**: Zenodo, concept DOI [10.5281/zenodo.24172853](https://doi.org/10.5281/zenodo.24172853) (resolves to
-  the latest version), v1.4.0 DOI [10.5281/zenodo.24172854](https://doi.org/10.5281/zenodo.24172854). Citation
+  the latest version), v1.5.0 DOI [10.5281/zenodo.24199019](https://doi.org/10.5281/zenodo.24199019), v1.4.0 DOI
+  [10.5281/zenodo.24172854](https://doi.org/10.5281/zenodo.24172854). Citation
   metadata: [`CITATION.cff`](CITATION.cff).
 - **Cross-validation of `lib/`** (Keccak-256, EIP-712 and secp256k1 written here in the standard library), against
   reference libraries that the suite itself does not depend on:
