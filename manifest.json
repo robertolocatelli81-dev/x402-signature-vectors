@@ -2,7 +2,7 @@
   "suite": "x402-signature-vectors",
   "version": "1.4.0",
   "counts": {
-    "files": 116,
+    "files": 117,
     "vectors": 81
   },
   "files": {
@@ -40,6 +40,7 @@
     "tools/reject_reasons.py": "6806272b43fcc52f2e2b63b0d22a106ac80237e384a53ba48ac68f626e0bea45",
     "tools/test_check_manifest.py": "c86751303b062e11b9290392a355b6bb7fe12fc8edb4b3071b3bafe61ff6100d",
     "tools/test_runner_schema.py": "e1dc554e80530ca0118c282e984b17a8c5dcb670c3a10b1550ff9b11ba2d225d",
+    "tools/test_sdk_adapters.py": "cfbbb0c0299edfd5dca13dee7d995fb48782bb14e315bf06d830a079d7283506",
     "vectors/001-eip3009-spec-example.json": "16f3581af0fe84d0081d460308a91f50bb5ed7a6ce4e5cba06148766c2cb1457",
     "vectors/002-eip2612-spec-example.json": "ef2ab43beb74b0231d538d2592e925b4264ca2e5094289b21924b485e182088c",
     "vectors/003-eip3009-generated-valid.json": "0682461c525565aa4f4decb34ed305e55cbf229e3d9703f1e8721fff2a7d671e",
