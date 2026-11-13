@@ -24,7 +24,9 @@ def genera():
         if any(p in radice for p in ("/.git/", "__pycache__", "/.xval")) or radice.endswith("/.git"):
             continue
         for f in sorted(file):
-            if f in ("manifest.json",) or f.endswith((".pyc", ".log")):
+            # `.git` come FILE: in una worktree o in un submodule e' un puntatore ("gitdir: …"), non un file della suite
+            # (13/11/2026: in una worktree la verifica dava "NON DICHIARATO .git" e --genera lo registrava).
+            if f in ("manifest.json", ".git") or f.endswith((".pyc", ".log")):
                 continue
             rel = os.path.relpath(os.path.join(radice, f), BASE)
             voci[rel] = sha256(os.path.join(BASE, rel))

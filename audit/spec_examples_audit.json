@@ -1,48 +1,175 @@
 {
+  "upstream": "x402-foundation/x402",
+  "commit": "2178d4b77aff61395c375bbdf30757876393b85d",
   "firma": "0x2d6a7588d6acca505cbf0d9a4a227e0c52c6c34008c8e8986a1283259764173608a2ce6496642e377d6da8dbbf5836e9bd15092f9ecab05ded3d6293af148b571c",
   "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
   "casi": [
     {
-      "id": "exact_evm_eip3009",
       "documento": "specs/schemes/exact/scheme_exact_evm.md",
-      "standard": "EIP-3009 TransferWithAuthorization (EIP-712)",
+      "riga": 56,
+      "standard": "EIP-3009 TransferWithAuthorization",
       "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
       "recuperato": "0x857b06519e91e3a54538791bdbb0e22373e36b66",
-      "nota": "domain dedotto: extra.name / extra.version / CAIP-2 chain reference / accepted.asset",
-      "esito": "VALIDA"
+      "digest": "0xf256992871671abcb27ff92885a7afa46218724e5fc0bac35d050115aa1d22e6",
+      "stesso_digest_del_valido": true,
+      "esito": "VALIDA",
+      "nota": null
     },
     {
-      "id": "eip2612_permit",
+      "documento": "specs/x402-specification-v2.md",
+      "riga": 179,
+      "standard": "EIP-3009 TransferWithAuthorization",
+      "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "recuperato": "0x857b06519e91e3a54538791bdbb0e22373e36b66",
+      "digest": "0xf256992871671abcb27ff92885a7afa46218724e5fc0bac35d050115aa1d22e6",
+      "stesso_digest_del_valido": true,
+      "esito": "VALIDA",
+      "nota": null
+    },
+    {
+      "documento": "specs/transports-v2/http.md",
+      "riga": 98,
+      "standard": "EIP-3009 TransferWithAuthorization",
+      "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "recuperato": "0x857b06519e91e3a54538791bdbb0e22373e36b66",
+      "digest": "0xf256992871671abcb27ff92885a7afa46218724e5fc0bac35d050115aa1d22e6",
+      "stesso_digest_del_valido": true,
+      "esito": "VALIDA",
+      "nota": null
+    },
+    {
+      "documento": "specs/transports-v2/mcp.md",
+      "riga": 121,
+      "standard": "EIP-3009 TransferWithAuthorization",
+      "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "recuperato": "0x857b06519e91e3a54538791bdbb0e22373e36b66",
+      "digest": "0xf256992871671abcb27ff92885a7afa46218724e5fc0bac35d050115aa1d22e6",
+      "stesso_digest_del_valido": true,
+      "esito": "VALIDA",
+      "nota": null
+    },
+    {
+      "documento": "specs/x402-specification-v1.md",
+      "riga": 138,
+      "standard": "EIP-3009 TransferWithAuthorization (v1)",
+      "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "recuperato": "0x857b06519e91e3a54538791bdbb0e22373e36b66",
+      "digest": "0xf256992871671abcb27ff92885a7afa46218724e5fc0bac35d050115aa1d22e6",
+      "stesso_digest_del_valido": true,
+      "esito": "VALIDA",
+      "nota": "the v1 block names network base-sepolia, not the asset: domain of the v2 example (USDC on Base Sepolia)"
+    },
+    {
+      "documento": "specs/transports-v1/http.md",
+      "riga": 72,
+      "standard": "EIP-3009 TransferWithAuthorization (v1)",
+      "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "recuperato": "0x857b06519e91e3a54538791bdbb0e22373e36b66",
+      "digest": "0xf256992871671abcb27ff92885a7afa46218724e5fc0bac35d050115aa1d22e6",
+      "stesso_digest_del_valido": true,
+      "esito": "VALIDA",
+      "nota": "the v1 block names network base-sepolia, not the asset: domain of the v2 example (USDC on Base Sepolia)"
+    },
+    {
+      "documento": "specs/transports-v1/mcp.md",
+      "riga": 104,
+      "standard": "EIP-3009 TransferWithAuthorization (v1)",
+      "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "recuperato": "0x857b06519e91e3a54538791bdbb0e22373e36b66",
+      "digest": "0xf256992871671abcb27ff92885a7afa46218724e5fc0bac35d050115aa1d22e6",
+      "stesso_digest_del_valido": true,
+      "esito": "VALIDA",
+      "nota": "the v1 block names network base-sepolia, not the asset: domain of the v2 example (USDC on Base Sepolia)"
+    },
+    {
+      "documento": "specs/transports-v1/a2a.md",
+      "riga": 93,
+      "standard": "EIP-3009 TransferWithAuthorization (v1)",
+      "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "recuperato": null,
+      "digest": null,
+      "esito": "NON CODIFICABILE",
+      "nota": "authorization.to is \"0xServerWalletAddressHere\", not an address"
+    },
+    {
+      "documento": "specs/transports-v2/a2a.md",
+      "riga": 109,
+      "standard": "EIP-3009 TransferWithAuthorization",
+      "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "recuperato": null,
+      "digest": null,
+      "esito": "NON CODIFICABILE",
+      "nota": "authorization.to is \"0xServerWalletAddressHere\", not an address"
+    },
+    {
+      "documento": "specs/schemes/exact/scheme_exact_evm.md",
+      "riga": 149,
+      "standard": "Permit2 PermitWitnessTransferFrom",
+      "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "recuperato": "0x468d6ad86c21a78c0c1f4f1fdc6c67616b9beb6f",
+      "digest": "0x21528e1468aac114016416353e2309329f217dc180b21baa1d81cde941095685",
+      "stesso_digest_del_valido": false,
+      "esito": "NON VERIFICA",
+      "nota": "canonical Permit2 domain (no version), chain 84532; witness types from WITNESS_TYPE_STRING"
+    },
+    {
       "documento": "specs/extensions/eip2612_gas_sponsoring.md",
-      "standard": "EIP-2612 Permit (EIP-712)",
+      "riga": 124,
+      "standard": "Permit2 PermitWitnessTransferFrom",
       "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
-      "recuperato": "0xd259c1962ac82d9033ea21cf55d59c1a5d97acbb",
-      "nota": "stessi campi dell'esempio; spender = Canonical Permit2, value = uint256 max",
-      "esito": "PLACEHOLDER (non verifica)"
+      "recuperato": "0x468d6ad86c21a78c0c1f4f1fdc6c67616b9beb6f",
+      "digest": "0x21528e1468aac114016416353e2309329f217dc180b21baa1d81cde941095685",
+      "stesso_digest_del_valido": false,
+      "esito": "NON VERIFICA",
+      "nota": "the payload block is the one of scheme_exact_evm.md:149"
     },
     {
-      "id": "erc20_gas_sponsoring_permit",
       "documento": "specs/extensions/erc20_gas_sponsoring.md",
-      "standard": "EIP-2612 Permit (EIP-712)",
+      "riga": 150,
+      "standard": "Permit2 PermitWitnessTransferFrom",
       "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
-      "recuperato": "0xd259c1962ac82d9033ea21cf55d59c1a5d97acbb",
-      "nota": "identico al precedente nel payload dichiarato",
-      "esito": "PLACEHOLDER (non verifica)"
+      "recuperato": "0x468d6ad86c21a78c0c1f4f1fdc6c67616b9beb6f",
+      "digest": "0x21528e1468aac114016416353e2309329f217dc180b21baa1d81cde941095685",
+      "stesso_digest_del_valido": false,
+      "esito": "NON VERIFICA",
+      "nota": "the signature sits in payload.permit2Authorization only; the extension's info carries a signedTransaction, not this signature"
     },
     {
-      "id": "sign_in_with_x",
+      "documento": "specs/extensions/eip2612_gas_sponsoring.md",
+      "riga": 149,
+      "standard": "EIP-2612 Permit",
+      "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "recuperato": "0xd259c1962ac82d9033ea21cf55d59c1a5d97acbb",
+      "digest": "0x9d699b419c72490ae461cca68d915ed086fa1cf4028f64ab40ad4735a9535818",
+      "stesso_digest_del_valido": false,
+      "esito": "NON VERIFICA",
+      "nota": "token domain from extra (name USDC, version 2); info.version \"1\" is the schema version"
+    },
+    {
+      "documento": "specs/schemes/upto/scheme_upto_evm.md",
+      "riga": 120,
+      "standard": "Permit2 PermitWitnessTransferFrom (upto)",
+      "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+      "recuperato": null,
+      "digest": null,
+      "esito": "NON CODIFICABILE",
+      "nota": "witness.facilitator is \"0xFacilitatorAddress1234567890123456789012\", not an address; nonce is a bytes32 hex string where Permit2 declares uint256"
+    },
+    {
       "documento": "specs/extensions/sign-in-with-x.md",
+      "riga": 150,
       "standard": "ERC-4361 / EIP-191 personal_sign",
       "atteso": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
-      "recuperato": "0x01147808a7457af8b8ad66bb8c0fd69c56821f54",
-      "nota": "il messaggio ERC-4361 e' ricostruito dai campi dell'esempio: la spec non pubblica la stringa firmata, quindi questo caso resta INDICATIVO",
-      "indicativo": true,
-      "esito": "non verifica (indicativo)"
+      "recuperato": "0x5b2acbca0fb899bd73747ac64302145db44d5d66",
+      "digest": "0xf94099d42ed534f71d421da750ed907115036ad5a6e3a8a1c4ca43d307fe49b6",
+      "stesso_digest_del_valido": false,
+      "esito": "NON VERIFICA",
+      "nota": "the EVM string published in the section \"Message Format\" of the same document"
     }
   ],
   "conteggio": {
-    "VALIDA": 1,
-    "PLACEHOLDER": 2,
-    "INDICATIVO": 1
+    "VALIDA": 7,
+    "NON CODIFICABILE": 3,
+    "NON VERIFICA": 5
   }
 }

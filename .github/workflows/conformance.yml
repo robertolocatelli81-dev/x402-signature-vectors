@@ -17,6 +17,8 @@ jobs:
       # Nessuna installazione: la suite gira sulla sola stdlib, ed è metà del punto.
       - name: Integrity gate (fail-closed)
         run: python3 tools/check_manifest.py
+      - name: Integrity gate inside a git worktree (a .git FILE is not a suite file; a planted file still fails)
+        run: python3 tools/test_check_manifest.py
       - name: Vector schema
         run: python3 tools/check_schema.py
       - name: SPEC.md covers every schema field, and nothing else (closed list of reject classes)
@@ -27,7 +29,7 @@ jobs:
         run: python3 verify.py
       - name: runner closed schema (planted fields named, intact suite green)
         run: python3 tools/test_runner_schema.py
-      - name: Audit of the specification examples
+      - name: Audit of the specification examples (recomputed; must equal audit/spec_examples_audit.json)
         run: python3 tools/audit_spec_examples.py
       - name: Fuzz the runner (no unhandled exceptions on hostile input)
         run: python3 tools/fuzz_runner.py
