@@ -124,9 +124,11 @@ for r in letture_ko:
 # ── Annidamento profondo (20/11/2026): fino alla 1.5.0 verdetto_da_testo("[" * 1000 + "]" * 1000) sollevava
 # RecursionError invece di rifiutare, e verdetto() su un oggetto gia' letto con un `signer` annidato in profondita'
 # pure (str()). Un valore annidato al posto di OGNI nodo del vettore 003, radice compresa, letto come testo e come
-# oggetto: nessuna eccezione, e il testo che il lettore di QUESTO interprete non segue (json.loads solleva
-# RecursionError: da 1000 livelli su 3.9/3.11, da 20000 su 3.12/3.13, da 100000 su 3.14, misurato 20/11/2026) e'
-# reject/input_not_object (SPEC.md §3.1).
+# oggetto: nessuna eccezione, e il testo annidato oltre 64 livelli (SPEC.md §3.1, verify.PROFONDITA_MAX) e'
+# reject/input_not_object su OGNI interprete: il limite del lettore cambia (json.loads solleva RecursionError: prima
+# profondita' di liste rifiutata 993 su 3.9.25 e 3.11.2, 9998 su 3.12.15, 9999 su 3.13.15, 65197 su 3.14.8, misurato
+# 20/11/2026), quello della suite no. Qui "oltre" e' noto per costruzione: 5000 e 200000 livelli lo sono, 50 no
+# (i nodi del vettore stanno entro 5 livelli).
 def _percorsi(o, p=()):
     yield p
     for k, v in (o.items() if isinstance(o, dict) else enumerate(o) if isinstance(o, list) else ()):
@@ -143,14 +145,6 @@ def _metti(radice, p, valore):
     return radice
 
 
-def _leggibile(testo):
-    try:
-        json.loads(testo)
-        return True
-    except RecursionError:
-        return False
-
-
 annidati_ko, annidati_n, illeggibili = [], 0, 0
 _SEGNA = "__ANNIDATO__"
 for p in list(_percorsi(_v3)):
@@ -161,7 +155,8 @@ for p in list(_percorsi(_v3)):
             for _ in range(n):
                 obj_prof = [obj_prof] if forma == "lista" else {"a": obj_prof}
             testo = json.dumps(_metti(json.loads(json.dumps(_v3)), p, _SEGNA)).replace(json.dumps(_SEGNA), testo_prof, 1)
-            illeggibili += not _leggibile(testo)
+            oltre = n > 64
+            illeggibili += oltre
             for modo in ("testo", "oggetto"):
                 annidati_n += 1
                 try:
@@ -176,12 +171,61 @@ for p in list(_percorsi(_v3)):
                     annidati_ko.append(f"/{'/'.join(map(str, p))} {n} {forma} {modo}: {esito[0]!r}")
                 elif p == ("signer",) and esito[0] != "reject":     # SPEC.md §1 /signer: a string; a list is no signer
                     annidati_ko.append(f"/signer {n} {forma} {modo}: {esito[0]}")
-                elif modo == "testo" and not _leggibile(testo) and esito[:3:2] != ("reject", "input_not_object"):
+                elif modo == "testo" and oltre and esito[:3:2] != ("reject", "input_not_object"):
                     annidati_ko.append(f"/{'/'.join(map(str, p))} {n} {forma} testo: {esito[0]}/{esito[2]} (atteso reject/input_not_object)")
 print(f"  annidamento: {annidati_n} casi ({len(list(_percorsi(_v3)))} nodi x 3 profondita' x 2 forme x testo/oggetto) "
-      f"({illeggibili} testi oltre il limite del lettore di questo interprete) -> {len(annidati_ko)} sbagliati")
+      f"({illeggibili} testi oltre 64 livelli) -> {len(annidati_ko)} sbagliati")
 if not illeggibili:
-    annidati_ko.append("nessun testo oltre il limite del lettore: il caso RecursionError non e' stato esercitato")
+    annidati_ko.append("nessun testo oltre 64 livelli: il caso non e' stato esercitato")
+# Il confine, sul primo vettore con un membro in piu' che il verdetto ignora: 64 livelli in tutto si leggono (accept),
+# 65 no; parentesi dentro una stringa (anche dopo \" e \\) non sono livelli; lo stesso testo in bytes; e la rete di
+# sicurezza: un lettore che solleva RecursionError e' reject/input_not_object.
+_t1 = open(os.path.join(BASE, "vectors", sorted(os.listdir(os.path.join(BASE, "vectors")))[0]), encoding="utf-8").read().rstrip()
+_con = lambda valore: _t1[:-1] + ', "x_annidato": ' + valore + "}"                    # noqa: E731
+_lista = lambda n: "[" * n + "]" * n                                                  # noqa: E731
+_ogg = lambda n: '{"a":' * n + "1" + "}" * n                                          # noqa: E731
+confine = [("controllo", _t1, "accept", None), ("lista 63 (64 in tutto)", _con(_lista(63)), "accept", None),
+           ("lista 64 (65 in tutto)", _con(_lista(64)), "reject", "input_not_object"),
+           ("oggetto 63", _con(_ogg(63)), "accept", None), ("oggetto 64", _con(_ogg(64)), "reject", "input_not_object"),
+           ("misto 64", _con("[{\"a\":" * 32 + "1" + "}]" * 32), "reject", "input_not_object"),
+           ("misto 62", _con("[{\"a\":" * 31 + "1" + "}]" * 31), "accept", None),
+           ("parentesi in una stringa", _con(json.dumps("[" * 500 + "{" * 500)), "accept", None),
+           ("stringa con \\\" e parentesi", _con(json.dumps('a"' + "[" * 500 + "\\" + '"' + "{" * 500)), "accept", None),
+           ("chiave con parentesi", _t1[:-1] + ', ' + json.dumps("[" * 500) + ': 1}', "accept", None),
+           ("200 fratelli, 2 livelli", _con("[" + ",".join(["[]", "{}"] * 100) + "]"), "accept", None),
+           ("signer numero", json.dumps({**json.loads(_t1), "signer": 5}), "reject", "signer_mismatch"),
+           ("signer lista", json.dumps({**json.loads(_t1), "signer": [json.loads(_t1)["signer"]]}), "reject", "signer_mismatch"),
+           ("signer con spazio in coda", json.dumps({**json.loads(_t1), "signer": json.loads(_t1)["signer"] + " "}), "reject", "signer_mismatch"),
+           ("65 livelli di sole aperte", "[" * 65, "reject", "input_not_object"),
+           ("bytes, lista 64", _con(_lista(64)).encode("utf-8"), "reject", "input_not_object"),
+           ("bytes utf-16, lista 64", _con(_lista(64)).encode("utf-16"), "reject", "input_not_object"),
+           ("bytes, lista 63", _con(_lista(63)).encode("utf-8"), "accept", None)]
+confine_ko = []
+for nome, testo, v_att, c_att in confine:
+    try:
+        esito = V.verdetto_da_testo(testo)
+    except BaseException as ex:                              # noqa: BLE001
+        confine_ko.append(f"{nome}: {type(ex).__name__}"); continue
+    if (esito[0], esito[2]) != (v_att, c_att):
+        confine_ko.append(f"{nome}: {esito[0]}/{esito[2]} (atteso {v_att}/{c_att})")
+    elif nome.startswith("signer ") and (esito[1] or "").lower() != json.loads(_t1)["signer"].lower():
+        confine_ko.append(f"{nome}: indirizzo recuperato {esito[1]!r} (SPEC.md §1: un rifiuto per regola riporta l'indirizzo)")
+_vero = V.leggi_json_stretto
+def _solleva(testo):
+    raise RecursionError("lettore finto")
+V.leggi_json_stretto = _solleva
+try:
+    esito = V.verdetto_da_testo(_t1)
+    if (esito[0], esito[2]) != ("reject", "input_not_object"):
+        confine_ko.append(f"lettore che solleva RecursionError: {esito[0]}/{esito[2]}")
+except BaseException as ex:                                  # noqa: BLE001
+    confine_ko.append(f"lettore che solleva RecursionError: {type(ex).__name__}")
+finally:
+    V.leggi_json_stretto = _vero
+print(f"  confine dei 64 livelli e `signer` non stringa: {len(confine) + 1} casi -> {len(confine_ko)} sbagliati")
+for r in confine_ko:
+    print(f"      {r}")
+annidati_ko += confine_ko
 for r in annidati_ko[:8]:
     print(f"      {r}")
 

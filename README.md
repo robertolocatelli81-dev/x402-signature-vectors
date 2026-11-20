@@ -152,7 +152,7 @@ Every `reject` vector also declares **`reject_reason`** — one of `signature_ma
 `signer_mismatch`, `input_not_object`, `json_ambiguous` (defined in `tools/reject_reasons.py`). A verifier is conformant on a reject vector
 only if it rejects **for that class of reason**: a vector rejected for the wrong reason is how a broken
 test passes, and a reject vector without a declared class fails the schema gate. `input_not_object`
-(the payload is `null`, an array, a string, a number or a boolean) cannot appear in a vector file,
+(the payload is `null`, an array, a string, a number or a boolean, or a text nested more than 64 levels deep) cannot appear in a vector file,
 which is an object by construction; the runner emits it and `tools/fuzz_runner.py` checks it.
 
 **Each layer is testable in isolation.** Every vector carries `type_hash`, `domain_separator`,

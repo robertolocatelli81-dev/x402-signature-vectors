@@ -17,7 +17,7 @@ CLASSI = {
     "encoding_error":          "il messaggio EIP-712 non e' codificabile (campo mancante, primaryType ignoto, valore non nella forma stretta del suo tipo)",
     "recovery_undefined":      "firma ben formata ma il recupero non produce una chiave (x non sulla curva, punto all'infinito)",
     "signer_mismatch":         "recupera a un indirizzo diverso dal `signer` dichiarato",
-    "input_not_object":        "l'input non e' un oggetto JSON (null, array, stringa, numero, bool): nessun campo leggibile",
+    "input_not_object":        "l'input non e' un oggetto JSON (null, array, stringa, numero, bool), o il testo e' annidato oltre 64 livelli: nessun campo leggibile",
     "json_ambiguous":          "il testo JSON ha due letture: un membro ripetuto (vince l'ultimo in un lettore, il primo in un altro) o NaN/Infinity",
 }
 

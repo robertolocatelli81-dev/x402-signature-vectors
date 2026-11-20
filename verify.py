@@ -81,12 +81,49 @@ def _no_costanti(nome):
     raise JsonAmbiguo(f"{nome} non e' JSON")
 
 
+PROFONDITA_MAX = 64     # SPEC.md §3.1: i livelli di array e oggetti annidati che un testo puo' avere
+
+
+class TroppoAnnidato(ValueError):
+    """Il testo annida array e oggetti oltre PROFONDITA_MAX: non viene letto (SPEC.md §3.1)."""
+
+
+def annidato_oltre(testo, limite=PROFONDITA_MAX):
+    """True se nel testo array e oggetti sono annidati piu' di `limite` livelli, contati FUORI dalle stringhe e PRIMA
+    della lettura. Il limite del lettore `json` cambia con l'interprete (prima profondita' di liste rifiutata, misurata
+    il 20/11/2026: 993 su 3.9.25 e 3.11.2, 9998 su 3.12.15, 9999 su 3.13.15, 65197 su 3.14.8): con quel solo limite
+    il primo vettore con un membro in piu', ignorato dal verdetto e annidato 1500 livelli, era reject su 3.9 e 3.11 e
+    accept su 3.12, 3.13 e 3.14. Un numero della suite da' la stessa risposta ovunque."""
+    if isinstance(testo, (bytes, bytearray)):               # json.loads li accetta: stessa decodifica
+        testo = bytes(testo).decode(json.detect_encoding(bytes(testo)), "surrogatepass")
+    livello, in_stringa, salta = 0, False, False
+    for c in testo:
+        if in_stringa:
+            if salta:
+                salta = False
+            elif c == "\\":
+                salta = True
+            elif c == '"':
+                in_stringa = False
+        elif c == '"':
+            in_stringa = True
+        elif c == "[" or c == "{":
+            livello += 1
+            if livello > limite:
+                return True
+        elif c == "]" or c == "}":
+            livello -= 1
+    return False
+
+
 def leggi_json_stretto(testo):
     """Il lettore che un verificatore deve usare: il `json` della libreria standard tiene l'ULTIMO di due membri
     con lo stesso nome, un altro lettore il primo, e i due vedono importi diversi sotto la stessa firma
     (25/09/2026: `"value": 99999999999, "value": 10000` era `accept`). `verdetto(dict)` riceve un oggetto gia'
     letto e non puo' piu' vedere i duplicati: chi integra deve leggere con questa funzione, o usare
     `verdetto_da_testo`."""
+    if annidato_oltre(testo):
+        raise TroppoAnnidato(f"annidato oltre {PROFONDITA_MAX} livelli")
     return json.loads(testo, object_pairs_hook=_no_duplicati, parse_constant=_no_costanti)
 
 
@@ -98,8 +135,9 @@ def verdetto_da_testo(testo):
     except ValueError as ex:
         return "reject", None, "input_not_object", f"testo non leggibile come JSON: {ex}"
     except RecursionError:
-        # Un testo annidato oltre la profondita' che il lettore segue (RFC 8259 §9: un'implementazione puo' porre un
-        # limite alla profondita') non e' leggibile qui. Fino alla 1.5.0 RecursionError usciva dalla funzione: con
+        # Rete di sicurezza: oltre PROFONDITA_MAX il testo non arriva al lettore (TroppoAnnidato, sopra); resta per un
+        # interprete con un limite di ricorsione piu' basso di quello. Un testo annidato oltre la profondita' che il
+        # lettore segue (RFC 8259 §9: un'implementazione puo' porre un limite alla profondita') non e' leggibile qui. Fino alla 1.5.0 RecursionError usciva dalla funzione: con
         # "[" * 1000 + "]" * 1000 il verificatore sollevava invece di rifiutare (Python 3.11; su 3.12 e 3.13 con 20000
         # livelli, su 3.14 con 100000; 20/11/2026).
         return "reject", None, "input_not_object", "testo non leggibile come JSON: annidato oltre il limite del lettore"

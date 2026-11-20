@@ -10,16 +10,26 @@ recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
 - **`verify.verdetto_da_testo`**: measured on 1.5.0 on 20/11/2026, `"[" * 1000 + "]" * 1000` and `'{"a":' * 1000 + "1" +
   "}" * 1000` (and deeper) made it raise `RecursionError` instead of answering on Python 3.9 and 3.11; the reader of
-  Python 3.12 and 3.13 reads 5,000 levels and raises at 20,000, that of 3.14 reads 20,000 and raises at 100,000. The input of a verifier comes from
-  the network. Now such a text is `reject` / `input_not_object` (`SPEC.md` 1.2.1, §3.1, citing RFC 8259 §9: "An
+  Python 3.12 and 3.13 reads 5,000 levels and raises at 20,000, that of 3.14 reads 20,000 and raises at 100,000 (first
+  depth of nested arrays refused by `json.loads`: 993 on 3.9.25 and 3.11.2, 9,998 on 3.12.15, 9,999 on 3.13.15,
+  65,197 on 3.14.8). The input of a verifier comes from the network. Now such a text is `reject` / `input_not_object` (`SPEC.md` 1.2.1, §3.1, citing RFC 8259 §9: "An
   implementation may set limits on the maximum depth of nesting").
+- With the reader's limit alone the answer between those depths depended on the interpreter: the first vector with one
+  more member, ignored by the verdict and nested 1,500 levels deep, was `reject` / `input_not_object` on 3.9 and 3.11
+  and `accept` on 3.12, 3.13 and 3.14. So the limit is a number of this suite: a text in which arrays and objects are
+  nested more than 64 levels deep, counted outside strings before the text is read (`verify.annidato_oltre`,
+  `verify.PROFONDITA_MAX`), is `reject` / `input_not_object` on every interpreter; the vectors nest 5 levels.
+  `SPEC.md` §3.1 and the table of §3.3, `README.md` and `tools/reject_reasons.py` say so. `tools/fuzz_runner.py`: 19
+  cases (64 levels read, 65 not; 200 sibling values are not levels, nor are brackets inside a string or a member
+  name; the same text as bytes; a reader raising `RecursionError`; a `signer` that is a number, a list or the address
+  followed by a space is `signer_mismatch` with the recovered address reported).
 - **`verify.verdetto`** on an object already read: a `signer` that is not a string is `signer_mismatch` ("`signer`
   non e' una stringa"). Before, `str(signer)` was compared, which never equals an address; on a `signer` nested
   thousands of levels deep `str()` raised `RecursionError`.
 - **`tools/fuzz_runner.py`** (CI): a value nested 50, 5,000 and 200,000 levels deep, as a list and as an object, put in
   place of every node of vector 003 (root included), read as text and as an object: 600 cases, no exception, every
-  text the running interpreter's `json.loads` cannot follow is `reject` / `input_not_object` (the section fails if no
-  such text was produced), and a nested value in place of `signer` is `reject`.
+  text nested more than 64 levels deep (200 of them, on every interpreter) is `reject` / `input_not_object` (the
+  section fails if no such text was produced), and a nested value in place of `signer` is `reject`.
   On the `verify.py` of 1.5.0 the same section reports `RecursionError`.
 - **`tools/positive_control.py`**: the sabotage `signer-case-sensitive` patches the new comparison line.
 - No vector, class or schema changed.

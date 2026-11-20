@@ -129,9 +129,14 @@ was signed. This is a rule of this suite, stricter than EIP-712; §5.4 keeps div
 ### 3.1 Reading
 The text is read with a reader that rejects a repeated member name anywhere in the document and the non-JSON
 constants `NaN`, `Infinity`, `-Infinity` (`verify.leggi_json_stretto`): class `json_ambiguous`. A text that is not a
-JSON object (`null`, array, string, number, boolean, or not JSON at all) is `input_not_object`. So is a text nested
-deeper than the reader follows (RFC 8259 §9: "An implementation may set limits on the maximum depth of nesting"; the
-runner's reader is Python's `json`, whose limit depends on the interpreter's recursion limit).
+JSON object (`null`, array, string, number, boolean, or not JSON at all) is `input_not_object`. So is a text in
+which arrays and objects are nested more than 64 levels deep, counted outside strings before the text is read
+(`verify.annidato_oltre`; RFC 8259 §9: "An implementation may set limits on the maximum depth of nesting"). The limit is
+a number of this suite so that the answer does not depend on the reader: measured on 20 November 2026, the first depth
+of nested arrays that Python's `json.loads` refuses is 993 on CPython 3.9.25 and 3.11.2, 9,998 on 3.12.15, 9,999 on
+3.13.15 and 65,197 on 3.14.8, and with the reader's limit alone the first vector with one more member, ignored by the
+verdict and nested 1,500 levels deep, was `reject` / `input_not_object` on 3.9 and 3.11 and `accept` on 3.12, 3.13 and
+3.14. The vectors of this suite nest 5 levels.
 
 ### 3.2 Order of the checks
 A verifier computes the signature-form checks and the encoding, then answers with the FIRST class that applies, in
@@ -158,7 +163,7 @@ Otherwise the verdict is `accept`.
 | `encoding_error` | the EIP-712 message cannot be encoded under §1–§2 |
 | `recovery_undefined` | well-formed signature, but recovery yields no key |
 | `signer_mismatch` | recovers to an address other than the declared signer |
-| `input_not_object` | the input is not a JSON object |
+| `input_not_object` | the input is not a JSON object, or its text is nested more than 64 levels deep (§3.1) |
 | `json_ambiguous` | the JSON text has two readings (repeated member, NaN/Infinity) |
 
 No other class exists. A new class is a new version of this document, added at the same time to the schema,
@@ -266,5 +271,6 @@ vector states that the same bytes verify off chain under §3.
 with a trailing newline make the file not a vector; the runner checks the four intermediate values; adapter lines are
 read strictly. No vector changed. A new `origin`, a new class or a new value form is a new
 version, recorded here and in `CHANGELOG.md` together with the schema change.
-1.2.1 (20 November 2026, unreleased): §3.1 states the class of a text nested deeper than the reader follows
-(`input_not_object`; until 1.5.0 the runner's reader raised instead of answering). No vector, class or schema changed.
+1.2.1 (20 November 2026, unreleased): §3.1 states the class of a text nested more than 64 levels deep
+(`input_not_object`; until 1.5.0 the runner's reader raised instead of answering, at a depth that changed with the
+interpreter). No vector, class or schema changed.
