@@ -121,6 +121,70 @@ print(f"  letture e nomi: {6 + len(ATOMICI)} casi (NaN/Infinity/-Infinity in due
 for r in letture_ko:
     print(f"      {r}")
 
-falliti = bool(panici or radici_ko or forme_ko or letture_ko)
+# ── Annidamento profondo (20/11/2026): fino alla 1.5.0 verdetto_da_testo("[" * 1000 + "]" * 1000) sollevava
+# RecursionError invece di rifiutare, e verdetto() su un oggetto gia' letto con un `signer` annidato in profondita'
+# pure (str()). Un valore annidato al posto di OGNI nodo del vettore 003, radice compresa, letto come testo e come
+# oggetto: nessuna eccezione, e il testo che il lettore di QUESTO interprete non segue (json.loads solleva
+# RecursionError: da 1000 livelli su 3.9/3.11, da 20000 su 3.12/3.13, da 100000 su 3.14, misurato 20/11/2026) e'
+# reject/input_not_object (SPEC.md §3.1).
+def _percorsi(o, p=()):
+    yield p
+    for k, v in (o.items() if isinstance(o, dict) else enumerate(o) if isinstance(o, list) else ()):
+        yield from _percorsi(v, p + (k,))
+
+
+def _metti(radice, p, valore):
+    if not p:
+        return valore
+    o = radice
+    for k in p[:-1]:
+        o = o[k]
+    o[p[-1]] = valore
+    return radice
+
+
+def _leggibile(testo):
+    try:
+        json.loads(testo)
+        return True
+    except RecursionError:
+        return False
+
+
+annidati_ko, annidati_n, illeggibili = [], 0, 0
+_SEGNA = "__ANNIDATO__"
+for p in list(_percorsi(_v3)):
+    for n in (50, 5000, 200000):
+        for forma in ("lista", "oggetto"):
+            testo_prof = ("[" * n + "]" * n) if forma == "lista" else ('{"a":' * n + "1" + "}" * n)
+            obj_prof = 1
+            for _ in range(n):
+                obj_prof = [obj_prof] if forma == "lista" else {"a": obj_prof}
+            testo = json.dumps(_metti(json.loads(json.dumps(_v3)), p, _SEGNA)).replace(json.dumps(_SEGNA), testo_prof, 1)
+            illeggibili += not _leggibile(testo)
+            for modo in ("testo", "oggetto"):
+                annidati_n += 1
+                try:
+                    if modo == "testo":
+                        esito = V.verdetto_da_testo(testo)
+                    else:
+                        esito = V.verdetto(_metti(json.loads(json.dumps(_v3)), p, obj_prof))
+                except BaseException as ex:                  # noqa: BLE001
+                    annidati_ko.append(f"/{'/'.join(map(str, p))} {n} {forma} {modo}: {type(ex).__name__}")
+                    continue
+                if esito[0] not in ("accept", "reject"):
+                    annidati_ko.append(f"/{'/'.join(map(str, p))} {n} {forma} {modo}: {esito[0]!r}")
+                elif p == ("signer",) and esito[0] != "reject":     # SPEC.md §1 /signer: a string; a list is no signer
+                    annidati_ko.append(f"/signer {n} {forma} {modo}: {esito[0]}")
+                elif modo == "testo" and not _leggibile(testo) and esito[:3:2] != ("reject", "input_not_object"):
+                    annidati_ko.append(f"/{'/'.join(map(str, p))} {n} {forma} testo: {esito[0]}/{esito[2]} (atteso reject/input_not_object)")
+print(f"  annidamento: {annidati_n} casi ({len(list(_percorsi(_v3)))} nodi x 3 profondita' x 2 forme x testo/oggetto) "
+      f"({illeggibili} testi oltre il limite del lettore di questo interprete) -> {len(annidati_ko)} sbagliati")
+if not illeggibili:
+    annidati_ko.append("nessun testo oltre il limite del lettore: il caso RecursionError non e' stato esercitato")
+for r in annidati_ko[:8]:
+    print(f"      {r}")
+
+falliti = bool(panici or radici_ko or forme_ko or letture_ko or annidati_ko)
 print("  ESITO:", "nessun panic, classi e forme corrette" if not falliti else "DA CORREGGERE")
 sys.exit(0 if not falliti else 1)

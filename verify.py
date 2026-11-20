@@ -97,6 +97,12 @@ def verdetto_da_testo(testo):
         return "reject", None, "json_ambiguous", str(ex)
     except ValueError as ex:
         return "reject", None, "input_not_object", f"testo non leggibile come JSON: {ex}"
+    except RecursionError:
+        # Un testo annidato oltre la profondita' che il lettore segue (RFC 8259 §9: un'implementazione puo' porre un
+        # limite alla profondita') non e' leggibile qui. Fino alla 1.5.0 RecursionError usciva dalla funzione: con
+        # "[" * 1000 + "]" * 1000 il verificatore sollevava invece di rifiutare (Python 3.11; su 3.12 e 3.13 con 20000
+        # livelli, su 3.14 con 100000; 20/11/2026).
+        return "reject", None, "input_not_object", "testo non leggibile come JSON: annidato oltre il limite del lettore"
     return verdetto(vec)
 
 
@@ -167,7 +173,11 @@ def verdetto(vec):
     firmatario = vec.get("signer")
     if not firmatario:
         return "reject", rec, "signer_mismatch", "vettore senza `signer` dichiarato"
-    ok = rec.lower() == str(firmatario).lower()
+    if not isinstance(firmatario, str):
+        # SPEC.md §1 /signer: una stringa. Prima str(firmatario): mai uguale a un indirizzo, ma su un oggetto gia' letto
+        # annidato in profondita' str() sollevava RecursionError invece di rifiutare (20/11/2026)
+        return "reject", rec, "signer_mismatch", "`signer` non e' una stringa"
+    ok = rec.lower() == firmatario.lower()
     if ok:
         return "accept", rec, None, None
     return "reject", rec, "signer_mismatch", "recupera a un indirizzo diverso"

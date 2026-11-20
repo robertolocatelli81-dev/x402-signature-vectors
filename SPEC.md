@@ -1,6 +1,6 @@
 # x402 signature vectors — format and conformance
 
-**Specification version 1.2 · 13 November 2026 · applies to vector format 1 (`schema/vector.schema.json`).**
+**Specification version 1.2.1 · 20 November 2026 (unreleased) · applies to vector format 1 (`schema/vector.schema.json`).**
 The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
 
 This document says what a vector is, how its verdict is reached, what "conforms" means for a verifier, and what
@@ -129,7 +129,9 @@ was signed. This is a rule of this suite, stricter than EIP-712; §5.4 keeps div
 ### 3.1 Reading
 The text is read with a reader that rejects a repeated member name anywhere in the document and the non-JSON
 constants `NaN`, `Infinity`, `-Infinity` (`verify.leggi_json_stretto`): class `json_ambiguous`. A text that is not a
-JSON object (`null`, array, string, number, boolean, or not JSON at all) is `input_not_object`.
+JSON object (`null`, array, string, number, boolean, or not JSON at all) is `input_not_object`. So is a text nested
+deeper than the reader follows (RFC 8259 §9: "An implementation may set limits on the maximum depth of nesting"; the
+runner's reader is Python's `json`, whose limit depends on the interpreter's recursion limit).
 
 ### 3.2 Order of the checks
 A verifier computes the signature-form checks and the encoding, then answers with the FIRST class that applies, in
@@ -264,3 +266,5 @@ vector states that the same bytes verify off chain under §3.
 with a trailing newline make the file not a vector; the runner checks the four intermediate values; adapter lines are
 read strictly. No vector changed. A new `origin`, a new class or a new value form is a new
 version, recorded here and in `CHANGELOG.md` together with the schema change.
+1.2.1 (20 November 2026, unreleased): §3.1 states the class of a text nested deeper than the reader follows
+(`input_not_object`; until 1.5.0 the runner's reader raised instead of answering). No vector, class or schema changed.

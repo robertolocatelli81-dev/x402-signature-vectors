@@ -4,6 +4,26 @@ Vectors are versioned so that an implementation can state *which* set it passes.
 stable and never reused: a vector that turns out to be wrong is corrected in place and the change is
 recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
+## Unreleased
+
+### 2026-11-20 — a text nested deeper than the reader follows is rejected, not raised
+
+- **`verify.verdetto_da_testo`**: measured on 1.5.0 on 20/11/2026, `"[" * 1000 + "]" * 1000` and `'{"a":' * 1000 + "1" +
+  "}" * 1000` (and deeper) made it raise `RecursionError` instead of answering on Python 3.9 and 3.11; the reader of
+  Python 3.12 and 3.13 reads 5,000 levels and raises at 20,000, that of 3.14 reads 20,000 and raises at 100,000. The input of a verifier comes from
+  the network. Now such a text is `reject` / `input_not_object` (`SPEC.md` 1.2.1, §3.1, citing RFC 8259 §9: "An
+  implementation may set limits on the maximum depth of nesting").
+- **`verify.verdetto`** on an object already read: a `signer` that is not a string is `signer_mismatch` ("`signer`
+  non e' una stringa"). Before, `str(signer)` was compared, which never equals an address; on a `signer` nested
+  thousands of levels deep `str()` raised `RecursionError`.
+- **`tools/fuzz_runner.py`** (CI): a value nested 50, 5,000 and 200,000 levels deep, as a list and as an object, put in
+  place of every node of vector 003 (root included), read as text and as an object: 600 cases, no exception, every
+  text the running interpreter's `json.loads` cannot follow is `reject` / `input_not_object` (the section fails if no
+  such text was produced), and a nested value in place of `signer` is `reject`.
+  On the `verify.py` of 1.5.0 the same section reports `RecursionError`.
+- **`tools/positive_control.py`**: the sabotage `signer-case-sensitive` patches the new comparison line.
+- No vector, class or schema changed.
+
 ## 1.5.0 — 2026-11-13
 
 ### 2026-11-13 — specification, audit at `2178d4b`, two official SDKs, real payments, positive control
