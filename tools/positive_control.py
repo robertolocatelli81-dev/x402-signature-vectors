@@ -174,8 +174,12 @@ def build_b1(seed=20261113, n=24):
         out.append(t.replace('"value": ', '"value": 1, "value": ', 1))
         # a non-JSON constant in a member EIP-712 ignores; a struct named like an atomic type
         out.append(t.replace('"validAfter": ', '"x": ' + rnd.choice(["NaN", "Infinity", "-Infinity"]) + ', "validAfter": ', 1))
-        ta2 = dict(TIPI_3009, **{rnd.choice(["string", "bool"]): [{"name": "a", "type": "uint256"}]})
-        out.append(json.dumps(vec(dom, ta2, T, msg, hx(r, s, 27 + rec))))
+        # (reachable from primaryType, signed over the struct reading: an unreachable one is refused by SPEC 1.3 anyway)
+        nm = rnd.choice(["string", "bool"])
+        ta2 = {"Pay": [{"name": "to", "type": nm}], nm: [{"name": "a", "type": "uint256"}]}
+        m2 = {"to": {"a": rnd.randrange(9)}}
+        r4, s4, rec4, _ = sign(dom, ta2, "Pay", m2)
+        out.append(json.dumps(vec(dom, ta2, "Pay", m2, hx(r4, s4, 27 + rec4))))
     return out
 
 

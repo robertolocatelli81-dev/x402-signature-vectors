@@ -132,7 +132,7 @@ def cross_vettori():
             # vengono prima della crittografia, come nel runner; senza, 077-081 davano un falso "discordante".
             # La struttura e' confrontata con eth-account in crossvalidate_eip712.py; qui si confronta la crittografia.
             leggi_json_stretto(testo)
-            valida_struttura(e["domain"], e["types"])
+            valida_struttura(e["domain"], e["types"], e["primaryType"])
             ds = hash_struct("EIP712Domain", {"EIP712Domain": campi}, e["domain"])
             hs = hash_struct(e["primaryType"], e["types"], e["message"])
         except Exception:                                     # noqa: BLE001

@@ -2,7 +2,7 @@
 
 Byte-level test vectors for the **signature layer** of [x402](https://github.com/x402-foundation/x402):
 EIP-712 typed-data digests and secp256k1 recovery for the `exact` scheme on EVM (EIP-3009, Permit2 witness
-transfer, EIP-2612 permit). 84 JSON vectors — three of them from real x402 payments — each with the expected
+transfer, EIP-2612 permit). 85 JSON vectors — three of them from real x402 payments — each with the expected
 verdict, the reason class of every reject and the intermediate hashes, checked by a runner that needs only the
 Python standard library, and run through the official TypeScript and Python SDKs. Format and meaning of
 "conforms": [`SPEC.md`](SPEC.md).
@@ -51,14 +51,14 @@ on EIP-3009 payloads, off chain (no RPC; the token contract's own on-chain check
 
 | SDK / entry | match | divergence | not applicable | not reached |
 |---|---|---|---|---|
-| TypeScript typed-data | 76 | 7 | 1 | 0 |
-| TypeScript facilitator | 47 | 2 | 31 | 4 |
-| Python typed-data | 75 | 8 | 1 | 0 |
-| Python facilitator | 49 | 2 | 31 | 2 |
+| TypeScript typed-data | 76 | 8 | 1 | 0 |
+| TypeScript facilitator | 47 | 2 | 32 | 4 |
+| Python typed-data | 76 | 8 | 1 | 0 |
+| Python facilitator | 49 | 2 | 32 | 2 |
 
-All 19 divergences are on rules of this suite that the standards leave open, or on inputs that cannot reach that
+All 20 divergences are on rules of this suite that the standards leave open, or on inputs that cannot reach that
 entry through x402: both SDKs accept a raw recovery id `v` = 0 and normalise it before the chain, and both
-facilitators read `"010000"` as 10000. On these 84 inputs no SDK produced a signature verdict that breaks EIP-712,
+facilitators read `"010000"` as 10000. On these 85 inputs no SDK produced a signature verdict that breaks EIP-712,
 EIP-2, EIP-3009 or the x402 text on an input that can reach that entry through x402; the two typed-data entries do
 depart from EIP-712 on inputs no x402 `exact` payload can carry (074, a `uint256[2]` with three elements, accepted by
 both; 080, a caller-supplied `EIP712Domain` with `string chainId`, accepted by Python). What the run did find is in
@@ -102,7 +102,7 @@ vettore                          origine    atteso   ottenuto  esito    ragione 
 …
 077-json-duplicate-member        generated  reject   reject    OK       json_ambiguous: membro JSON ripetuto: 'value'
 …
-84 vettori · 84 conformi · 0 falliti
+85 vettori · 85 conformi · 0 falliti
 ```
 
 Exit code 0 = every vector conformant, 1 = at least one failure, 2 = the bench self-test failed and no verdict
@@ -133,11 +133,11 @@ The other gates (`tools/check_manifest.py`, `check_schema.py`, `check_docs.py`, 
 
 | test | result |
 |---|---|
-| **EIP-712 encoding vs `eth-account` 0.14.0** (`tools/crossvalidate_eip712.py`) | 57 vectors compared (the 27 whose message is not encodable by construction are skipped), **0 divergences**: arrays, nesting, NUL byte, partial domains, signed integers, dynamic bytes, undeclared fields and canonical decimal strings included |
-| **Primitives vs `coincurve`/libsecp256k1 and `eth-hash`** (`tools/crossvalidate.py`) | 2000 Keccak inputs, 500 signatures produced *by* libsecp256k1, 600 degenerate inputs checked for matching **rejections**, all 84 vectors re-verified with `coincurve`: 0 divergences |
-| **Reproducibility** | the five `tools/genera_vettori*.py` regenerate all 84 vectors **byte-identical** to the committed ones |
+| **EIP-712 encoding vs `eth-account` 0.14.0** (`tools/crossvalidate_eip712.py`) | 57 vectors compared (the 28 whose message is not encodable by construction are skipped), **0 divergences**: arrays, nesting, NUL byte, partial domains, signed integers, dynamic bytes, undeclared fields and canonical decimal strings included |
+| **Primitives vs `coincurve`/libsecp256k1 and `eth-hash`** (`tools/crossvalidate.py`) | 2000 Keccak inputs, 500 signatures produced *by* libsecp256k1, 600 degenerate inputs checked for matching **rejections**, all 85 vectors re-verified with `coincurve`: 0 divergences |
+| **Reproducibility** | the five `tools/genera_vettori*.py` regenerate all 85 vectors **byte-identical** to the committed ones |
 | **The gates can fail** (`tools/positive_control.py`) | 15 sabotages of `lib/`, `verify.py` and the runner (Keccak padding, low-s removed or off by one, domain without `version`, unsorted `encodeType`, raw `v`, `r` = 0, lax JSON reader, array length, NUL, point at infinity, signer case, class / address / schema / intermediate-value comparison off, NaN read as a number, a struct named `string`): **18 caught**, each changing behaviour on a batch that is not the vectors ([`audit/POSITIVE_CONTROL.md`](audit/POSITIVE_CONTROL.md)) |
-| **Hostile input** (`tools/fuzz_runner.py`) | 600 malformed vectors → 600 rejected, 0 unhandled exceptions; 10 non-object payloads → 10 `input_not_object`; strict value forms, 20 admitted + 44 not admitted → 0 wrong; `NaN`/`Infinity` and struct names spelled like atomic types, 16 cases → 0 wrong |
+| **Hostile input** (`tools/fuzz_runner.py`) | 600 malformed vectors → 600 rejected, 0 unhandled exceptions; 10 non-object payloads → 10 `input_not_object`; strict value forms, 20 admitted + 44 not admitted → 0 wrong; `NaN`/`Infinity` and struct names spelled like atomic types (unreachable, and reachable from `primaryType` with a signature over the struct reading), 26 cases → 0 wrong; 240 random type graphs signed with the test key, 120 of them with structs that `primaryType` does not reach, as text, as object and through `lib/eip712.signing_digest`, plus 7 invalid `primaryType` values and 25 hostile `types` shapes given to `lib/` (which must answer with its own exception), 752 cases → 0 wrong |
 
 ## Vector format
 
@@ -185,7 +185,9 @@ first by other readers, so the runner reads every vector with a strict reader (`
 class `json_ambiguous`); `verdetto(dict)` receives an object already read and cannot see a duplicate, so an
 integrator must read with that function or call `verdetto_da_testo`. A domain member outside the five
 EIP-712 names, a `types.EIP712Domain` that does not match the domain's members (names, types, order), and
-a struct named like an atomic type (`address`) are `encoding_error`.
+a struct named like an atomic type (`address`) are `encoding_error`. So is a struct in `types` that `primaryType` does
+not reach (085): EIP-712 `encodeType` leaves it out, so the signature does not cover it, and libraries read it two
+ways (eth-account 0.14.0 refuses the typed data, viem 2.57.19 recovers the signer; measured 21 November 2026).
 
 `origin` separates three statuses that must not be mixed:
 
@@ -201,7 +203,7 @@ test private key  0x4646…4646   (published on purpose: a conformance vector mu
 test address      0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f
 ```
 
-Current set: **84 vectors — 34 `accept`, 50 `reject`** (v1.5.0), against
+Current set: **85 vectors — 34 `accept`, 51 `reject`** (v1.6.0, unreleased), against
 [`schema/vector.schema.json`](schema/vector.schema.json).
 
 Beyond message-binding mutations (amount off by one, substituted recipient, one-second validity
@@ -226,7 +228,7 @@ shift, wrong-chain domain), the set covers:
   (hashed whole), and referenced-type ordering in `encodeType` (alphabetical, regardless of declaration order).
 - **Robustness** — signatures too short, too long, empty; a message missing a declared field; a
   `primaryType` absent from `types`. These must be clean rejections: the input comes from the network.
-- **Strict value forms** (056–076) and **one reading of the text, the domain and the type names** (077–081),
+- **Strict value forms** (056–076) and **one reading of the text, the domain and the type names** (077–081, 085),
   as described above.
 
 ## The bench checks itself before it measures
@@ -249,7 +251,8 @@ reconcile, and an undeclared file is a failure.
   verifier computes the same bytes and the same verdict, not that a payment system is secure.
 - **Status**: this is not an official x402 Foundation or Coinbase artifact and does not speak for either.
   The strict JSON value forms are a rule of this suite: EIP-712 defines the encoding of values, not their
-  JSON spelling.
+  JSON spelling. So is the rule that every struct of `types` other than `EIP712Domain` is reachable from
+  `primaryType` (`SPEC.md` §1): EIP-712 does not state it.
 - **`lib/`** is written from the published specifications (FIPS 202 / Keccak, EIP-712, SEC 2) only to make
   the vectors checkable without dependencies. It is not an audited cryptographic library and must not be
   used in production. Its agreement with `eth-hash`, libsecp256k1 and `eth-account` is measured on the

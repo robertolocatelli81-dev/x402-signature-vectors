@@ -9,6 +9,9 @@ messaggio che il runner PRECEDENTE ricavava da quel JSON, quindi il runner prece
   079 `types.EIP712Domain` dichiarato senza `version` mentre il dominio lo porta: la dichiarazione era ignorata;
   080 `types.EIP712Domain` con `chainId` dichiarato `string`, codificato uint256;
   081 una struct chiamata `address` che oscura il tipo atomico.
+085 (21/11/2026, SPEC.md 1.3): `types` con una struct che `primaryType` non raggiunge. encodeType non la include, quindi
+la firma di 003 vale anche con lei: il runner precedente ACCETTA, eth-account 0.14.0 rifiuta (`Unable to determine
+primary type`), viem 2.57.19 accetta. Il JSON mostrato ha due letture; ora e' encoding_error.
 """
 import json
 import os
@@ -56,6 +59,13 @@ def tutti():
                         firma_su(D, t81, "Pay", m81), "reject", None,
                         ["Una struct si chiama `address`: il campo `to`, dichiarato address, veniva codificato come "
                          "quella struct. eth-account calcola un digest diverso.", NOTA]))
+    t85 = dict(TIPI_3009, Unused=[{"name": "x", "type": "uint256"}])
+    v.append(costruisci("085-types-unreachable-struct", "generated", STD, D, t85, T3, MSG3009, sg, "reject", None,
+                        ["`types` definisce `Unused`, che nessun membro raggiungibile da `primaryType` nomina: encodeType non "
+                         "la include, e la firma (quella di 003) non la copre. SPEC.md 1.3, §1 `/eip712/types`: una struct "
+                         "diversa da `EIP712Domain` non raggiungibile da `primaryType` e' encoding_error.", NOTA,
+                         "Misurato il 21/11/2026: eth-account 0.14.0 solleva `Unable to determine primary type` (deduce la "
+                         "struct primaria dai types e ne trova due); viem 2.57.19 recupera il firmatario."]))
     return v
 
 

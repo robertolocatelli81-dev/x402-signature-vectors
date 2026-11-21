@@ -520,6 +520,12 @@
       "atteso": "0xa849bbad82f9edafdf9a5550cc874276138779d9",
       "riferimento": "0xa849bbad82f9edafdf9a5550cc874276138779d9",
       "ok": true
+    },
+    {
+      "vettore": "085-types-unreachable-struct",
+      "atteso": null,
+      "riferimento": null,
+      "ok": true
     }
   ],
   "ok": true

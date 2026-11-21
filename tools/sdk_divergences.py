@@ -45,4 +45,11 @@ CLASSIFICATION = {
         "c", "EIP-712 defines `uint256 chainId`; verify_typed_data_strict lets a caller's types.EIP712Domain replace "
              "the derived one (mechanisms/evm/verify.py:221-224), so chainId is hashed as a string. Not reachable "
              "through x402: every caller in the SDK passes SDK constants as types."),
+    ("typescript", "typed-data", "085-types-unreachable-struct"): (
+        "c", "suite rule: every struct of types other than EIP712Domain is reachable from primaryType (SPEC §1, 1.3); "
+             "EIP-712 does not state it. viem 2.57.19 checks the field types of every struct (utils/typedData.ts:124-126) "
+             "and encodes only the structs reachable from primaryType (utils/signature/hashTypedData.ts:187), so the "
+             "extra struct is not signed. Not reachable through x402: an exact payload carries no types, the facilitator "
+             "hashes its constant authorizationTypes (dist/cjs/exact/facilitator/index.js:150, 1194). eth-account "
+             "0.14.0, under the Python SDK, refuses it."),
 }

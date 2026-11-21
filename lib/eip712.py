@@ -206,13 +206,36 @@ _RE_NOME_STRUCT = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*", re.ASCII)
 _RE_TIPO_ATOMICO = re.compile(r"u?int[0-9]*|address|bool|string|bytes[0-9]*", re.ASCII)
 
 
-def valida_struttura(dominio, types) -> None:
+def strutture_raggiungibili(primary: str, types: dict) -> set:
+    """Le struct che encodeType(primary) puo' includere: `primary` e ogni struct nominata, anche come `T[]` / `T[k]`,
+    da un membro di una struct raggiungibile, a ogni profondita' (visita iterativa: nessun limite di ricorsione)."""
+    visti, da_fare = set(), [primary]
+    while da_fare:
+        nome = da_fare.pop()
+        if nome in visti or nome not in types:
+            continue
+        visti.add(nome)
+        campi = types[nome]
+        for campo in campi if isinstance(campi, list) else ():
+            tipo = campo.get("type") if isinstance(campo, dict) else None
+            if isinstance(tipo, str):
+                da_fare.append(tipo.split("[")[0])
+    return visti
+
+
+def valida_struttura(dominio, types, primary) -> None:
     """Il dominio e i nomi dei tipi hanno UNA sola lettura (25/09/2026, revisione 4 menti round 2).
 
     Prima venivano ignorati: membri del dominio fuori dall'elenco EIP-712 (`chainID`, `verifyingcontract`),
     un `types.EIP712Domain` dichiarato ma diverso dai campi presenti (anche `chainId` dichiarato `string`),
     e una struct chiamata come un tipo atomico (`address`), che ne oscurava il tipo. In tutti e tre i casi il
     JSON mostrato non era il messaggio firmato; eth-account li rifiuta o calcola un digest diverso.
+
+    `types` e' chiuso (SPEC.md 1.3, §1 `/eip712/types`, 21/11/2026): ogni struct diversa da `EIP712Domain` deve essere
+    raggiungibile da `primary`. encodeType include solo le struct referenziate, quindi una struct non raggiungibile non
+    e' firmata, e le librerie la leggono in due modi (misurato 21/11/2026 sul vettore 001 con una struct in piu'):
+    eth-account 0.14.0 rifiuta (`Unable to determine primary type`; se la struct in piu' contiene la primaria:
+    `primaryType` diverso da quello che deduce), viem 2.57.19 recupera il firmatario. Fino alla 1.5.0 qui: accept.
     """
     if not isinstance(dominio, dict) or not isinstance(types, dict):
         raise ValoreNonConforme("domain e types devono essere oggetti JSON")
@@ -229,6 +252,13 @@ def valida_struttura(dominio, types) -> None:
             raise ValoreNonConforme(f"nome di struct non valido: {nome!r}")
         if nome != "EIP712Domain" and _RE_TIPO_ATOMICO.fullmatch(nome):
             raise ValoreNonConforme(f"struct chiamata come un tipo atomico: {nome!r} ne oscurerebbe il tipo")
+    if not isinstance(primary, str) or primary not in types:
+        raise ValoreNonConforme(f"primaryType {str(primary)[:48]!r} non e' una struct di types")
+    raggiunte = strutture_raggiungibili(primary, types)
+    fuori = sorted(n for n in types if n != "EIP712Domain" and n not in raggiunte)
+    if fuori:
+        raise ValoreNonConforme(f"types: struct non raggiungibili da primaryType {primary!r}: {fuori[:5]} "
+                                f"(encodeType non le include: non sono firmate)")
 
 
 def hash_struct(primary: str, types: dict, dati: dict) -> bytes:
@@ -257,7 +287,7 @@ def domain_separator(dominio: dict, campi: list | None = None) -> bytes:
 def signing_digest(dominio: dict, primary: str, types: dict, messaggio: dict,
                    campi_dominio: list | None = None) -> bytes:
     """Il digest EIP-712 firmato: keccak256(0x19 0x01 ‖ domainSeparator ‖ hashStruct(message))."""
-    valida_struttura(dominio, types)
+    valida_struttura(dominio, types, primary)
     return keccak256(b"\x19\x01" + domain_separator(dominio, campi_dominio)
                      + hash_struct(primary, types, messaggio))
 

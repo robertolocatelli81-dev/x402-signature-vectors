@@ -1,6 +1,6 @@
 # x402 signature vectors — format and conformance
 
-**Specification version 1.2.1 · 20 November 2026 (unreleased) · applies to vector format 1 (`schema/vector.schema.json`).**
+**Specification version 1.3 · unreleased, with vectors 1.6.0 · applies to vector format 1 (`schema/vector.schema.json`).**
 The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
 
 This document says what a vector is, how its verdict is reached, what "conforms" means for a verifier, and what
@@ -56,6 +56,13 @@ EIP-712 order above (`string name`, `string version`, `uint256 chainId`, `addres
 The EIP-712 struct definitions. `EIP712Domain` MAY be present; if present it MUST equal the derived domain type
 (names, types and order), otherwise `encoding_error`. A struct name MUST match `^[A-Za-z_$][A-Za-z0-9_$]*$` and
 MUST NOT be spelled like an atomic type (`address`, `uint256`, `bytes32`…), otherwise `encoding_error`.
+`types` MUST NOT define a struct that is not `EIP712Domain` and is not reachable from `primaryType`, otherwise
+`encoding_error`. A struct is reachable when it is `primaryType` or a member of a reachable struct has it as its type,
+alone or as `T[]` / `T[k]`. EIP-712 `encodeType` includes only the referenced structs, so a struct that is not
+reachable is not signed, and libraries read such typed data two ways (measured on 21 November 2026 on vector 001 with
+one more struct: eth-account 0.14.0 refuses it, "Unable to determine primary type", and when the extra struct holds
+the primary type, "The provided `primaryType` does not match the derived `primaryType`"; viem 2.57.19 recovers the
+signer). EIP-712 does not state this rule: it is a rule of this suite (§5.4). Vector 085.
 
 ### `/eip712/types/*/name`
 A member name of a struct. A member definition holds exactly `name` and `type`; any other key makes the file not a
@@ -251,7 +258,7 @@ is classified in the results as exactly one of:
   source, on an input that reaches it through x402;
 - **(b) defect of this suite** (vector, runner, adapter): corrected, with a test;
 - **(c) rule of this suite only**: the verifier follows the standard and this suite is stricter (§2, `v` in
-  {27, 28}, the domain members rule), or the input cannot reach the entry point through x402. Reported, not called a
+  {27, 28}, the domain members rule, the reachable structs rule of §1 `/eip712/types`), or the input cannot reach the entry point through x402. Reported, not called a
   defect.
 
 ## 6. Real-payment vectors (`onchain`)
@@ -271,6 +278,8 @@ vector states that the same bytes verify off chain under §3.
 with a trailing newline make the file not a vector; the runner checks the four intermediate values; adapter lines are
 read strictly. No vector changed. A new `origin`, a new class or a new value form is a new
 version, recorded here and in `CHANGELOG.md` together with the schema change.
-1.2.1 (20 November 2026, unreleased): §3.1 states the class of a text nested more than 64 levels deep
+1.3 (unreleased, with vectors 1.6.0): §3.1 states the class of a text nested more than 64 levels deep
 (`input_not_object`; until 1.5.0 the runner's reader raised instead of answering, at a depth that changed with the
-interpreter). No vector, class or schema changed.
+interpreter); §1 `/eip712/types`: a struct other than `EIP712Domain` that `primaryType` does not reach is
+`encoding_error` (until 1.5.0 the runner accepted it, measured; it is not part of what is signed). Vector 085. No
+verdict of vectors 001–084 changed, no class or schema changed.

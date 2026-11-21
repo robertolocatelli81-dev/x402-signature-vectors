@@ -1,6 +1,7 @@
 # The vectors through two official x402 SDKs
 
-**Measured:** 13 November 2026. **Upstream:** `x402-foundation/x402` at `2178d4b` (13 November 2026, 08:22 UTC).
+**Measured:** 13 November 2026; vector 085 added and every line re-measured on 21 November 2026 (same pinned SDKs,
+Node 22.23.2, Python 3.11.2: the 336 lines of vectors 001–084 unchanged). **Upstream:** `x402-foundation/x402` at `2178d4b` (13 November 2026, 08:22 UTC).
 **SDKs:** npm `@x402/evm` 2.31.0 with `@x402/core` 2.31.0 and `viem` 2.57.19 (lockfile
 [`tools/adapters/typescript/package-lock.json`](../tools/adapters/typescript/package-lock.json), installed with
 `npm ci`); PyPI `x402` 2.28.0 with `eth-account` 0.14.0 and `eth-keys` 0.8.0
@@ -46,21 +47,21 @@ with Node 24 and Python 3.11.
 
 | SDK / entry | match | divergence | not applicable | not reached |
 |---|---|---|---|---|
-| typescript/typed-data | 76 | 7 | 1 | 0 |
-| typescript/facilitator-exact | 47 | 2 | 31 | 4 |
-| python/typed-data | 75 | 8 | 1 | 0 |
-| python/facilitator-exact | 49 | 2 | 31 | 2 |
+| typescript/typed-data | 76 | 8 | 1 | 0 |
+| typescript/facilitator-exact | 47 | 2 | 32 | 4 |
+| python/typed-data | 76 | 8 | 1 | 0 |
+| python/facilitator-exact | 49 | 2 | 32 | 2 |
 
 The three real-payment vectors (082–084, signatures that settled x402 payments on Base Sepolia, see the README)
 are accepted by all four entries. No entry raised an exception on any vector, and no reject class disagreed where a class was reported. **Every
 divergence is of class (c)**: the SDK follows the standard and this suite is stricter, or the input cannot reach
-that entry through x402. None of the 84 vectors produced a signature verdict that breaks EIP-712, EIP-2, EIP-3009 or
+that entry through x402. None of the 85 vectors produced a signature verdict that breaks EIP-712, EIP-2, EIP-3009 or
 the x402 text on an input that can reach that entry through x402 (074 and 080 depart from EIP-712 on the typed-data
-entries, on inputs no x402 `exact` payload can carry). That says what these 84 inputs show; it is not a proof that the
+entries, on inputs no x402 `exact` payload can carry). That says what these 85 inputs show; it is not a proof that the
 SDKs have no signature defect.
 
 Not applicable: 077 on every entry (a repeated JSON member cannot reach an entry that takes a parsed object); on
-the facilitator entries also the 30 vectors that are not EIP-3009 messages with a server-held domain (Permit,
+the facilitator entries also the 31 vectors that are not EIP-3009 messages with a server-held domain (Permit,
 Permit2, structural EIP-712 cases, malformed domains). Not reached: 012 and 045 (inverted or degenerate validity
 window, `invalid_exact_evm_payload_authorization_valid_before`) on both facilitators; 033 and 034 on the TypeScript
 facilitator only (see finding 2).
@@ -76,6 +77,7 @@ facilitator only (see finding 2).
 | 074 | both typed-data | 3 elements for `uint256[2]` accepted | (c) EIP-712 types `T[k]` as k elements; no x402 exact message has an array member. |
 | 078 | TypeScript typed-data | domain member `chainID` ignored | (c) suite domain rule; the facilitator builds the domain from `PaymentRequirements`. |
 | 080 | Python typed-data | `types.EIP712Domain` with `string chainId` used as given | (c) EIP-712 defines `uint256 chainId`; `verify.py:221-224` lets the caller's `EIP712Domain` replace the derived one; every caller in the SDK passes SDK constants. |
+| 085 | TypeScript typed-data | a struct of `types` that `primaryType` does not reach accepted | (c) suite rule (SPEC §1 `/eip712/types`, 1.3); EIP-712 does not state it. viem checks the field types of every struct (`utils/typedData.ts:124-126`) and encodes only those reachable from `primaryType` (`utils/signature/hashTypedData.ts:187`); an exact payload carries no types (the facilitator hashes its constant `authorizationTypes`). The Python typed-data entry (eth-account) rejects it. |
 
 The same table is the closed list `tools/sdk_divergences.py`: the runner fails on a divergence without an entry and
 on an entry without a divergence.
@@ -210,3 +212,4 @@ Cells: the SDK's verdict, with the class when it reported one; **bold** = diverg
 | 082-onchain-x402-base-sepolia-55a0b820 | accept | accept | accept | accept | accept |
 | 083-onchain-x402-base-sepolia-5bf1e09a | accept | accept | accept | accept | accept |
 | 084-onchain-x402-base-sepolia-9537eb22 | accept | accept | accept | accept | accept |
+| 085-types-unreachable-struct | reject `encoding_error` | **accept** (c) | n/a | reject | n/a |

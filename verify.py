@@ -147,7 +147,7 @@ def verdetto_da_testo(testo):
 def digest_di(vec):
     try:
         e = vec["eip712"]       # dentro il try: un vettore SENZA il blocco sollevava KeyError (fuzz 25/09, root={})
-        valida_struttura(e["domain"], e["types"])
+        valida_struttura(e["domain"], e["types"], e["primaryType"])     # SPEC.md §1 /eip712/types: struct raggiungibili
         ds = hash_struct("EIP712Domain", {"EIP712Domain": campi_dominio(e["domain"])}, e["domain"])
         return keccak256(b"\x19\x01" + ds + hash_struct(e["primaryType"], e["types"], e["message"]))
     except Exception as ex:                                  # noqa: BLE001 — l'input non e' fidato
@@ -228,7 +228,7 @@ def strati(vec):
     """I quattro valori intermedi di SPEC.md §1, o None se il messaggio non e' codificabile."""
     try:
         e = vec["eip712"]
-        valida_struttura(e["domain"], e["types"])
+        valida_struttura(e["domain"], e["types"], e["primaryType"])
         th = type_hash(e["primaryType"], e["types"])
         ds = hash_struct("EIP712Domain", {"EIP712Domain": campi_dominio(e["domain"])}, e["domain"])
         hs = hash_struct(e["primaryType"], e["types"], e["message"])

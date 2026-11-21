@@ -14,7 +14,7 @@ CLASSI = {
     "signature_malformed":     "non e' una firma: non 0x, non esadecimale, lunghezza != 65, v non in {27,28}",
     "signature_out_of_range":  "r o s fuori da [1, N-1]",
     "signature_high_s":        "s > N/2: firma malleabile (EIP-2)",
-    "encoding_error":          "il messaggio EIP-712 non e' codificabile (campo mancante, primaryType ignoto, valore non nella forma stretta del suo tipo)",
+    "encoding_error":          "il messaggio EIP-712 non e' codificabile (campo mancante, primaryType ignoto, struct non raggiungibile da primaryType, valore non nella forma stretta del suo tipo)",
     "recovery_undefined":      "firma ben formata ma il recupero non produce una chiave (x non sulla curva, punto all'infinito)",
     "signer_mismatch":         "recupera a un indirizzo diverso dal `signer` dichiarato",
     "input_not_object":        "l'input non e' un oggetto JSON (null, array, stringa, numero, bool), o il testo e' annidato oltre 64 livelli: nessun campo leggibile",
@@ -73,6 +73,7 @@ REJECT_REASON = {
     "079-domain-types-inconsistent": "encoding_error",
     "080-domain-chainid-declared-string": "encoding_error",
     "081-struct-named-like-atomic-type": "encoding_error",
+    "085-types-unreachable-struct": "encoding_error",
 }
 
 

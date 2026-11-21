@@ -116,8 +116,19 @@ for nome in ATOMICI:
     esito = V.verdetto_da_testo(json.dumps(v))
     if esito[0] != "reject" or esito[2] != "encoding_error":
         letture_ko.append(f"struct {nome!r}: {esito[0]}/{esito[2]}")
-print(f"  letture e nomi: {6 + len(ATOMICI)} casi (NaN/Infinity/-Infinity in due posti, {len(ATOMICI)} struct dal nome "
-      f"atomico) -> {len(letture_ko)} sbagliati")
+    # la stessa struct RAGGIUNGIBILE da primaryType e firmata sulla lettura «struct» (come 081): sola regola dei nomi
+    # (una struct non raggiungibile e' encoding_error anche per SPEC.md 1.3, e da sola non proverebbe questa regola)
+    sys.path.insert(0, os.path.join(BASE, "tools"))
+    from genera_vettori import DOM_USDC as _D, digest as _dg, firma as _fm, indirizzo_test as _it   # noqa: E402
+    ti, vi = ("bool", True) if nome == "string" else ("string", "x")      # il membro interno non e' la struct stessa
+    tp = {"Pay": [{"name": "to", "type": nome}], nome: [{"name": "a", "type": ti}]}
+    vp = {"signer": _it(), "signature": _fm(_dg(_D, tp, "Pay", {"to": {"a": vi}})),
+          "eip712": {"domain": _D, "types": tp, "primaryType": "Pay", "message": {"to": {"a": vi}}}}
+    esito = V.verdetto_da_testo(json.dumps(vp))
+    if esito[0] != "reject" or esito[2] != "encoding_error":
+        letture_ko.append(f"struct {nome!r} raggiungibile: {esito[0]}/{esito[2]}")
+print(f"  letture e nomi: {6 + 2 * len(ATOMICI)} casi (NaN/Infinity/-Infinity in due posti, {len(ATOMICI)} struct dal nome "
+      f"atomico, non raggiungibili e raggiungibili firmate) -> {len(letture_ko)} sbagliati")
 for r in letture_ko:
     print(f"      {r}")
 
@@ -229,6 +240,144 @@ annidati_ko += confine_ko
 for r in annidati_ko[:8]:
     print(f"      {r}")
 
-falliti = bool(panici or radici_ko or forme_ko or letture_ko or annidati_ko)
+# ── Struct non raggiungibili da primaryType (21/11/2026, SPEC.md 1.3 §1 /eip712/types): fino alla 1.5.0 una struct in
+# piu' in `types` era accept (encodeType non la include, la firma non la copre). Generativo, nei due sensi: grafi di
+# struct casuali (membri atomici, struct, T[] e T[k], cicli attraverso T[] vuoti, EIP712Domain dichiarato o no, ordine
+# delle chiavi mescolato), messaggio costruito sui tipi e FIRMATO con la chiave di test. Tutte raggiungibili -> accept
+# col firmatario; con struct in piu' (isolate, vuote, che contengono la primaria, in catena, ricorsive, con tipi ignoti,
+# non liste, membri non oggetti) -> reject/encoding_error. L'oracolo e' un punto fisso sugli archi scritto qui, non
+# lib/eip712.strutture_raggiungibili.
+sys.path.insert(0, os.path.join(BASE, "tools"))
+from genera_vettori import CAMPI_DOMINIO, DOM_USDC, digest as _digest, firma as _firma, indirizzo_test  # noqa: E402
+from eip712 import ValoreNonConforme, signing_digest                    # noqa: E402
+_rng = random.Random(20261121)
+_FIRMATARIO = indirizzo_test()
+_ATOMI = {"uint256": lambda: _rng.randrange(2 ** 256), "uint8": lambda: _rng.randrange(256),
+          "int256": lambda: _rng.randrange(-2 ** 255, 2 ** 255), "address": lambda: "0x" + _rng.randbytes(20).hex(),
+          "bool": lambda: _rng.random() < 0.5, "string": lambda: "s" * _rng.randrange(4),
+          "bytes32": lambda: "0x" + _rng.randbytes(32).hex(), "bytes": lambda: "0x" + _rng.randbytes(_rng.randrange(4)).hex()}
+
+
+def _oracolo_fuori(primary, types):
+    """Struct diverse da EIP712Domain non raggiungibili da primary: punto fisso R = {primary} U basi dei tipi di R."""
+    R = {primary}
+    while True:
+        basi = {c["type"].split("[")[0] for n in R if isinstance(types.get(n), list) for c in types[n]
+                if isinstance(c, dict) and isinstance(c.get("type"), str)}
+        nuovo = R | (basi & set(types))
+        if nuovo == R:
+            return sorted(n for n in types if n != "EIP712Domain" and n not in R)
+        R = nuovo
+
+
+def _grafo():
+    k = _rng.randint(1, 5)
+    nomi = [f"S{i}" for i in range(k)]
+    types = {n: [] for n in nomi}
+    for j in range(1, k):                                   # ogni S_j ha un genitore prima di lei: raggiungibile
+        types[nomi[_rng.randrange(j)]].append({"name": f"r{j}", "type": nomi[j] + _rng.choice(["", "[]", "[2]"])})
+    for i, n in enumerate(nomi):
+        for m in range(_rng.randint(0 if types[n] else 1, 3)):
+            types[n].append({"name": f"a{m}", "type": _rng.choice(list(_ATOMI)) + _rng.choice(["", "", "[]", "[1]"])})
+        if _rng.random() < 0.3:                             # ciclo: verso una struct gia' vista, come T[] vuoto
+            types[n].append({"name": "ciclo", "type": nomi[_rng.randrange(i + 1)] + "[]"})
+        _rng.shuffle(types[n])
+    return nomi, types
+
+
+def _valore(tipo, types):
+    if tipo.endswith("[]"):
+        return [_valore(tipo[:-2], types) for _ in range(_rng.randrange(3))]
+    if tipo.endswith("]"):
+        base, n = tipo[:-1].split("[")
+        return [_valore(base, types) for _ in range(int(n))]
+    if tipo in types:
+        return {c["name"]: ([] if c["name"] == "ciclo" else _valore(c["type"], types)) for c in types[tipo]}
+    return _ATOMI[tipo]()
+
+
+def _in_piu(nomi, s):
+    p, X, Y = nomi[0], "X" + s, "Y" + s
+    return _rng.choice([
+        {X: [{"name": "x", "type": "uint256"}]}, {X: []}, {X: [{"name": "x", "type": p}]},
+        {X: [{"name": "x", "type": p + "[]"}]}, {X: [{"name": "x", "type": _rng.choice(nomi) + "[3]"}]},
+        {X: [{"name": "y", "type": Y}], Y: [{"name": "z", "type": "uint8"}]}, {X: [{"name": "x", "type": X + "[]"}]},
+        {X: [{"name": "x", "type": "foo"}]}, {X: [{"name": "x", "type": "Nessuna"}]}, {X: 5}, {X: {"a": 1}},
+        {X: None}, {X: p}, {X: [5]}, {X: ["uint256 x"]}, {Y: [{"name": "x", "type": X}], X: [{"name": "y", "type": Y}]}])
+
+
+struct_ko, struct_n, struct_rej = [], 0, 0
+for i in range(240):
+    nomi, types = _grafo()
+    msg = _valore(nomi[0], types)
+    sig = _firma(_digest(DOM_USDC, types, nomi[0], msg))
+    tipi = dict(types)
+    if i % 2:
+        for q in range(_rng.randint(1, 3)):
+            tipi.update(_in_piu(nomi, f"{i}_{q}"))
+    if _rng.random() < 0.5:
+        tipi["EIP712Domain"] = CAMPI_DOMINIO
+    chiavi = list(tipi)
+    _rng.shuffle(chiavi)
+    tipi = {k: tipi[k] for k in chiavi}
+    fuori = _oracolo_fuori(nomi[0], tipi)
+    atteso = ("reject", "encoding_error") if fuori else ("accept", None)
+    struct_rej += bool(fuori)
+    vec = {"signer": _FIRMATARIO, "signature": sig,
+           "eip712": {"domain": DOM_USDC, "types": tipi, "primaryType": nomi[0], "message": msg}}
+    for modo in ("testo", "oggetto"):
+        struct_n += 1
+        try:
+            esito = V.verdetto_da_testo(json.dumps(vec)) if modo == "testo" else V.verdetto(vec)
+        except BaseException as ex:                          # noqa: BLE001
+            struct_ko.append(f"grafo {i} {modo}: {type(ex).__name__}"); continue
+        if (esito[0], esito[2]) != atteso or (atteso[0] == "accept" and (esito[1] or "").lower() != _FIRMATARIO.lower()):
+            struct_ko.append(f"grafo {i} {modo} (fuori {fuori[:3]}): {esito[0]}/{esito[2]} (atteso {atteso[0]}/{atteso[1]})")
+    # lib/eip712.signing_digest applica la stessa regola, con la primaria data (non dedotta dai nomi)
+    struct_n += 1
+    try:
+        d_lib = signing_digest(DOM_USDC, nomi[0], tipi, msg, CAMPI_DOMINIO)
+        if fuori or d_lib != _digest(DOM_USDC, types, nomi[0], msg):
+            struct_ko.append(f"grafo {i} signing_digest: digest calcolato (fuori {fuori[:3]})")
+    except ValoreNonConforme:
+        if not fuori:
+            struct_ko.append(f"grafo {i} signing_digest: rifiuta un grafo tutto raggiungibile")
+    except BaseException as ex:                              # noqa: BLE001
+        struct_ko.append(f"grafo {i} signing_digest: {type(ex).__name__}")
+for pt in (5, None, ["TransferWithAuthorization"], {"a": 1}, "", "EIP712Domain", "Nessuna"):
+    v = json.loads(json.dumps(_v3)); v["eip712"]["primaryType"] = pt
+    struct_n += 1
+    try:
+        esito = V.verdetto(v)
+    except BaseException as ex:                              # noqa: BLE001
+        struct_ko.append(f"primaryType {pt!r}: {type(ex).__name__}"); continue
+    if (esito[0], esito[2]) != ("reject", "encoding_error"):
+        struct_ko.append(f"primaryType {pt!r}: {esito[0]}/{esito[2]} (atteso reject/encoding_error)")
+# La libreria (lib/eip712.valida_struttura) rifiuta con la SUA classe e il suo motivo, mai con un'eccezione qualunque:
+# forme ostili delle struct raggiungibili (non liste, membri non oggetti, `type` non stringa) e primaryType non validi.
+from eip712 import ValoreNonConforme, strutture_raggiungibili, valida_struttura   # noqa: E402
+_T = "TransferWithAuthorization"
+_ostili = [({_T: v}, _T) for v in (5, None, "S0", {"a": 1}, [5], [None], ["uint256 x"], [{"name": "x"}],
+                                   [{"name": "x", "type": 7}], [{"name": "x", "type": None}], [{"name": "x", "type": ["X"]}])]
+_ostili += [({_T: _v3["eip712"]["types"][_T]}, pt) for pt in (5, None, [_T], {"a": 1}, "", "EIP712Domain", "Nessuna")]
+_ostili += [({_T: [{"name": "x", "type": "X[]"}], "X": v}, _T) for v in (5, None, "S0", {"a": 1}, [5], [{"name": "x"}],
+                                                                          [{"name": "x", "type": 7}])]
+for tipi, pt in _ostili:
+    struct_n += 1
+    try:
+        strutture_raggiungibili(pt, tipi) if isinstance(pt, str) else None
+        valida_struttura(DOM_USDC, tipi, pt)
+    except ValoreNonConforme:
+        pass
+    except BaseException as ex:                              # noqa: BLE001
+        struct_ko.append(f"lib, types {str(tipi)[:50]} primaryType {pt!r}: {type(ex).__name__} invece di ValoreNonConforme")
+if not (0 < struct_rej < 240):
+    struct_ko.append(f"grafi con struct non raggiungibili: {struct_rej} su 240, il caso non e' esercitato nei due sensi")
+print(f"  struct non raggiungibili da primaryType: {struct_n} casi (240 grafi firmati, {struct_rej} con struct in piu', "
+      f"x testo/oggetto + lib signing_digest; 7 primaryType non validi; {len(_ostili)} forme ostili alla libreria) -> {len(struct_ko)} sbagliati")
+for r in struct_ko[:8]:
+    print(f"      {r}")
+
+falliti = bool(panici or radici_ko or forme_ko or letture_ko or annidati_ko or struct_ko)
 print("  ESITO:", "nessun panic, classi e forme corrette" if not falliti else "DA CORREGGERE")
 sys.exit(0 if not falliti else 1)
