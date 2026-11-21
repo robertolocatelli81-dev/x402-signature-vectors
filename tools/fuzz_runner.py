@@ -437,9 +437,10 @@ for r in struct_ko[:8]:
     print(f"      {r}")
 
 # ── Interi lunghi (21/11/2026, SPEC.md 1.3 §3.1): fino alla 1.5.0 un intero di piu' di 4300 cifre, anche in un membro
-# ignorato, era input_not_object o accept secondo PYTHONINTMAXSTRDIGITS (il limite di int() dentro json.loads). Ora un
-# intero JSON (senza frazione ne' esponente) di piu' di 4300 cifre, contate fuori dalle stringhe prima della lettura, e'
-# input_not_object; entro il limite il lettore converte a pezzi e l'esito non dipende dalla variabile. Stessi casi in
+# ignorato, era input_not_object o accept secondo PYTHONINTMAXSTRDIGITS (il limite di int() dentro json.loads), e un
+# numero con frazione o esponente di migliaia di cifre, o che float() porta a infinito, era accept. Ora un numero JSON
+# con piu' di 4300 cifre (tutte, anche frazione ed esponente), contate fuori dalle stringhe prima della lettura, o con
+# un valore non finito, e' input_not_object; entro il limite il lettore converte a pezzi e l'esito non dipende dalla variabile. Stessi casi in
 # questo processo e in due figli con PYTHONINTMAXSTRDIGITS=0 e =640: esiti identici e quelli attesi.
 import subprocess                                                     # noqa: E402
 _CASI_CIFRE = r"""
@@ -481,8 +482,10 @@ for _ev in (None, "0", "640"):
     except ValueError:
         cifre_ko.append(f"PYTHONINTMAXSTRDIGITS={_ev}: figlio senza risultato (rc {_p.returncode}) {_p.stderr[-120:]}")
 for _n, _nome, _v, _c in _esiti.get(None, []):
-    if _nome in ("stringa", "chiave", "frazione", "esponente") or _nome.startswith("stringa con"):
-        _att = ("accept", None)                                        # non e' un intero, o sta dentro una stringa
+    if _nome in ("stringa", "chiave") or _nome.startswith("stringa con"):
+        _att = ("accept", None)                                        # dentro una stringa: non e' un numero
+    elif _nome in ("frazione", "esponente"):    # n nove + ".0"/"E+0": n + 1 cifre; da 309 nove float() da' infinito
+        _att = ("reject", "input_not_object") if _n + 1 > 4300 or _n >= 309 else ("accept", None)
     elif _n > 4300 or _nome == "in coda al testo":
         _att = ("reject", "input_not_object")
     elif _nome == "value" and _n >= 78:                               # 78 nove > 2**256 - 1
@@ -497,11 +500,14 @@ for _ev in ("0", "640"):
     if _ev in _esiti and _esiti[_ev] != _esiti.get(None):
         _d = [a for a, b in zip(_esiti[_ev], _esiti.get(None, [])) if a != b]
         cifre_ko.append(f"PYTHONINTMAXSTRDIGITS={_ev} cambia {len(_d)} esiti, es. {_d[:1]}")
-# il confine sul lettore stesso, anche con l'intero in coda al testo (nessun carattere dopo l'ultima cifra)
+# il confine sul lettore stesso, anche con il numero in coda al testo (nessun carattere dopo l'ultima cifra): le cifre
+# si contano su tutto il numero, parte intera, frazione ed esponente
 for _txt, _oltre in (("9" * 4300, False), ("9" * 4301, True), ("-" + "9" * 4301, True), ("[" + "9" * 4301 + "]", True),
-                     ("9" * 4301 + ".5", False), ("9" * 4301 + "e1", False), ('"' + "9" * 4301 + '"', False)):
-    if V.intero_oltre(_txt) != _oltre:
-        cifre_ko.append(f"intero_oltre({_txt[:6]}…{_txt[-3:]}, {len(_txt)} caratteri) != {_oltre}")
+                     ("9" * 4299 + ".5", False), ("9" * 4300 + ".5", True), ("1e" + "0" * 4298 + "1", False),
+                     ("1e" + "0" * 4299 + "1", True), ("1.5e-" + "0" * 4298, False), ("1.5e-" + "0" * 4299, True),
+                     ('"' + "9" * 4301 + '"', False)):
+    if V.numero_oltre(_txt) != _oltre:
+        cifre_ko.append(f"numero_oltre({_txt[:6]}…{_txt[-3:]}, {len(_txt)} caratteri) != {_oltre}")
     try:
         V.leggi_json_stretto(_txt)
         _letto = "letto"
@@ -511,6 +517,27 @@ for _txt, _oltre in (("9" * 4300, False), ("9" * 4301, True), ("-" + "9" * 4301,
         _letto = "altro ValueError"
     if (_letto == "TroppeCifre") != _oltre:
         cifre_ko.append(f"leggi_json_stretto({_txt[:6]}…{_txt[-3:]}): {_letto}")
+# numeri con frazione o esponente che float() porta a infinito: input_not_object ovunque nel testo; i finiti (anche
+# 0.0 per underflow) si leggono. Membro ignorato e `value` del vettore 003.
+_t3 = json.dumps(_v3)
+for _num, _att_ign, _att_val in (("1.5", ("accept", None), ("reject", "encoding_error")),
+                                 ("1e400", ("reject", "input_not_object"), ("reject", "input_not_object")),
+                                 ("-1e400", ("reject", "input_not_object"), ("reject", "input_not_object")),
+                                 ("1E+309", ("reject", "input_not_object"), ("reject", "input_not_object")),
+                                 ("1.7976931348623157e308", ("accept", None), ("reject", "encoding_error")),
+                                 ("1e-400", ("accept", None), ("reject", "encoding_error")),
+                                 ("-0.0", ("accept", None), ("reject", "encoding_error"))):
+    for _dove, _txt, _att in (("ignorato", _t3.replace('"validAfter": ', '"x": ' + _num + ', "validAfter": ', 1), _att_ign),
+                              ("value", _t3.replace('"value": 10000', '"value": ' + _num, 1), _att_val),
+                              ("ignorato, bytes", _t3.replace('"validAfter": ', '"x": [' + _num + '], "validAfter": ', 1)
+                               .encode("utf-8"), _att_ign)):
+        assert _txt != _t3 and _txt != _t3.encode("utf-8")
+        try:
+            _e = V.verdetto_da_testo(_txt)
+        except BaseException as ex:                          # noqa: BLE001
+            cifre_ko.append(f"{_num} {_dove}: {type(ex).__name__}"); continue
+        if (_e[0], _e[2]) != _att:
+            cifre_ko.append(f"{_num} {_dove}: {_e[0]}/{_e[2]} (atteso {_att[0]}/{_att[1]})")
 # il valore letto: segno e cifre esatti, anche oltre i pezzi da 600 cifre del lettore
 for _n in (1, 599, 600, 601, 1200, 4300):
     _s = "9" * _n
@@ -521,7 +548,8 @@ for _n in (1, 599, 600, 601, 1200, 4300):
                 cifre_ko.append(f"lettura di {_txt[:12]}… ({_n} cifre): valore diverso")
         except BaseException as ex:                          # noqa: BLE001
             cifre_ko.append(f"lettura di {_txt[:12]}… ({_n} cifre): {type(ex).__name__}")
-print(f"  interi lunghi: {len(_esiti.get(None, []))} casi x 3 ambienti (PYTHONINTMAXSTRDIGITS assente, 0, 640) "
+print(f"  numeri lunghi: {len(_esiti.get(None, []))} casi x 3 ambienti (PYTHONINTMAXSTRDIGITS assente, 0, 640) "
+      f"+ 11 testi al confine + 21 numeri non finiti/finiti + 18 letture esatte "
       f"-> {len(cifre_ko)} sbagliati")
 for r in cifre_ko[:8]:
     print(f"      {r}")

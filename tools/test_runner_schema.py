@@ -47,6 +47,7 @@ def main():
         altri.append(("testo tronco", orig[:len(orig) // 2], "non leggibile"))
         altri.append(("intero di 5000 cifre in un membro in piu'", orig.rstrip()[:-1].rstrip() + ',\n "x": ' + "9" * 5000 + "\n}\n",
                       "non leggibile"))
+        altri.append(("1e400 in un membro in piu'", orig.rstrip()[:-1].rstrip() + ',\n "x": 1e400\n}\n', "non leggibile"))
         altri.append(("annidato 65 livelli", orig.rstrip()[:-1].rstrip() + ',\n "x": ' + "[" * 65 + "]" * 65 + "\n}\n",
                       "non leggibile"))
         for nome, testo, segno in altri:
@@ -59,7 +60,7 @@ def main():
                 f.write(orig)
         print("runner chiuso: 3/3 campi non previsti -> FALLITO con il campo nominato; "
               f"{len(altri)}/{len(altri)} seconde letture o testi non leggibili (membro di tipo, a capo finale, membro "
-              "ripetuto, testo tronco, intero di 5000 cifre, 65 livelli) -> FALLITO; "
+              "ripetuto, testo tronco, intero di 5000 cifre, 1e400, 65 livelli) -> FALLITO; "
               "suite intatta verde")
         return 0
     finally:

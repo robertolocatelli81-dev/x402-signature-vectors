@@ -47,8 +47,8 @@ SABOTAGES = [
     ("r-zero-admitted", "verify.py", "    if not (1 <= r < S.N):", "    if not (0 <= r < S.N):",
      "r = 0 not rejected as out of range"),
     ("json-reader-lax", "verify.py",
-     "    return json.loads(testo, object_pairs_hook=_no_duplicati, parse_constant=_no_costanti, parse_int=_intero_json)",
-     "    return json.loads(testo, parse_int=_intero_json)", "strict reader replaced by json.loads (repeated members, NaN)"),
+     "    return json.loads(testo, object_pairs_hook=_no_duplicati, parse_constant=_no_costanti, parse_int=_intero_json,",
+     "    return json.loads(testo, parse_int=_intero_json,", "strict reader replaced by json.loads (repeated members, NaN)"),
     ("array-length-unchecked", "lib/eip712.py", "        if lunghezza and len(valore) != int(lunghezza):",
      "        if False:", "fixed-size array length not checked"),
     ("string-nul-truncated", "lib/eip712.py", "        return keccak256(valore.encode(\"utf-8\"))",
@@ -69,8 +69,8 @@ SABOTAGES = [
     # 13/11/2026 (review): three sabotages no gate saw before the runner checked the four intermediate values and
     # tools/fuzz_runner.py read NaN/Infinity and every atomic struct name.
     ("nan-admitted", "verify.py",
-     "    return json.loads(testo, object_pairs_hook=_no_duplicati, parse_constant=_no_costanti, parse_int=_intero_json)",
-     "    return json.loads(testo, object_pairs_hook=_no_duplicati, parse_int=_intero_json)", "NaN/Infinity read as numbers"),
+     "    return json.loads(testo, object_pairs_hook=_no_duplicati, parse_constant=_no_costanti, parse_int=_intero_json,",
+     "    return json.loads(testo, object_pairs_hook=_no_duplicati, parse_int=_intero_json,", "NaN/Infinity read as numbers"),
     ("struct-named-string", "lib/eip712.py", 'r"u?int[0-9]*|address|bool|string|bytes[0-9]*"',
      'r"u?int[0-9]*|address|bytes[0-9]*"', "a struct named `string` or `bool` admitted"),
     ("runner-layers-ignored", "verify.py", "        ok_strati = all((calc is None and vec[\"expected\"][k] is None) or (",

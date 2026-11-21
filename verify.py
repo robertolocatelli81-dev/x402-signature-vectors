@@ -116,23 +116,28 @@ def annidato_oltre(testo, limite=PROFONDITA_MAX):
     return False
 
 
-CIFRE_MAX = 4300        # SPEC.md §3.1: le cifre che un numero intero JSON (senza frazione ne' esponente) puo' avere
+CIFRE_MAX = 4300        # SPEC.md §3.1: le cifre che un numero JSON puo' avere (parte intera, frazione ed esponente insieme)
 
 
 class TroppeCifre(ValueError):
-    """Un numero intero JSON ha piu' di CIFRE_MAX cifre: il testo non viene letto (SPEC.md §3.1)."""
+    """Un numero JSON ha piu' di CIFRE_MAX cifre: il testo non viene letto (SPEC.md §3.1)."""
 
 
-def intero_oltre(testo, limite=CIFRE_MAX):
-    """True se nel testo un numero intero JSON (cifre non seguite da `.`, `e` o `E`) ha piu' di `limite` cifre, contate
-    FUORI dalle stringhe e PRIMA della lettura. Il `json` di CPython converte gli interi con int(), che oltre 4300 cifre
-    solleva ValueError, ma il limite lo sposta una variabile d'ambiente (PYTHONINTMAXSTRDIGITS=0 lo toglie): misurato il
-    21/11/2026, il vettore 003 con un membro ignorato di 4301 cifre era input_not_object e, con quella variabile, accept
-    (anche in 1.5.0). Un numero della suite da' la stessa risposta ovunque."""
+class NumeroNonFinito(ValueError):
+    """Un numero JSON con frazione o esponente vale infinito per float(): il testo non viene letto (SPEC.md §3.1)."""
+
+
+def numero_oltre(testo, limite=CIFRE_MAX):
+    """True se nel testo un numero JSON ha piu' di `limite` cifre (parte intera, frazione ed esponente contate insieme),
+    contate FUORI dalle stringhe e PRIMA della lettura. Il `json` di CPython converte gli interi con int(), che oltre 4300
+    cifre solleva ValueError, ma il limite lo sposta una variabile d'ambiente (PYTHONINTMAXSTRDIGITS=0 lo toglie):
+    misurato il 21/11/2026, il vettore 003 con un membro ignorato di 4301 cifre era input_not_object e, con quella
+    variabile, accept (anche in 1.5.0). I numeri con frazione o esponente passavano da float() senza limite: 5000 cifre
+    seguite da `.5` erano accept in un membro ignorato. Un numero della suite da' la stessa risposta ovunque."""
     if isinstance(testo, (bytes, bytearray)):               # json.loads li accetta: stessa decodifica
         testo = bytes(testo).decode(json.detect_encoding(bytes(testo)), "surrogatepass")
     in_stringa = salta = in_numero = False
-    cifre, intero = 0, True
+    cifre = 0
     for c in testo + " ":                                    # lo spazio finale chiude un numero in coda al testo
         if in_stringa:
             if salta:
@@ -143,19 +148,27 @@ def intero_oltre(testo, limite=CIFRE_MAX):
                 in_stringa = False
         elif "0" <= c <= "9":
             if not in_numero:
-                in_numero, cifre, intero = True, 0, True
-            cifre += 1                                       # conta solo finche' intero: dopo `.`/`e` non decide
-        elif in_numero and c in ".eE":
-            intero = False                                   # frazione o esponente: non e' un intero
-        elif in_numero and c in "+-":
-            pass                                             # segno dell'esponente
+                in_numero, cifre = True, 0
+            cifre += 1
+        elif in_numero and c in ".eE+-":
+            pass                                             # frazione, esponente e suo segno: lo stesso numero
         else:
-            if in_numero and intero and cifre > limite:
+            if in_numero and cifre > limite:
                 return True
             in_numero = False
             if c == '"':
                 in_stringa = True
     return False
+
+
+def _float_json(s):
+    """parse_float del lettore: float() di un numero con frazione o esponente; infinito (1e400, -1e400) non e' un valore
+    che il testo mostra, quindi NumeroNonFinito (SPEC.md §3.1). Prima: accept in un membro ignorato. (Un numero JSON non
+    da' mai NaN a float(): NaN arriva solo come costante, che `_no_costanti` rifiuta.)"""
+    v = float(s)
+    if v in (float("inf"), float("-inf")):
+        raise NumeroNonFinito(f"numero non finito: {s[:24]}")
+    return v
 
 
 def _intero_json(s):
@@ -177,9 +190,10 @@ def leggi_json_stretto(testo):
     `verdetto_da_testo`."""
     if annidato_oltre(testo):
         raise TroppoAnnidato(f"annidato oltre {PROFONDITA_MAX} livelli")
-    if intero_oltre(testo):
-        raise TroppeCifre(f"un numero intero con piu' di {CIFRE_MAX} cifre")
-    return json.loads(testo, object_pairs_hook=_no_duplicati, parse_constant=_no_costanti, parse_int=_intero_json)
+    if numero_oltre(testo):
+        raise TroppeCifre(f"un numero con piu' di {CIFRE_MAX} cifre")
+    return json.loads(testo, object_pairs_hook=_no_duplicati, parse_constant=_no_costanti, parse_int=_intero_json,
+                      parse_float=_float_json)
 
 
 def verdetto_da_testo(testo):
@@ -342,9 +356,9 @@ def main():
         # vettore: FALLITO col motivo, stesso esito con ogni interprete e PYTHONINTMAXSTRDIGITS. Prima: 998 con il testo
         # tronco faceva uscire il runner con JSONDecodeError, e un intero di 5000 cifre lo stesso o no secondo la variabile.
         try:
-            if annidato_oltre(testo) or intero_oltre(testo):
+            if annidato_oltre(testo) or numero_oltre(testo):
                 raise ValueError(f"oltre i limiti di SPEC.md §3.1 ({PROFONDITA_MAX} livelli, {CIFRE_MAX} cifre)")
-            vec = json.loads(testo, object_pairs_hook=_segna_ripetuti, parse_int=_intero_json)   # SOLO per leggere expected/id e per lo schema: il verdetto passa dal lettore stretto
+            vec = json.loads(testo, object_pairs_hook=_segna_ripetuti, parse_int=_intero_json, parse_float=_float_json)   # SOLO per leggere expected/id e per lo schema: il verdetto passa dal lettore stretto
         except (ValueError, RecursionError) as ex:
             falliti += 1; righe.append((nome, "?", "?", "?", "FALLITO", f"schema: testo non leggibile: {str(ex)[:80]}")); continue
         # (un vettore con un membro ripetuto, come 077, e' un vettore della suite che DEVE dare reject/json_ambiguous)
