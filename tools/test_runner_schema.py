@@ -41,6 +41,14 @@ def main():
         altri.append(("firma con a capo finale", json.dumps(v, ensure_ascii=False, indent=1), "pattern"))
         doppio = orig.rstrip()[:-1].rstrip() + ',\n "expected": ' + json.dumps(json.loads(orig)["expected"]) + "\n}\n"
         altri.append(("membro ripetuto fuori da /eip712", doppio, "membro ripetuto"))
+        # 21/11/2026: un file che il lettore di SPEC.md §3.1 non legge e' FALLITO col motivo, mai un'eccezione del runner
+        # (prima: JSONDecodeError per un testo tronco; per un intero di 5000 cifre, eccezione o no secondo
+        # PYTHONINTMAXSTRDIGITS). Il runner gira in un figlio con l'ambiente di questo processo.
+        altri.append(("testo tronco", orig[:len(orig) // 2], "non leggibile"))
+        altri.append(("intero di 5000 cifre in un membro in piu'", orig.rstrip()[:-1].rstrip() + ',\n "x": ' + "9" * 5000 + "\n}\n",
+                      "non leggibile"))
+        altri.append(("annidato 65 livelli", orig.rstrip()[:-1].rstrip() + ',\n "x": ' + "[" * 65 + "]" * 65 + "\n}\n",
+                      "non leggibile"))
         for nome, testo, segno in altri:
             with open(os.path.join(vdir, first), "w", encoding="utf-8") as f:
                 f.write(testo)
@@ -50,7 +58,8 @@ def main():
             with open(os.path.join(vdir, first), "w", encoding="utf-8") as f:
                 f.write(orig)
         print("runner chiuso: 3/3 campi non previsti -> FALLITO con il campo nominato; "
-              f"{len(altri)}/{len(altri)} seconde letture (membro di tipo, a capo finale, membro ripetuto) -> FALLITO; "
+              f"{len(altri)}/{len(altri)} seconde letture o testi non leggibili (membro di tipo, a capo finale, membro "
+              "ripetuto, testo tronco, intero di 5000 cifre, 65 livelli) -> FALLITO; "
               "suite intatta verde")
         return 0
     finally:

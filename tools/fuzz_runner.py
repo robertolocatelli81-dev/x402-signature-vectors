@@ -436,6 +436,96 @@ print(f"  struct non raggiungibili da primaryType: {struct_n} casi (240 grafi fi
 for r in struct_ko[:8]:
     print(f"      {r}")
 
-falliti = bool(panici or radici_ko or forme_ko or letture_ko or annidati_ko or struct_ko)
+# ── Interi lunghi (21/11/2026, SPEC.md 1.3 §3.1): fino alla 1.5.0 un intero di piu' di 4300 cifre, anche in un membro
+# ignorato, era input_not_object o accept secondo PYTHONINTMAXSTRDIGITS (il limite di int() dentro json.loads). Ora un
+# intero JSON (senza frazione ne' esponente) di piu' di 4300 cifre, contate fuori dalle stringhe prima della lettura, e'
+# input_not_object; entro il limite il lettore converte a pezzi e l'esito non dipende dalla variabile. Stessi casi in
+# questo processo e in due figli con PYTHONINTMAXSTRDIGITS=0 e =640: esiti identici e quelli attesi.
+import subprocess                                                     # noqa: E402
+_CASI_CIFRE = r"""
+import json, os, sys
+sys.path.insert(0, sys.argv[1])
+import verify as V
+t = open(os.path.join(sys.argv[1], "vectors", "003-eip3009-generated-valid.json"), encoding="utf-8").read()
+out = []
+for n in (1, 78, 79, 640, 641, 4300, 4301, 5000, 100000):
+    num = "9" * n
+    for nome, testo in (("ignorato", t.replace('"validAfter": ', '"x": ' + num + ', "validAfter": ', 1)),
+                        ("ignorato negativo", t.replace('"validAfter": ', '"x": -' + num + ', "validAfter": ', 1)),
+                        ("value", t.replace('"value": 10000', '"value": ' + num, 1)),
+                        ("lista", t.replace('"validAfter": ', '"x": [0, ' + num + '], "validAfter": ', 1)),
+                        ("in coda al testo", num),
+                        ("stringa", t.replace('"validAfter": ', '"x": "' + num + '", "validAfter": ', 1)),
+                        ("stringa con \\\" e \\\\", t.replace('"validAfter": ', '"x": "a\\\\\\"' + num + '", "validAfter": ', 1)),
+                        ("chiave", t.replace('"validAfter": ', '"' + num + '": 1, "validAfter": ', 1)),
+                        ("frazione", t.replace('"validAfter": ', '"x": ' + num + '.0, "validAfter": ', 1)),
+                        ("esponente", t.replace('"validAfter": ', '"x": ' + num + 'E+0, "validAfter": ', 1)),
+                        ("bytes", t.replace('"validAfter": ', '"x": ' + num + ', "validAfter": ', 1).encode("utf-16"))):
+        try:
+            e = V.verdetto_da_testo(testo)
+            out.append([n, nome, e[0], e[2]])
+        except BaseException as ex:                                   # noqa: BLE001
+            out.append([n, nome, "ECCEZIONE", type(ex).__name__])
+print(json.dumps([sys.get_int_max_str_digits(), out]))
+"""
+_env = {k: v for k, v in os.environ.items() if k not in ("PYTHONPATH", "PYTHONINTMAXSTRDIGITS")}
+cifre_ko, _esiti = [], {}
+for _ev in (None, "0", "640"):
+    _e = dict(_env, **({"PYTHONINTMAXSTRDIGITS": _ev} if _ev else {}))
+    # niente -I: -I implica -E, che ignora proprio PYTHONINTMAXSTRDIGITS (PYTHONPATH e' tolto da _env)
+    _p = subprocess.run([sys.executable, "-s", "-c", _CASI_CIFRE, BASE], capture_output=True, text=True, env=_e, cwd=BASE)
+    try:
+        _visto, _esiti[_ev] = json.loads(_p.stdout)
+        if _visto != (int(_ev) if _ev else 4300):         # senza la variabile: il default di CPython
+            cifre_ko.append(f"PYTHONINTMAXSTRDIGITS={_ev}: il figlio vede int_max_str_digits={_visto}")
+    except ValueError:
+        cifre_ko.append(f"PYTHONINTMAXSTRDIGITS={_ev}: figlio senza risultato (rc {_p.returncode}) {_p.stderr[-120:]}")
+for _n, _nome, _v, _c in _esiti.get(None, []):
+    if _nome in ("stringa", "chiave", "frazione", "esponente") or _nome.startswith("stringa con"):
+        _att = ("accept", None)                                        # non e' un intero, o sta dentro una stringa
+    elif _n > 4300 or _nome == "in coda al testo":
+        _att = ("reject", "input_not_object")
+    elif _nome == "value" and _n >= 78:                               # 78 nove > 2**256 - 1
+        _att = ("reject", "encoding_error")
+    elif _nome == "value":
+        _att = ("reject", "signer_mismatch")                           # un altro importo: la firma e' di 10000
+    else:
+        _att = ("accept", None)
+    if (_v, _c) != _att:
+        cifre_ko.append(f"{_n} cifre, {_nome}: {_v}/{_c} (atteso {_att[0]}/{_att[1]})")
+for _ev in ("0", "640"):
+    if _ev in _esiti and _esiti[_ev] != _esiti.get(None):
+        _d = [a for a, b in zip(_esiti[_ev], _esiti.get(None, [])) if a != b]
+        cifre_ko.append(f"PYTHONINTMAXSTRDIGITS={_ev} cambia {len(_d)} esiti, es. {_d[:1]}")
+# il confine sul lettore stesso, anche con l'intero in coda al testo (nessun carattere dopo l'ultima cifra)
+for _txt, _oltre in (("9" * 4300, False), ("9" * 4301, True), ("-" + "9" * 4301, True), ("[" + "9" * 4301 + "]", True),
+                     ("9" * 4301 + ".5", False), ("9" * 4301 + "e1", False), ('"' + "9" * 4301 + '"', False)):
+    if V.intero_oltre(_txt) != _oltre:
+        cifre_ko.append(f"intero_oltre({_txt[:6]}…{_txt[-3:]}, {len(_txt)} caratteri) != {_oltre}")
+    try:
+        V.leggi_json_stretto(_txt)
+        _letto = "letto"
+    except V.TroppeCifre:
+        _letto = "TroppeCifre"
+    except ValueError:
+        _letto = "altro ValueError"
+    if (_letto == "TroppeCifre") != _oltre:
+        cifre_ko.append(f"leggi_json_stretto({_txt[:6]}…{_txt[-3:]}): {_letto}")
+# il valore letto: segno e cifre esatti, anche oltre i pezzi da 600 cifre del lettore
+for _n in (1, 599, 600, 601, 1200, 4300):
+    _s = "9" * _n
+    for _txt, _val in (("[" + _s + "]", [10 ** _n - 1]), ("[-" + _s + "]", [1 - 10 ** _n]),
+                       ("[-0, 0]", [0, 0])):
+        try:
+            if V.leggi_json_stretto(_txt) != _val:
+                cifre_ko.append(f"lettura di {_txt[:12]}… ({_n} cifre): valore diverso")
+        except BaseException as ex:                          # noqa: BLE001
+            cifre_ko.append(f"lettura di {_txt[:12]}… ({_n} cifre): {type(ex).__name__}")
+print(f"  interi lunghi: {len(_esiti.get(None, []))} casi x 3 ambienti (PYTHONINTMAXSTRDIGITS assente, 0, 640) "
+      f"-> {len(cifre_ko)} sbagliati")
+for r in cifre_ko[:8]:
+    print(f"      {r}")
+
+falliti = bool(panici or radici_ko or forme_ko or letture_ko or annidati_ko or struct_ko or cifre_ko)
 print("  ESITO:", "nessun panic, classi e forme corrette" if not falliti else "DA CORREGGERE")
 sys.exit(0 if not falliti else 1)

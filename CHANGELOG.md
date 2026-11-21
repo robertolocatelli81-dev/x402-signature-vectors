@@ -6,6 +6,43 @@ recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
 ## 1.6.0 — unreleased
 
+### 2026-11-21 — an integer of more than 4,300 digits is `input_not_object` on every interpreter and environment
+
+- **Rule** (`SPEC.md` 1.3, §3.1; RFC 8259 §9: "An implementation may set limits on the range and precision of
+  numbers"): a text holding a JSON number without fraction or exponent written with more than 4,300 digits, anywhere in
+  the document, counted outside strings before the text is read (`verify.intero_oltre`, `verify.CIFRE_MAX`), is
+  `reject` / `input_not_object`. Integers within the limit are converted in pieces of 600 digits
+  (`json.loads(..., parse_int=verify._intero_json)`), so the answer does not depend on `PYTHONINTMAXSTRDIGITS`.
+- **Why**: Python's `json.loads` converts integers with `int()`, whose limit (4,300 digits by default) that variable
+  moves. Measured on 21 November 2026, vector 003 with one more member, ignored by the verdict, holding an integer of
+  4,301 digits: `reject` / `input_not_object` by default and `accept` with `PYTHONINTMAXSTRDIGITS=0`, with the runner
+  of the previous commit on CPython 3.9.25, 3.11.2, 3.12.15, 3.13.15 and 3.14.8 and with that of 1.5.0 on 3.9.25,
+  3.11.2 and 3.14.8; with `PYTHONINTMAXSTRDIGITS=640` an integer of 641 digits was `input_not_object`. Now 56 cases
+  give the same answers on the five interpreters with the variable unset, `0` and `640`, equal to those of the
+  previous runner with the variable unset.
+- **Verdicts**: none of the 85 vectors changes (verdict, recovered address, class, four intermediate values; their
+  longest integer has 78 digits). No vector added: `input_not_object` cannot be the expectation of a vector file,
+  which is an object (README).
+- **Runner**: a file in `vectors/` that the reader of §3.1 does not read (more than 64 levels, an integer of more than
+  4,300 digits, not JSON) is now `FALLITO` with `schema: testo non leggibile: …`. Before, a truncated file made
+  `verify.py` exit with a `JSONDecodeError` traceback, and a file with an integer of 5,000 digits did the same or not
+  according to `PYTHONINTMAXSTRDIGITS` (measured on copies of the suite). `tools/test_runner_schema.py` (CI) plants the
+  three files: each one `FALLITO`, with the variable unset and `=0`; on the runner of the previous commit the first
+  one already fails the test (`('testo tronco', 1, [])`).
+- **`tools/fuzz_runner.py`** (CI): integers of 1, 78, 79, 640, 641, 4,300, 4,301, 5,000 and 100,000 digits in an
+  ignored member (also negative), in `value`, in a list, as the whole text, inside a string, inside a string after
+  `\\` and `\"`, as a member name, with a fraction, with an exponent, and as UTF-16 bytes; run in this process and in
+  two children with `PYTHONINTMAXSTRDIGITS=0` and `=640`: 99 cases × 3, the same answers, 0 wrong; and 18 readings
+  of integers of 1 to 4,300 digits, positive, negative and `-0`, equal to the exact values; and 7 texts at the limit
+  (4,300 and 4,301 digits, negative, in a list, at the very end of the text, with a fraction, with an exponent, in a
+  string) given to `intero_oltre` and `leggi_json_stretto`.
+- **`tools/positive_control.py`**: the sabotages `json-reader-lax` and `nan-admitted` patch the reader line, which now
+  also passes `parse_int`; their target strings are updated (each found once). On the runner of the previous commit
+  the section reports the two environments changing 15 and 10 answers.
+- Not covered by this rule: a number with a fraction or an exponent and thousands of digits is read by `float()`
+  (for example as `inf`); in a member the verdict ignores it is `accept`, in a declared integer member it is
+  `encoding_error` (a float is never an admitted integer form, §2).
+
 ### 2026-11-21 — a struct that `primaryType` does not reach is `encoding_error` (SPEC.md 1.3)
 
 - **Rule** (`SPEC.md` 1.3, §1 `/eip712/types`): `types` MUST NOT define a struct that is not `EIP712Domain` and is not

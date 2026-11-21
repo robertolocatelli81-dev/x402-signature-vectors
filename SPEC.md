@@ -145,6 +145,15 @@ of nested arrays that Python's `json.loads` refuses is 993 on CPython 3.9.25 and
 3.13.15 and 65,197 on 3.14.8, and with the reader's limit alone the first vector with one more member, ignored by the
 verdict and nested 1,500 levels deep, was `reject` / `input_not_object` on 3.9 and 3.11 and `accept` on 3.12, 3.13 and
 3.14. The vectors of this suite nest 5 levels.
+So is a text that holds a JSON number without fraction or exponent written with more than 4,300 digits, anywhere in
+the document (a member the verdict ignores included), counted outside strings before the text is read
+(`verify.intero_oltre`; RFC 8259 §9: "An implementation may set limits on the range and precision of numbers"). This
+limit too is a number of this suite: Python's `json.loads` converts integers with `int()`, which by default refuses
+more than 4,300 digits, and the environment variable `PYTHONINTMAXSTRDIGITS` moves that limit (`0` removes it). Measured
+on 21 November 2026 on vector 003 with one more member holding an integer of 4,301 digits: `reject` /
+`input_not_object` by default and `accept` with `PYTHONINTMAXSTRDIGITS=0`, with the runner of the previous commit on
+CPython 3.9.25, 3.11.2, 3.12.15, 3.13.15 and 3.14.8, and with that of 1.5.0 on 3.9.25, 3.11.2 and 3.14.8. The reader converts the integers it admits in pieces of 600 digits, so its answer does not
+depend on that variable either. The longest integer in the vectors of this suite has 78 digits.
 
 ### 3.2 Order of the checks
 A verifier computes the signature-form checks and the encoding, then answers with the FIRST class that applies, in
@@ -171,7 +180,7 @@ Otherwise the verdict is `accept`.
 | `encoding_error` | the EIP-712 message cannot be encoded under §1–§2 |
 | `recovery_undefined` | well-formed signature, but recovery yields no key |
 | `signer_mismatch` | recovers to an address other than the declared signer |
-| `input_not_object` | the input is not a JSON object, or its text is nested more than 64 levels deep (§3.1) |
+| `input_not_object` | the input is not a JSON object, or its text is nested more than 64 levels deep or holds an integer of more than 4,300 digits (§3.1) |
 | `json_ambiguous` | the JSON text has two readings (repeated member, NaN/Infinity) |
 
 No other class exists. A new class is a new version of this document, added at the same time to the schema,
@@ -281,6 +290,7 @@ read strictly. No vector changed. A new `origin`, a new class or a new value for
 version, recorded here and in `CHANGELOG.md` together with the schema change.
 1.3 (unreleased, with vectors 1.6.0): §3.1 states the class of a text nested more than 64 levels deep
 (`input_not_object`; until 1.5.0 the runner's reader raised instead of answering, at a depth that changed with the
-interpreter); §1 `/eip712/types`: a struct other than `EIP712Domain` that `primaryType` does not reach is
+interpreter) and of a text holding an integer of more than 4,300 digits (`input_not_object` on every interpreter and
+environment; until 1.5.0 the answer changed with `PYTHONINTMAXSTRDIGITS`); §1 `/eip712/types`: a struct other than `EIP712Domain` that `primaryType` does not reach is
 `encoding_error` (until 1.5.0 the runner accepted it, measured; it is not part of what is signed). Vector 085. No
 verdict of vectors 001–084 changed, no class or schema changed.

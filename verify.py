@@ -116,6 +116,59 @@ def annidato_oltre(testo, limite=PROFONDITA_MAX):
     return False
 
 
+CIFRE_MAX = 4300        # SPEC.md §3.1: le cifre che un numero intero JSON (senza frazione ne' esponente) puo' avere
+
+
+class TroppeCifre(ValueError):
+    """Un numero intero JSON ha piu' di CIFRE_MAX cifre: il testo non viene letto (SPEC.md §3.1)."""
+
+
+def intero_oltre(testo, limite=CIFRE_MAX):
+    """True se nel testo un numero intero JSON (cifre non seguite da `.`, `e` o `E`) ha piu' di `limite` cifre, contate
+    FUORI dalle stringhe e PRIMA della lettura. Il `json` di CPython converte gli interi con int(), che oltre 4300 cifre
+    solleva ValueError, ma il limite lo sposta una variabile d'ambiente (PYTHONINTMAXSTRDIGITS=0 lo toglie): misurato il
+    21/11/2026, il vettore 003 con un membro ignorato di 4301 cifre era input_not_object e, con quella variabile, accept
+    (anche in 1.5.0). Un numero della suite da' la stessa risposta ovunque."""
+    if isinstance(testo, (bytes, bytearray)):               # json.loads li accetta: stessa decodifica
+        testo = bytes(testo).decode(json.detect_encoding(bytes(testo)), "surrogatepass")
+    in_stringa = salta = in_numero = False
+    cifre, intero = 0, True
+    for c in testo + " ":                                    # lo spazio finale chiude un numero in coda al testo
+        if in_stringa:
+            if salta:
+                salta = False
+            elif c == "\\":
+                salta = True
+            elif c == '"':
+                in_stringa = False
+        elif "0" <= c <= "9":
+            if not in_numero:
+                in_numero, cifre, intero = True, 0, True
+            cifre += 1                                       # conta solo finche' intero: dopo `.`/`e` non decide
+        elif in_numero and c in ".eE":
+            intero = False                                   # frazione o esponente: non e' un intero
+        elif in_numero and c in "+-":
+            pass                                             # segno dell'esponente
+        else:
+            if in_numero and intero and cifre > limite:
+                return True
+            in_numero = False
+            if c == '"':
+                in_stringa = True
+    return False
+
+
+def _intero_json(s):
+    """parse_int del lettore: int() su pezzi di 600 cifre (sotto il minimo di PYTHONINTMAXSTRDIGITS, 640), cosi' la
+    lettura di un intero entro CIFRE_MAX non dipende dalla variabile d'ambiente."""
+    segno, s = (-1, s[1:]) if s.startswith("-") else (1, s)
+    v = 0
+    for i in range(0, len(s), 600):
+        pezzo = s[i:i + 600]
+        v = v * 10 ** len(pezzo) + int(pezzo)
+    return segno * v
+
+
 def leggi_json_stretto(testo):
     """Il lettore che un verificatore deve usare: il `json` della libreria standard tiene l'ULTIMO di due membri
     con lo stesso nome, un altro lettore il primo, e i due vedono importi diversi sotto la stessa firma
@@ -124,7 +177,9 @@ def leggi_json_stretto(testo):
     `verdetto_da_testo`."""
     if annidato_oltre(testo):
         raise TroppoAnnidato(f"annidato oltre {PROFONDITA_MAX} livelli")
-    return json.loads(testo, object_pairs_hook=_no_duplicati, parse_constant=_no_costanti)
+    if intero_oltre(testo):
+        raise TroppeCifre(f"un numero intero con piu' di {CIFRE_MAX} cifre")
+    return json.loads(testo, object_pairs_hook=_no_duplicati, parse_constant=_no_costanti, parse_int=_intero_json)
 
 
 def verdetto_da_testo(testo):
@@ -283,7 +338,15 @@ def main():
     righe, falliti = [], 0
     for nome in file:
         testo = open(os.path.join(vdir, nome), encoding="utf-8").read()
-        vec = json.loads(testo, object_pairs_hook=_segna_ripetuti)          # SOLO per leggere expected/id e per lo schema: il verdetto passa dal lettore stretto
+        # Un file che il lettore di §3.1 non legge (oltre 64 livelli, un intero di piu' di 4300 cifre, non JSON) non e' un
+        # vettore: FALLITO col motivo, stesso esito con ogni interprete e PYTHONINTMAXSTRDIGITS. Prima: 998 con il testo
+        # tronco faceva uscire il runner con JSONDecodeError, e un intero di 5000 cifre lo stesso o no secondo la variabile.
+        try:
+            if annidato_oltre(testo) or intero_oltre(testo):
+                raise ValueError(f"oltre i limiti di SPEC.md §3.1 ({PROFONDITA_MAX} livelli, {CIFRE_MAX} cifre)")
+            vec = json.loads(testo, object_pairs_hook=_segna_ripetuti, parse_int=_intero_json)   # SOLO per leggere expected/id e per lo schema: il verdetto passa dal lettore stretto
+        except (ValueError, RecursionError) as ex:
+            falliti += 1; righe.append((nome, "?", "?", "?", "FALLITO", f"schema: testo non leggibile: {str(ex)[:80]}")); continue
         # (un vettore con un membro ripetuto, come 077, e' un vettore della suite che DEVE dare reject/json_ambiguous)
         errori_schema = _valida_schema(vec, schema, "") if isinstance(vec, dict) else ["non e' un oggetto"]   # percorso senza il nome del file: il campo resta leggibile
         if not errori_schema and ripetuto_fuori_da_eip712(vec) is not None:
