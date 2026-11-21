@@ -73,13 +73,20 @@ def keccak256(data: bytes) -> bytes:
 def encode_type(primary: str, types: dict) -> bytes:
     """encodeType: `Primary(tipo nome,...)` seguito dai tipi referenziati in ordine alfabetico."""
     def deps(nome, visti):
-        if nome in visti or nome not in types:
-            return visti
-        visti = visti | {nome}
-        for campo in types[nome]:
-            base = campo["type"].split("[")[0]
-            if base in types:
-                visti = deps(base, visti)
+        # Visita iterativa (21/11/2026): con la ricorsione una catena di ~990 struct, tutte raggiungibili e firmate,
+        # sollevava RecursionError, e lo stesso testo era accept o encoding_error secondo la profondita' della pila di
+        # chi chiama e sys.setrecursionlimit (misurato: 980 struct, accept chiamando verdetto_da_testo direttamente,
+        # reject da 30 chiamate piu' in basso).
+        visti, da_fare = set(visti), [nome]
+        while da_fare:
+            n = da_fare.pop()
+            if n in visti or n not in types:
+                continue
+            visti.add(n)
+            for campo in types[n]:
+                base = campo["type"].split("[")[0]
+                if base in types:
+                    da_fare.append(base)
         return visti
     ordinati = [primary] + sorted(deps(primary, set()) - {primary})
     fuori = "".join(f"{t}({','.join(f'{c[chr(116)+chr(121)+chr(112)+chr(101)]} {c[chr(110)+chr(97)+chr(109)+chr(101)]}' for c in types[t])})" for t in ordinati)
@@ -224,6 +231,19 @@ def strutture_raggiungibili(primary: str, types: dict) -> set:
 
 
 def valida_struttura(dominio, types, primary) -> None:
+    """La struttura delle typed data ha UNA sola lettura (`_valida_struttura`, sotto), e questa funzione risponde a OGNI
+    forma di `dominio`, `types` e `primary` con la sua eccezione, `ValoreNonConforme`, mai con un'altra: una forma che i
+    controlli non nominano (un nome non stringa, un intero oltre il limite di conversione in testo) e' non conforme
+    anche lei (21/11/2026: `primary` = 10 ** 5000 sollevava ValueError di str())."""
+    try:
+        _valida_struttura(dominio, types, primary)
+    except ValoreNonConforme:
+        raise
+    except Exception as ex:                                  # noqa: BLE001 - l'input non e' fidato
+        raise ValoreNonConforme(f"domain, types o primaryType in una forma non ammessa ({type(ex).__name__})") from ex
+
+
+def _valida_struttura(dominio, types, primary) -> None:
     """Il dominio e i nomi dei tipi hanno UNA sola lettura (25/09/2026, revisione 4 menti round 2).
 
     Prima venivano ignorati: membri del dominio fuori dall'elenco EIP-712 (`chainID`, `verifyingcontract`),
@@ -252,8 +272,19 @@ def valida_struttura(dominio, types, primary) -> None:
             raise ValoreNonConforme(f"nome di struct non valido: {nome!r}")
         if nome != "EIP712Domain" and _RE_TIPO_ATOMICO.fullmatch(nome):
             raise ValoreNonConforme(f"struct chiamata come un tipo atomico: {nome!r} ne oscurerebbe il tipo")
-    if not isinstance(primary, str) or primary not in types:
-        raise ValoreNonConforme(f"primaryType {str(primary)[:48]!r} non e' una struct di types")
+    for nome, campi in types.items():
+        # Una struct e' una lista di membri, un membro un oggetto con `name` e `type` stringhe (SPEC.md §1
+        # `/eip712/types/*`). Prima queste forme passavano di qui e sollevavano TypeError / KeyError / AttributeError in
+        # encode_type: encoding_error per il runner, ma un'eccezione qualunque per chi chiama signing_digest.
+        if not isinstance(campi, list):
+            raise ValoreNonConforme(f"types.{nome}: una struct e' una lista di membri, trovato {type(campi).__name__}")
+        for campo in campi:
+            if not (isinstance(campo, dict) and isinstance(campo.get("name"), str) and isinstance(campo.get("type"), str)):
+                raise ValoreNonConforme(f"types.{nome}: un membro e' un oggetto con `name` e `type` stringhe")
+    if not isinstance(primary, str):
+        raise ValoreNonConforme(f"primaryType non e' una stringa ({type(primary).__name__})")
+    if primary not in types:
+        raise ValoreNonConforme(f"primaryType {primary[:48]!r} non e' una struct di types")
     raggiunte = strutture_raggiungibili(primary, types)
     fuori = sorted(n for n in types if n != "EIP712Domain" and n not in raggiunte)
     if fuori:

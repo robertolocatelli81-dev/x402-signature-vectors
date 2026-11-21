@@ -33,10 +33,12 @@ recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 - **`tools/fuzz_runner.py`** (CI): 240 random type graphs (atomic members, structs, `T[]` / `T[k]`, cycles through empty
   `T[]`, `EIP712Domain` declared or not, key order shuffled), the message built on them and signed with the test key;
   120 get one to three structs that `primaryType` does not reach (isolated, empty, holding the primary type, chained,
-  recursive, with an unknown type, not a list, members that are not objects). Read as text and as an object, and
-  passed to `lib/eip712.signing_digest` (digest only when every struct is reachable), plus 7 invalid `primaryType`
-  values, plus 25 hostile `types` shapes given to `lib/eip712.valida_struttura` (it must raise
-  its own `ValoreNonConforme`, never another exception): 752 cases, 0 wrong. The expected answer comes from a fixed
+  recursive, with an unknown type, not a list, members that are not objects). Read as text and as an object,
+  passed to `lib/eip712.signing_digest` (digest only when every struct is reachable) and to `verify.strati` (the four
+  intermediate values only when every struct is reachable), plus 7 invalid `primaryType`
+  values, plus 37 hostile shapes of `types`, `primaryType` and the domain given to `lib/eip712.valida_struttura` and to
+  `lib/eip712.signing_digest` (each call must raise the library's own `ValoreNonConforme`: no other exception, and no
+  silent return; a `primaryType` that is not a string is refused by that reason), plus chains of 980 and 3,000 reachable structs read three ways: 1052 cases, 0 wrong. The expected answer comes from a fixed
   point written in the test, not from `lib/`. The verdict cases of the graphs, run on the parent commit (whose `lib/eip712.py` is that
   of 1.5.0), report 240 wrong: the 120 graphs with extra structs, accepted, as text and as object.
 - **Positive control kept able to fail**: with the rule, a struct named like an atomic type that nothing references is
@@ -44,6 +46,26 @@ recorded here, so a verdict recorded against v0.2.0 stays meaningful.
   (measured on this branch: «catturati 17/18», B1 and B2 diff 0). The fuzz case and the B1 input now make that struct
   reachable from `primaryType` and sign over the struct reading, as vector 081 does (`fuzz_runner.py` «letture e
   nomi»: 26 cases; on a copy with the sabotage: 2 wrong, `string` and `bool` accepted).
+- **Review of the commit above, same day** (the recursion of `encode_type` is older than the rule; it is in 1.5.0):
+  - `valida_struttura` returned without an exception on 18 of the 25 hostile `types` shapes of the fuzz (a struct that
+    is not a list, a member that is not an object with `name` and `type` strings), and `signing_digest` then raised
+    `TypeError`, `KeyError` or `AttributeError` on them; a `primaryType` that is an integer of 5,000 digits raised the
+    `ValueError` of `str()`. The runner answered `encoding_error` in every case; a caller of the library got an
+    exception that is not the library's. Now `valida_struttura` refuses those shapes itself and answers every form of
+    its three arguments with `ValoreNonConforme`.
+  - `encode_type` collected the referenced structs by recursion. A chain of structs, each an empty `T[]` member of the
+    one before, all reachable and signed, raised `RecursionError` from about 990 structs (`encoding_error`), and the
+    answer depended on the caller: measured with 980 structs, `accept` when `verdetto_da_testo` is called directly,
+    `reject` when called from 30 frames deeper, `accept` again after `sys.setrecursionlimit(3000)` (the same on the
+    v1.5.0 tag). The visit is now iterative: chains of 980 and 3,000 structs are `accept` as text, as object and from
+    200 frames deeper.
+  - `verify.strati` without the rule passed every gate (the runner does not call it on an `encoding_error`): the
+    fuzz now reads `verify.strati` on each of the 240 graphs.
+  - Texts: the README said «15 sabotages … 18 caught» (18 sabotages, since 1.5.0); `SPEC.md` §1 says that a struct is
+    reachable also as the element type of a nested array (`T[k][]`), which the runner already followed;
+    `audit/POSITIVE_CONTROL.md` has the table of 21 November (the B1 batch changed with the reachable struct named like
+    an atomic type; 18 of 18 caught, 18 of 18 not equivalent).
+  - No verdict, recovered address, class or intermediate value of the 85 vectors changes.
 
 ### 2026-11-20 — a text nested deeper than the reader follows is rejected, not raised
 

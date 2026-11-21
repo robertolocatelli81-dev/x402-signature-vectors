@@ -90,3 +90,37 @@ A sabotaged copy that cannot answer B1 at all (a patch that breaks the import) n
 `runner-layers-ignored` had such a patch and was counted as non-equivalent with B1 = -1. The intact copy passes all 12
 gates. Gate names are cut at 58 characters in the tool's output. It is the `positive-control` job of
 `conformance.yml`; the full run took 1785 s on the measuring machine (13/11/2026).
+
+## After 21 November 2026 (12 gates, B1 = 312 with a reachable struct named like an atomic type, 85 vectors)
+
+The rule of `SPEC.md` 1.3 (a struct that `primaryType` does not reach is `encoding_error`) refuses by itself the struct
+named `string` or `bool` that B1 added to `types` without referencing it. With that input the sabotage
+`struct-named-string` changes no answer (measured on 21 November 2026: of 8 atomic names, 0 differ between the intact
+and the sabotaged runner; with the struct reachable from `primaryType` and signed over the struct reading, 2 differ,
+`string` and `bool`), and the full run reported «catturati 17/18» (`CHANGELOG.md`, 21 November 2026). B1 and the fuzz
+case now use the reachable form, as vector 081 does. The new input draws more random numbers per round, so the B1 column
+is not comparable with the table above; B2 has 85 rows (vector 085).
+
+    sabotage                   caught by                                                   B1 diff  B2 diff
+    keccak-padding             verify.py, genera_vettori_onchain.py, test_runner_schema.p      168       85
+    low-s-skipped              verify.py, test_runner_schema.py, test_runner_compares.py        31        1
+    low-s-boundary             verify.py, test_runner_schema.py, test_runner_compares.py        24        0
+    domain-version-dropped     verify.py, test_runner_schema.py, test_runner_compares.py,      105       20
+    encodetype-unsorted        verify.py, test_runner_schema.py, test_runner_compares.py,       24        1
+    v-raw-admitted             verify.py, test_runner_schema.py, test_runner_compares.py        24        0
+    r-zero-admitted            verify.py, test_runner_schema.py, test_runner_compares.py        24        0
+    json-reader-lax            verify.py, test_runner_schema.py, test_runner_compares.py,       48        1
+    array-length-unchecked     verify.py, test_runner_schema.py, test_runner_compares.py,       24        0
+    string-nul-truncated       verify.py, test_runner_schema.py, test_runner_compares.py        24        0
+    infinity-serialised        verify.py, test_runner_schema.py, test_runner_compares.py,       24        0
+    signer-case-sensitive      verify.py, test_runner_schema.py, test_runner_compares.py,       24        0
+    runner-reason-ignored      test_runner_compares.py                                           0       10
+    runner-address-ignored     test_runner_compares.py                                           0        9
+    runner-schema-skipped      test_runner_schema.py                                             0       37
+    nan-admitted               fuzz_runner.py                                                   24        0
+    struct-named-string        fuzz_runner.py                                                   24        0
+    runner-layers-ignored      test_runner_compares.py                                           0       11
+
+    catturati 18/18; non equivalenti sul lotto 18/18
+
+Measured on 21 November 2026 with Python 3.11.2 (the full run took 4150 s on the measuring machine, under load).

@@ -58,7 +58,7 @@ The EIP-712 struct definitions. `EIP712Domain` MAY be present; if present it MUS
 MUST NOT be spelled like an atomic type (`address`, `uint256`, `bytes32`…), otherwise `encoding_error`.
 `types` MUST NOT define a struct that is not `EIP712Domain` and is not reachable from `primaryType`, otherwise
 `encoding_error`. A struct is reachable when it is `primaryType` or a member of a reachable struct has it as its type,
-alone or as `T[]` / `T[k]`. EIP-712 `encodeType` includes only the referenced structs, so a struct that is not
+alone or as the element type of an array, nested or not (`T[]`, `T[k]`, `T[k][]`). EIP-712 `encodeType` includes only the referenced structs, so a struct that is not
 reachable is not signed, and libraries read such typed data two ways (measured on 21 November 2026 on vector 001 with
 one more struct: eth-account 0.14.0 refuses it, "Unable to determine primary type", and when the extra struct holds
 the primary type, "The provided `primaryType` does not match the derived `primaryType`"; viem 2.57.19 recovers the
@@ -69,7 +69,8 @@ A member name of a struct. A member definition holds exactly `name` and `type`; 
 vector (§1).
 
 ### `/eip712/types/*/type`
-A member type: an atomic type of §2, a struct name defined in `types`, or an array `T[]` / `T[k]` of either.
+A member type: an atomic type of §2, a struct name defined in `types`, or an array `T[]` / `T[k]` of either or of
+such an array (`T[k][]`).
 
 ### `/eip712/primaryType`
 The struct that is signed. A `primaryType` absent from `types` is `encoding_error`.

@@ -344,6 +344,15 @@ for i in range(240):
             struct_ko.append(f"grafo {i} signing_digest: rifiuta un grafo tutto raggiungibile")
     except BaseException as ex:                              # noqa: BLE001
         struct_ko.append(f"grafo {i} signing_digest: {type(ex).__name__}")
+    # verify.strati (i quattro valori intermedi di SPEC.md §1): None se una struct non e' raggiungibile, altrimenti il
+    # digest firmato. Il runner non la chiama su un encoding_error: senza questo caso la regola in strati() non era provata.
+    struct_n += 1
+    try:
+        st = V.strati(vec)
+        if (st is None) != bool(fuori) or (st is not None and st["signing_digest"] != _digest(DOM_USDC, types, nomi[0], msg)):
+            struct_ko.append(f"grafo {i} strati: {'None' if st is None else 'calcolati'} (fuori {fuori[:3]})")
+    except BaseException as ex:                              # noqa: BLE001
+        struct_ko.append(f"grafo {i} strati: {type(ex).__name__}")
 for pt in (5, None, ["TransferWithAuthorization"], {"a": 1}, "", "EIP712Domain", "Nessuna"):
     v = json.loads(json.dumps(_v3)); v["eip712"]["primaryType"] = pt
     struct_n += 1
@@ -362,19 +371,68 @@ _ostili = [({_T: v}, _T) for v in (5, None, "S0", {"a": 1}, [5], [None], ["uint2
 _ostili += [({_T: _v3["eip712"]["types"][_T]}, pt) for pt in (5, None, [_T], {"a": 1}, "", "EIP712Domain", "Nessuna")]
 _ostili += [({_T: [{"name": "x", "type": "X[]"}], "X": v}, _T) for v in (5, None, "S0", {"a": 1}, [5], [{"name": "x"}],
                                                                           [{"name": "x", "type": 7}])]
-for tipi, pt in _ostili:
+# Forme che nessun controllo nomina (solo da chi chiama la libreria con un oggetto, non da un testo JSON): un intero di
+# 5000 cifre come primaryType, come nome di struct, come nome o tipo di un membro (str() e repr() di un intero cosi'
+# sollevano ValueError), nomi non stringa nel dominio, domain / types che non sono oggetti. Anche a queste la libreria
+# risponde con la SUA eccezione.
+_G = 10 ** 5000
+_ostili_dom = [(DOM_USDC, {_T: _v3["eip712"]["types"][_T]}, _G), (DOM_USDC, {_T: _v3["eip712"]["types"][_T], _G: []}, _T),
+               (DOM_USDC, {_T: [{"name": _G, "type": "uint256"}]}, _T), (DOM_USDC, {_T: [{"name": "x", "type": _G}]}, _T),
+               ({**DOM_USDC, 5: 1, "zz": 1}, {_T: _v3["eip712"]["types"][_T]}, _T),
+               ({**DOM_USDC, _G: 1}, {_T: _v3["eip712"]["types"][_T]}, _T), (None, {_T: []}, _T), ([], {_T: []}, _T),
+               (DOM_USDC, None, _T), (DOM_USDC, [[_T, []]], _T),
+               (DOM_USDC, {"EIP712Domain": CAMPI_DOMINIO}, "Nessuna"), (DOM_USDC, {}, _T)]   # primaryType assente, nessuna struct fuori
+for dom, tipi, pt in [(DOM_USDC, t, p) for t, p in _ostili] + _ostili_dom:
+    for nome_f, f in (("valida_struttura", lambda: valida_struttura(dom, tipi, pt)),
+                      ("signing_digest", lambda: signing_digest(dom, pt, tipi, _v3["eip712"]["message"], CAMPI_DOMINIO))):
+        struct_n += 1
+        try:
+            strutture_raggiungibili(pt, tipi) if isinstance(pt, str) and isinstance(tipi, dict) else None
+            f()
+            struct_ko.append(f"lib {nome_f}, types {str(type(tipi))} primaryType {type(pt).__name__}: nessuna eccezione su una forma ostile")
+        except ValoreNonConforme:
+            pass
+        except BaseException as ex:                          # noqa: BLE001
+            struct_ko.append(f"lib {nome_f}, primaryType {type(pt).__name__}: {type(ex).__name__} invece di ValoreNonConforme")
+# Un primaryType che non e' una stringa e' rifiutato con QUEL motivo (non con quello generico delle forme non nominate)
+for pt in (5, None, [_T], {"a": 1}, _G):
     struct_n += 1
     try:
-        strutture_raggiungibili(pt, tipi) if isinstance(pt, str) else None
-        valida_struttura(DOM_USDC, tipi, pt)
-    except ValoreNonConforme:
-        pass
+        valida_struttura(DOM_USDC, {_T: _v3["eip712"]["types"][_T]}, pt)
+        struct_ko.append(f"lib, primaryType {type(pt).__name__}: nessuna eccezione")
+    except ValoreNonConforme as ex:
+        if not str(ex).startswith("primaryType non e' una stringa"):
+            struct_ko.append(f"lib, primaryType {type(pt).__name__}: motivo {str(ex)[:50]!r}")
     except BaseException as ex:                              # noqa: BLE001
-        struct_ko.append(f"lib, types {str(tipi)[:50]} primaryType {pt!r}: {type(ex).__name__} invece di ValoreNonConforme")
+        struct_ko.append(f"lib, primaryType {type(pt).__name__}: {type(ex).__name__} invece di ValoreNonConforme")
+# Una catena di struct tutte raggiungibili, ognuna membro `T[]` vuoto della precedente (il testo ha 2 livelli): encodeType
+# le include tutte, la firma le copre, il verdetto e' accept a ogni lunghezza e da ogni profondita' della pila. Fino al
+# 21/11/2026 encode_type era ricorsiva: da ~990 struct RecursionError -> encoding_error, e a 980 l'esito cambiava con
+# la profondita' di chi chiama.
+def _da_profondita(k, f):
+    return f() if k == 0 else _da_profondita(k - 1, f)
+
+
+for n_catena in (980, 3000):
+    tc = {f"C{i}": [{"name": "a", "type": f"C{i + 1}[]"}] for i in range(n_catena - 1)}
+    tc[f"C{n_catena - 1}"] = [{"name": "x", "type": "uint256"}]
+    try:
+        vc = {"signer": _FIRMATARIO, "signature": _firma(_digest(DOM_USDC, tc, "C0", {"a": []})),
+              "eip712": {"domain": DOM_USDC, "types": tc, "primaryType": "C0", "message": {"a": []}}}
+        tx = json.dumps(vc)
+        esiti = [("testo", V.verdetto_da_testo(tx)), ("oggetto", V.verdetto(vc)),
+                 ("testo da 200 chiamate", _da_profondita(200, lambda: V.verdetto_da_testo(tx)))]
+    except BaseException as ex:                              # noqa: BLE001
+        esiti = [(m, (type(ex).__name__, None, None)) for m in ("testo", "oggetto", "testo da 200 chiamate")]
+    for modo, esito in esiti:
+        struct_n += 1
+        if esito[0] != "accept" or (esito[1] or "").lower() != _FIRMATARIO.lower():
+            struct_ko.append(f"catena di {n_catena} struct raggiungibili, {modo}: {esito[0]}/{esito[2]} (atteso accept)")
 if not (0 < struct_rej < 240):
     struct_ko.append(f"grafi con struct non raggiungibili: {struct_rej} su 240, il caso non e' esercitato nei due sensi")
 print(f"  struct non raggiungibili da primaryType: {struct_n} casi (240 grafi firmati, {struct_rej} con struct in piu', "
-      f"x testo/oggetto + lib signing_digest; 7 primaryType non validi; {len(_ostili)} forme ostili alla libreria) -> {len(struct_ko)} sbagliati")
+      f"x testo/oggetto + lib signing_digest + verify.strati; 7 primaryType non validi; {len(_ostili)} + {len(_ostili_dom)} forme ostili alla libreria "
+      f"x valida_struttura/signing_digest; 5 primaryType non stringa col loro motivo; catene di 980 e 3000 struct x 3 modi) -> {len(struct_ko)} sbagliati")
 for r in struct_ko[:8]:
     print(f"      {r}")
 
