@@ -4,7 +4,7 @@ Vectors are versioned so that an implementation can state *which* set it passes.
 stable and never reused: a vector that turns out to be wrong is corrected in place and the change is
 recorded here, so a verdict recorded against v0.2.0 stays meaningful.
 
-## 1.6.0 — unreleased
+## 1.6.0 — 2026-11-22
 
 ### 2026-11-21 — an integer of more than 4,300 digits is `input_not_object` on every interpreter and environment
 

@@ -119,8 +119,9 @@ The other gates (`tools/check_manifest.py`, `check_schema.py`, `check_docs.py`, 
   Monday, in four jobs: `verify` (stdlib only), `positive-control` (the gates against 18 sabotages),
   `crossvalidate` (with the reference libraries) and `sdk` (the two official SDKs, pinned). All four passed on the
   v1.5.0 tag (run 43433049744, 13 November 2026, commit `ec53f20`).
-- **Releases**: [v1.5.0](https://github.com/robertolocatelli81-dev/x402-signature-vectors/releases/tag/v1.5.0)
-  (tag on `ec53f20`, 13 November 2026; changes in [`CHANGELOG.md`](CHANGELOG.md)) and
+- **Releases**: v1.6.0 (22 November 2026, this version; changes in [`CHANGELOG.md`](CHANGELOG.md)),
+  [v1.5.0](https://github.com/robertolocatelli81-dev/x402-signature-vectors/releases/tag/v1.5.0)
+  (tag on `ec53f20`, 13 November 2026) and
   [v1.4.0](https://github.com/robertolocatelli81-dev/x402-signature-vectors/releases/tag/v1.4.0) (tag on `985b46d`,
   12 November 2026). Each GitHub release carries the tarball made by `git archive --format=tar.gz` of its tag and
   its `SHA256SUMS`.
@@ -203,7 +204,7 @@ test private key  0x4646…4646   (published on purpose: a conformance vector mu
 test address      0x9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f
 ```
 
-Current set: **85 vectors — 34 `accept`, 51 `reject`** (v1.6.0, unreleased), against
+Current set: **85 vectors — 34 `accept`, 51 `reject`** (v1.6.0), against
 [`schema/vector.schema.json`](schema/vector.schema.json).
 
 Beyond message-binding mutations (amount off by one, substituted recipient, one-second validity

@@ -1,6 +1,6 @@
 # x402 signature vectors — format and conformance
 
-**Specification version 1.3 · unreleased, with vectors 1.6.0 · applies to vector format 1 (`schema/vector.schema.json`).**
+**Specification version 1.3 · 22 November 2026 · applies to vector format 1 (`schema/vector.schema.json`).**
 The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
 
 This document says what a vector is, how its verdict is reached, what "conforms" means for a verifier, and what
@@ -294,7 +294,7 @@ vector states that the same bytes verify off chain under §3.
 with a trailing newline make the file not a vector; the runner checks the four intermediate values; adapter lines are
 read strictly. No vector changed. A new `origin`, a new class or a new value form is a new
 version, recorded here and in `CHANGELOG.md` together with the schema change.
-1.3 (unreleased, with vectors 1.6.0): §3.1 states the class of a text nested more than 64 levels deep
+1.3 (22 November 2026, with vectors 1.6.0): §3.1 states the class of a text nested more than 64 levels deep
 (`input_not_object`; until 1.5.0 the runner's reader raised instead of answering, at a depth that changed with the
 interpreter) and of a text holding a number of more than 4,300 digits or a number that is not finite (`input_not_object`
 on every interpreter and environment; until 1.5.0 an integer's answer changed with `PYTHONINTMAXSTRDIGITS` and other
